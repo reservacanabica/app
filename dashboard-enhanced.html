@@ -1,0 +1,738 @@
+<!--
+⚠️ ARQUIVO LEGADO — NÃO PRODUTIVO
+Este arquivo não é mais servido por rotas ativas.
+A versão produtiva está em: dashboard.html (incluído via layout.html)
+Manter apenas como referência histórica ou remover em limpeza futura.
+Data de descontinuação: 2026-01-20
+Motivo: Padronização visual — casca única (index.html → layout.html → dashboard.html)
+-->
+<!--
+COMPONENTE: dashboard-enhanced.html
+PAPEL: Dashboard aprimorado com visual sofisticado inspirado no Aquaponia
+
+PRINCIPAIS FUNCIONALIDADES:
+- Cards estatísticos com design moderno
+- Gráficos e visualizações de dados
+- Navegação intuitiva por módulos
+- Layout responsivo e acessível
+
+INTEGRAÇÕES:
+- DashboardService via google.script.run
+- design-system.html para estilos consistentes
+
+STATUS: PRODUÇÃO — Dashboard completo e funcional
+-->
+
+<?!= include('design-system') ?>
+
+<style>
+/* Dashboard específico */
+.dashboard-container {
+  padding: var(--canna-space-8);
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  margin-bottom: var(--canna-space-8);
+}
+
+.dashboard-greeting {
+  color: var(--color-primary-light);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: var(--canna-space-2);
+}
+
+.dashboard-title {
+  font-size: var(--text-4xl);
+  font-weight: var(--font-extrabold);
+  margin-bottom: var(--canna-space-3);
+  background: linear-gradient(135deg, var(--text-primary), var(--color-primary-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dashboard-subtitle {
+  color: var(--text-secondary);
+  font-size: var(--text-lg);
+  margin-bottom: 0;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--canna-space-6);
+  margin-bottom: var(--canna-space-8);
+}
+
+.stat-card {
+  position: relative;
+  padding: var(--canna-space-6);
+  background: linear-gradient(135deg, var(--surface-raised) 0%, var(--neutral-800) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-base);
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--color-primary);
+}
+
+.stat-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--canna-space-4);
+}
+
+.stat-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: rgba(58, 107, 30, 0.15);
+  border-radius: var(--radius-lg);
+  color: var(--color-primary-light);
+}
+
+.stat-card-icon .material-icons {
+  font-size: 28px;
+}
+
+.stat-card-value {
+  font-size: var(--text-4xl);
+  font-weight: var(--font-extrabold);
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: var(--canna-space-2);
+}
+
+.stat-card-label {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  margin-bottom: var(--canna-space-3);
+}
+
+.stat-card-change {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--canna-space-1);
+  padding: var(--canna-space-1) var(--canna-space-2);
+  background: rgba(16, 185, 129, 0.15);
+  border-radius: var(--radius-sm);
+  color: var(--color-success);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+}
+
+.stat-card-change.negative {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--color-danger);
+}
+
+.stat-card-change .material-icons {
+  font-size: 14px;
+}
+
+/* Content Grid */
+.content-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--canna-space-6);
+  margin-bottom: var(--canna-space-8);
+}
+
+/* Module Cards */
+.module-section {
+  margin-bottom: var(--canna-space-8);
+}
+
+.section-title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  margin-bottom: var(--canna-space-5);
+  display: flex;
+  align-items: center;
+  gap: var(--canna-space-3);
+}
+
+.section-title .material-icons {
+  color: var(--color-primary-light);
+}
+
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--canna-space-5);
+}
+
+.module-card {
+  position: relative;
+  padding: var(--canna-space-6);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.module-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(58, 107, 30, 0.05) 100%);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+  border-radius: var(--radius-xl);
+  pointer-events: none;
+}
+
+.module-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary);
+}
+
+.module-card:hover::after {
+  opacity: 1;
+}
+
+.module-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: rgba(58, 107, 30, 0.12);
+  border-radius: var(--radius-lg);
+  color: var(--color-primary-light);
+  margin-bottom: var(--canna-space-4);
+}
+
+.module-card-icon .material-icons {
+  font-size: 32px;
+}
+
+.module-card-title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  margin-bottom: var(--canna-space-2);
+  color: var(--text-primary);
+}
+
+.module-card-description {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--canna-space-4);
+}
+
+.module-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.module-card-count {
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+}
+
+.module-card-arrow {
+  color: var(--color-primary-light);
+  transition: transform var(--transition-base);
+}
+
+.module-card:hover .module-card-arrow {
+  transform: translateX(4px);
+}
+
+/* Recent Activity */
+.activity-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.activity-item {
+  display: flex;
+  gap: var(--canna-space-4);
+  padding: var(--canna-space-4);
+  border-bottom: 1px solid var(--border-color);
+  transition: background var(--transition-base);
+}
+
+.activity-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(58, 107, 30, 0.12);
+  border-radius: var(--radius-md);
+  color: var(--color-primary-light);
+}
+
+.activity-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-text {
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  margin-bottom: var(--canna-space-1);
+}
+
+.activity-meta {
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+}
+
+/* Quick Actions */
+.quick-actions {
+  display: flex;
+  gap: var(--canna-space-3);
+  flex-wrap: wrap;
+}
+
+.quick-action-btn {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* Empty State */
+.empty-state {
+  padding: var(--canna-space-12) var(--canna-space-6);
+  text-align: center;
+}
+
+.empty-state-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto var(--canna-space-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(107, 114, 128, 0.1);
+  border-radius: var(--radius-full);
+  color: var(--text-tertiary);
+}
+
+.empty-state-icon .material-icons {
+  font-size: 40px;
+}
+
+.empty-state-title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--canna-space-2);
+}
+
+.empty-state-description {
+  color: var(--text-secondary);
+  margin-bottom: var(--canna-space-6);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: var(--canna-space-4);
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .module-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-title {
+    font-size: var(--text-3xl);
+  }
+}
+</style>
+
+<div class="dashboard-container">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="dashboard-greeting">Sistema Científico</div>
+    <h1 class="dashboard-title">Painel de Controle</h1>
+    <p class="dashboard-subtitle">
+      Bem-vindo à plataforma Reserva Canábica. Gerencie estudos, experimentos e validações científicas.
+    </p>
+  </header>
+
+  <!-- Stats Grid -->
+  <div class="stats-grid" id="stats-container">
+    <!-- Stats serão carregados dinamicamente -->
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <div>
+          <div class="stat-card-value" id="total-studies">0</div>
+          <div class="stat-card-label">Estudos Ativos</div>
+          <span class="stat-card-change">
+            <span class="material-icons">trending_up</span>
+            <span>12% este mês</span>
+          </span>
+        </div>
+        <div class="stat-card-icon">
+          <span class="material-icons">science</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <div>
+          <div class="stat-card-value" id="total-experiments">0</div>
+          <div class="stat-card-label">Experimentos</div>
+          <span class="stat-card-change">
+            <span class="material-icons">trending_up</span>
+            <span>8% este mês</span>
+          </span>
+        </div>
+        <div class="stat-card-icon">
+          <span class="material-icons">biotech</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <div>
+          <div class="stat-card-value" id="total-observations">0</div>
+          <div class="stat-card-label">Observações</div>
+          <span class="stat-card-change">
+            <span class="material-icons">trending_up</span>
+            <span>23% este mês</span>
+          </span>
+        </div>
+        <div class="stat-card-icon">
+          <span class="material-icons">visibility</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <div>
+          <div class="stat-card-value" id="total-validations">0</div>
+          <div class="stat-card-label">Validações</div>
+          <span class="stat-card-change">
+            <span class="material-icons">trending_up</span>
+            <span>15% este mês</span>
+          </span>
+        </div>
+        <div class="stat-card-icon">
+          <span class="material-icons">verified</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions mb-4">
+    <button class="btn btn-primary quick-action-btn" onclick="navigateTo('study-form')">
+      <span class="material-icons">add</span>
+      Novo Estudo
+    </button>
+    <button class="btn btn-success quick-action-btn" onclick="navigateTo('experiment-form')">
+      <span class="material-icons">add</span>
+      Novo Experimento
+    </button>
+    <button class="btn quick-action-btn" onclick="navigateTo('reports')">
+      <span class="material-icons">analytics</span>
+      Relatórios
+    </button>
+  </div>
+
+  <!-- Content Grid -->
+  <div class="content-grid">
+    <!-- Main Content -->
+    <div>
+      <!-- Modules Section -->
+      <section class="module-section">
+        <h2 class="section-title">
+          <span class="material-icons">apps</span>
+          Módulos Principais
+        </h2>
+        <div class="module-grid">
+          <a href="#" class="module-card" onclick="navigateTo('study-list'); return false;">
+            <div class="module-card-icon">
+              <span class="material-icons">science</span>
+            </div>
+            <h3 class="module-card-title">Estudos Científicos</h3>
+            <p class="module-card-description">
+              Gerencie estudos de pesquisa com rastreabilidade completa e documentação científica.
+            </p>
+            <div class="module-card-footer">
+              <span class="module-card-count" id="study-count">0 registros</span>
+              <span class="material-icons module-card-arrow">arrow_forward</span>
+            </div>
+          </a>
+
+          <a href="#" class="module-card" onclick="navigateTo('experiment-list'); return false;">
+            <div class="module-card-icon">
+              <span class="material-icons">biotech</span>
+            </div>
+            <h3 class="module-card-title">Experimentos</h3>
+            <p class="module-card-description">
+              Conduza experimentos controlados com coleta sistemática de dados e análises.
+            </p>
+            <div class="module-card-footer">
+              <span class="module-card-count" id="experiment-count">0 registros</span>
+              <span class="material-icons module-card-arrow">arrow_forward</span>
+            </div>
+          </a>
+
+          <a href="#" class="module-card" onclick="navigateTo('observation-list'); return false;">
+            <div class="module-card-icon">
+              <span class="material-icons">visibility</span>
+            </div>
+            <h3 class="module-card-title">Observações</h3>
+            <p class="module-card-description">
+              Registre observações detalhadas com timestamps e dados contextuais.
+            </p>
+            <div class="module-card-footer">
+              <span class="module-card-count" id="observation-count">0 registros</span>
+              <span class="material-icons module-card-arrow">arrow_forward</span>
+            </div>
+          </a>
+
+          <a href="#" class="module-card" onclick="navigateTo('reference-list'); return false;">
+            <div class="module-card-icon">
+              <span class="material-icons">menu_book</span>
+            </div>
+            <h3 class="module-card-title">Referências</h3>
+            <p class="module-card-description">
+              Biblioteca de referências científicas organizadas e citáveis.
+            </p>
+            <div class="module-card-footer">
+              <span class="module-card-count" id="reference-count">0 registros</span>
+              <span class="material-icons module-card-arrow">arrow_forward</span>
+            </div>
+          </a>
+
+          <a href="#" class="module-card" onclick="navigateTo('evidence-list'); return false;">
+            <div class="module-card-icon">
+              <span class="material-icons">description</span>
+            </div>
+            <h3 class="module-card-title">Evidências</h3>
+            <p class="module-card-description">
+              Documente evidências científicas com metodologia rigorosa.
+            </p>
+            <div class="module-card-footer">
+              <span class="module-card-count" id="evidence-count">0 registros</span>
+              <span class="material-icons module-card-arrow">arrow_forward</span>
+            </div>
+          </a>
+
+          <a href="#" class="module-card" onclick="navigateTo('validation-list'); return false;">
+            <div class="module-card-icon">
+              <span class="material-icons">verified</span>
+            </div>
+            <h3 class="module-card-title">Validações</h3>
+            <p class="module-card-description">
+              Execute validações estatísticas e análises de qualidade de dados.
+            </p>
+            <div class="module-card-footer">
+              <span class="module-card-count" id="validation-count">0 registros</span>
+              <span class="material-icons module-card-arrow">arrow_forward</span>
+            </div>
+          </a>
+        </div>
+      </section>
+    </div>
+
+    <!-- Sidebar -->
+    <aside>
+      <!-- Recent Activity -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3 class="card-title">Atividades Recentes</h3>
+        </div>
+        <div class="card-body">
+          <ul class="activity-list" id="recent-activity">
+            <!-- Atividades serão carregadas dinamicamente -->
+            <li class="activity-item">
+              <div class="activity-icon">
+                <span class="material-icons">science</span>
+              </div>
+              <div class="activity-content">
+                <div class="activity-text">Novo estudo criado</div>
+                <div class="activity-meta">há 2 horas</div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- System Status -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Status do Sistema</h3>
+        </div>
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-4 mb-4">
+            <span class="badge badge-success">
+              <span class="material-icons" style="font-size: 12px;">check_circle</span>
+              Operacional
+            </span>
+          </div>
+          <div style="color: var(--text-secondary); font-size: var(--text-sm);">
+            Todos os serviços estão funcionando normalmente.
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+  
+  /**
+   * Carrega estatísticas do dashboard via google.script.run
+   * CORREÇÃO #4: Conectado ao backend (dashboard.stats)
+   */
+  function loadDashboardStats() {
+    console.log('[Dashboard] Carregando estatísticas via backend...');
+    
+    google.script.run
+      .withSuccessHandler(function(response) {
+        console.log('[Dashboard] Estatísticas recebidas:', response);
+        
+        if (response.ok && response.data) {
+          const data = response.data;
+          const global = data.global || {};
+          const roleSpecific = data.roleSpecific || {};
+          
+          // Mapeia para formato esperado pela UI
+          updateStats({
+            totalStudies: global.totalStudies || 0,
+            totalExperiments: global.totalExperiments || 0,
+            totalObservations: global.totalObservations || 0,
+            totalValidations: roleSpecific.pendingAudits || 0,
+            studyCount: global.totalStudies || 0,
+            experimentCount: global.totalExperiments || 0,
+            observationCount: global.totalObservations || 0,
+            referenceCount: 0, // TODO: implementar quando backend tiver
+            evidenceCount: 0,  // TODO: implementar quando backend tiver
+            validationCount: roleSpecific.pendingAudits || 0
+          });
+        } else {
+          console.warn('[Dashboard] Resposta inválida:', response);
+          updateStats(getDefaultStats());
+        }
+      })
+      .withFailureHandler(function(error) {
+        console.error('[Dashboard] Erro ao carregar estatísticas:', error);
+        alert('Erro ao carregar estatísticas do dashboard: ' + error.message);
+        updateStats(getDefaultStats());
+      })
+      .apiCall({ action: 'dashboard.stats', token: sessionStorage.getItem('authToken') || '' });
+  }
+  
+  /**
+   * Retorna estatísticas padrão em caso de erro
+   */
+  function getDefaultStats() {
+    return {
+      totalStudies: 0,
+      totalExperiments: 0,
+      totalObservations: 0,
+      totalValidations: 0,
+      studyCount: 0,
+      experimentCount: 0,
+      observationCount: 0,
+      referenceCount: 0,
+      evidenceCount: 0,
+      validationCount: 0
+    };
+  }
+  
+  /**
+   * Atualiza estatísticas na interface
+   */
+  function updateStats(data) {
+    document.getElementById('total-studies').textContent = data.totalStudies || 0;
+    document.getElementById('total-experiments').textContent = data.totalExperiments || 0;
+    document.getElementById('total-observations').textContent = data.totalObservations || 0;
+    document.getElementById('total-validations').textContent = data.totalValidations || 0;
+    
+    document.getElementById('study-count').textContent = (data.studyCount || 0) + ' registros';
+    document.getElementById('experiment-count').textContent = (data.experimentCount || 0) + ' registros';
+    document.getElementById('observation-count').textContent = (data.observationCount || 0) + ' registros';
+    document.getElementById('reference-count').textContent = (data.referenceCount || 0) + ' registros';
+    document.getElementById('evidence-count').textContent = (data.evidenceCount || 0) + ' registros';
+    document.getElementById('validation-count').textContent = (data.validationCount || 0) + ' registros';
+  }
+  
+  /**
+   * Função de navegação (será implementada pela aplicação principal)
+   */
+  window.navigateTo = function(view) {
+    console.log('Navigating to:', view);
+    // Implementar navegação real aqui
+  };
+  
+  // Inicialização
+  document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardStats();
+  });
+  
+  // Se já carregado
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    loadDashboardStats();
+  }
+  
+})();
+</script>

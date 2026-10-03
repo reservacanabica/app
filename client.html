@@ -1,0 +1,31 @@
+<!--
+COMPONENTE: client.html
+PAPEL: Cliente Apps Script.
+
+PRINCIPAIS FUNCIONALIDADES:
+- wrappers google.script.run, estado, erros, sessão e renderização;
+- mantém o estado de UI separado do processamento no Apps Script;
+- não acessa diretamente a planilha: usa client.html e os contratos do Web App.
+
+INTEGRAÇÕES:
+- WebApp.apiCall, Response, todas as páginas;
+- dados esperados: Token em memória da sessão.
+
+SEGURANÇA E LIMITAÇÕES:
+- nunca renderizar senha, token completo ou stack trace;
+- validação visual não substitui ValidationService no servidor;
+- usar escaping/templating seguro para texto proveniente da planilha;
+- esqueleto preparado para HtmlService e componentes parciais.
+
+STATUS: ESQUELETO DE INTERFACE — completar acessibilidade, testes e estados de erro.
+-->
+<script>
+(function(){
+  const state={token:sessionStorage.getItem('sheetCrudToken')||'',user:null};
+  function call(action,payload){return new Promise((resolve,reject)=>{const req=Object.assign({action,token:state.token},payload||{});google.script.run.withSuccessHandler(r=>{if(!r||!r.ok){showToast((r&&r.error&&r.error.message)||'Falha na operação','error');reject(r);return}resolve(r.data)}).withFailureHandler(reject).apiCall(req)})}
+  window.sheetCrud={state,call,login:async(data)=>{const r=await call('auth.login',data);state.token=r.session.token;state.user=r.user;sessionStorage.setItem('sheetCrudToken',state.token);return r},logout:async()=>{try{await call('auth.logout')}finally{state.token='';state.user=null;sessionStorage.removeItem('sheetCrudToken')}},showToast:window.showToast||function(){}};
+  window.showToast=function(message,type){const node=document.querySelector('[data-role="toast"]');if(node){node.textContent=message;node.dataset.type=type||'info';node.classList.remove('hidden');setTimeout(()=>node.classList.add('hidden'),4000)}};
+  document.addEventListener('submit',async(e)=>{if(e.target.id!=='login-form')return;e.preventDefault();const data=Object.fromEntries(new FormData(e.target).entries());try{await window.sheetCrud.login(data);window.showToast('Login realizado','success');}catch(err){const out=e.target.querySelector('[data-role="form-error"]');if(out)out.textContent='Não foi possível autenticar.'}});
+  document.addEventListener('click',async(e)=>{if(e.target.dataset.action==='logout'){await window.sheetCrud.logout();location.hash='#login'}});
+})();
+</script>

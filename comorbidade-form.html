@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comorbidades &amp; Cultivo</title>
+
+  <style>
+    /* ──────────────────────────────────────────────
+       BRIDGE: aliases legado → design system tokens
+       ────────────────────────────────────────────── */
+    :root {
+      /* Cores primárias mapeadas para o design system */
+      --cf-primary:       var(--color-primary,        #4CAF50);
+      --cf-primary-light: var(--color-primary-light,  #4caf50);
+      --cf-primary-dark:  var(--color-primary-dark,   #1b5e20);
+      --cf-primary-bg:    var(--color-primary-bg,     #e8f5e9);
+
+      /* Semânticas */
+      --cf-error:   var(--color-error,   #f44336);
+      --cf-warning: var(--color-warning, #ff9800);
+      --cf-info:    var(--color-info,    #2196f3);
+      --cf-success: var(--color-success, #4caf50);
+
+      /* Neutras */
+      --cf-text:        var(--color-text-primary,   #212121);
+      --cf-text-muted:  var(--color-text-secondary, #757575);
+      --cf-border:      var(--color-border,         #e0e0e0);
+      --cf-bg-page:     var(--color-bg-page,        #fafafa);
+      --cf-bg-card:     var(--color-bg-card,        #ffffff);
+      --cf-bg-hover:    var(--color-bg-hover,       #f5f5f5);
+
+      /* Espaçamentos */
+      --cf-xs: var(--space-xs, 4px);
+      --cf-sm: var(--space-sm, 8px);
+      --cf-md: var(--space-md, 16px);
+      --cf-lg: var(--space-lg, 24px);
+      --cf-xl: var(--space-xl, 32px);
+
+      /* Forma */
+      --cf-radius:    var(--radius-md,  8px);
+      --cf-radius-lg: var(--radius-lg,  12px);
+      --cf-radius-xl: 16px;
+      --cf-shadow-sm: var(--shadow-sm, 0 1px 2px rgba(0,0,0,.05));
+      --cf-shadow-md: var(--shadow-md, 0 4px 6px rgba(0,0,0,.1));
+      --cf-shadow-lg: var(--shadow-lg, 0 10px 15px rgba(0,0,0,.1));
+      --cf-transition: var(--transition-base, 200ms cubic-bezier(.4,0,.2,1));
+
+      /* Tipografia */
+      --cf-font: var(--font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+      --cf-text-xs:   var(--font-size-xs,   .75rem);
+      --cf-text-sm:   var(--font-size-sm,   .875rem);
+      --cf-text-base: var(--font-size-base, 1rem);
+      --cf-text-lg:   var(--font-size-lg,   1.125rem);
+      --cf-text-xl:   var(--font-size-xl,   1.25rem);
+      --cf-text-2xl:  var(--font-size-2xl,  1.5rem);
+      --cf-fw-medium:   var(--font-weight-medium,   500);
+      --cf-fw-semibold: var(--font-weight-semibold, 600);
+      --cf-fw-bold:     var(--font-weight-bold,     700);
+    }
+
+    /* ── Reset base ────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--cf-font);
+      background: var(--cf-bg-page);
+      color: var(--cf-text);
+      padding: var(--cf-lg);
+      line-height: 1.6;
+    }
+
+    .cf-container { max-width: 1200px; margin: 0 auto; }
+
+    /* ── HEADER ─────────────────────────────────── */
+    .cf-header {
+      background: linear-gradient(135deg, var(--cf-primary-light) 0%, var(--cf-primary) 100%);
+      color: white;
+      padding: var(--cf-xl);
+      border-radius: var(--cf-radius-xl);
+      margin-bottom: var(--cf-lg);
+      box-shadow: 0 4px 12px rgba(46,204,113,.2);
+    }
+
+    .cf-header h1 {
+      font-size: var(--cf-text-2xl);
+      font-weight: var(--cf-fw-bold);
+      margin-bottom: var(--cf-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--cf-md);
+    }
+
+    .cf-header p {
+      font-size: var(--cf-text-sm);
+      opacity: .95;
+      line-height: 1.5;
+    }
+
+    /* ── STATUS BAR ─────────────────────────────── */
+    .cf-status-bar {
+      background: var(--cf-bg-card);
+      padding: var(--cf-md) var(--cf-lg);
+      border-radius: var(--cf-radius-lg);
+      margin-bottom: var(--cf-lg);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--cf-shadow-sm);
+      border: 1px solid var(--cf-border);
+    }
+
+    .cf-status-counter {
+      font-size: var(--cf-text-lg);
+      font-weight: var(--cf-fw-semibold);
+      color: var(--cf-text);
+    }
+
+    .cf-status-counter span {
+      color: var(--cf-primary);
+      font-size: var(--cf-text-2xl);
+    }
+
+    .cf-status-coa {
+      display: flex;
+      align-items: center;
+      gap: var(--cf-sm);
+      padding: var(--cf-sm) var(--cf-md);
+      background: var(--cf-bg-hover);
+      border-radius: var(--cf-radius);
+      font-size: var(--cf-text-sm);
+      font-weight: var(--cf-fw-medium);
+    }
+
+    .cf-status-coa.grau-1 { background: #ffebee; color: #c62828; }
+    .cf-status-coa.grau-2 { background: var(--cf-primary-bg); color: var(--cf-primary-dark); }
+    .cf-status-coa.grau-3 { background: #e3f2fd; color: #1565c0; }
+    .cf-status-coa.grau-4 { background: #fff3e0; color: #e65100; }
+
+    /* ── FILTERS ────────────────────────────────── */
+    .cf-filters {
+      background: var(--cf-bg-card);
+      padding: var(--cf-lg);
+      border-radius: var(--cf-radius-lg);
+      margin-bottom: var(--cf-lg);
+      box-shadow: var(--cf-shadow-sm);
+      border: 1px solid var(--cf-border);
+    }
+
+    .cf-filter-section { margin-bottom: var(--cf-lg); }
+    .cf-filter-section:last-child { margin-bottom: 0; }
+
+    .cf-filter-label {
+      font-size: var(--cf-text-xs);
+      font-weight: var(--cf-fw-semibold);
+      color: var(--cf-text-muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: var(--cf-sm);
+      display: block;
+    }
+
+    /* Search usa .form-control do design system */
+    .cf-search {
+      width: 100%;
+      padding: var(--cf-sm) var(--cf-md);
+      border: 2px solid var(--cf-border);
+      border-radius: var(--cf-radius);
+      font-size: var(--cf-text-base);
+      font-family: var(--cf-font);
+      transition: all var(--cf-transition);
+      background: white;
+      color: var(--cf-text);
+    }
+
+    .cf-search:focus {
+      outline: none;
+      border-color: var(--cf-primary);
+      box-shadow: 0 0 0 3px var(--cf-primary-bg);
+    }
+
+    .cf-filter-buttons { display: flex; flex-wrap: wrap; gap: var(--cf-sm); }
+
+    .cf-filter-btn {
+      padding: var(--cf-sm) var(--cf-md);
+      border: 2px solid var(--cf-border);
+      background: white;
+      border-radius: var(--cf-radius);
+      font-size: var(--cf-text-xs);
+      font-weight: var(--cf-fw-medium);
+      font-family: var(--cf-font);
+      cursor: pointer;
+      transition: all var(--cf-transition);
+      white-space: nowrap;
+      color: var(--cf-text);
+    }
+
+    .cf-filter-btn:hover {
+      border-color: var(--cf-primary);
+      background: var(--cf-primary-bg);
+    }
+
+    .cf-filter-btn.active {
+      border-color: var(--cf-primary);
+      background: var(--cf-primary);
+      color: white;
+    }
+
+    /* ── CARDS GRID ─────────────────────────────── */
+    .cf-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: var(--cf-lg);
+      margin-bottom: var(--canna-space-24) /* 96px, was 100px for fixed footer clearance */; /* espaço para a bottom-bar fixa */
+    }
+
+    /* .comorb-card evita conflito com .card do design system */
+    .comorb-card {
+      background: var(--cf-bg-card);
+      border: 2px solid var(--cf-border);
+      border-radius: var(--cf-radius-lg);
+      padding: var(--cf-lg);
+      cursor: pointer;
+      transition: all var(--cf-transition);
+      position: relative;
+    }
+
+    .comorb-card:hover {
+      border-color: var(--cf-primary);
+      box-shadow: 0 4px 12px rgba(46,204,113,.15);
+      transform: translateY(-2px);
+    }
+
+    .comorb-card.selected {
+      border-color: var(--cf-primary);
+      border-width: 3px;
+      background: linear-gradient(to bottom, var(--cf-primary-bg) 0%, white 100%);
+    }
+
+    .comorb-card.shake { animation: cf-shake .3s; }
+
+    @keyframes cf-shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+
+    .comorb-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--cf-md);
+      gap: var(--cf-md);
+    }
+
+    .comorb-card-badges {
+      display: flex;
+      flex-direction: column;
+      gap: 6px /* Intentional: micro-spacing */;
+      align-items: flex-end;
+    }
+
+    /* ── BADGES específicos do form — prefixo cf-badge
+       para não colidir com .badge do design system     */
+    .cf-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--canna-space-1);
+      padding: var(--canna-space-1) var(--cf-sm);
+      border-radius: var(--cf-radius);
+      font-size: var(--cf-text-xs);
+      font-weight: var(--cf-fw-semibold);
+      letter-spacing: .3px;
+      white-space: nowrap;
+    }
+
+    .cf-badge-triagem-a { background: #d4edda; color: #155724; }
+    .cf-badge-triagem-b { background: #cfe2ff; color: #084298; }
+    .cf-badge-triagem-c { background: #fff3cd; color: #856404; }
+    .cf-badge-triagem-d { background: #f8d7da; color: #721c24; }
+    .cf-badge-triagem-e { background: var(--cf-bg-hover); color: var(--cf-text-muted); }
+
+    .cf-badge-coa-1 { background: #ffebee; color: #c62828; }
+    .cf-badge-coa-2 { background: var(--cf-primary-bg); color: var(--cf-primary-dark); }
+    .cf-badge-coa-3 { background: #e3f2fd; color: #1565c0; }
+    .cf-badge-coa-4 { background: #fff3e0; color: #e65100; }
+
+    .cf-priority-badge {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      width: 36px;
+      height: 36px;
+      background: var(--cf-primary);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: var(--cf-fw-bold);
+      font-size: var(--cf-text-lg);
+      box-shadow: 0 2px 8px rgba(46,204,113,.4);
+    }
+
+    .comorb-card-title {
+      font-size: var(--cf-text-lg);
+      font-weight: var(--cf-fw-bold);
+      color: var(--cf-text);
+      margin-bottom: var(--cf-sm);
+    }
+
+    .comorb-card-indication {
+      font-size: var(--cf-text-sm);
+      color: var(--cf-text-muted);
+      margin-bottom: var(--cf-md);
+      line-height: 1.4;
+    }
+
+    .comorb-card-specs {
+      background: var(--cf-bg-hover);
+      padding: var(--cf-md);
+      border-radius: var(--cf-radius);
+      margin-bottom: var(--cf-md);
+      font-size: var(--cf-text-xs);
+    }
+
+    .cf-spec-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .cf-spec-row:last-child { margin-bottom: 0; }
+
+    .cf-spec-label { font-weight: var(--cf-fw-semibold); color: var(--cf-text-muted); }
+    .cf-spec-value { color: var(--cf-text); text-align: right; }
+
+    .comorb-card-foot {
+      display: flex;
+      flex-direction: column;
+      gap: var(--cf-sm);
+      padding-top: var(--cf-md);
+      border-top: 1px solid var(--cf-border);
+    }
+
+    /* btn-estudos: alinhado ao .btn do design system */
+    .cf-btn-estudos {
+      width: 100%;
+      padding: var(--cf-sm) var(--cf-md);
+      background: var(--cf-info);
+      color: white;
+      border: none;
+      border-radius: var(--cf-radius);
+      font-size: var(--cf-text-sm);
+      font-weight: var(--cf-fw-semibold);
+      font-family: var(--cf-font);
+      cursor: pointer;
+      transition: all var(--cf-transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px /* Intentional: micro-spacing */;
+    }
+
+    .cf-btn-estudos:hover {
+      background: #1976d2;
+      transform: translateY(-1px);
+      box-shadow: var(--cf-shadow-sm);
+    }
+
+    .cf-agro-alert {
+      font-size: var(--cf-text-xs);
+      padding: var(--cf-sm) var(--cf-sm);
+      background: #fff3e0;
+      border-left: 3px solid var(--cf-warning);
+      border-radius: var(--cf-radius);
+      color: #e65100;
+      line-height: 1.3;
+    }
+
+    /* Textarea "outra condição" — usa .form-control */
+    .cf-outra-descricao {
+      width: 100%;
+      padding: var(--cf-sm) var(--cf-md);
+      border: 2px solid var(--cf-border);
+      border-radius: var(--cf-radius);
+      font-size: var(--cf-text-sm);
+      font-family: var(--cf-font);
+      resize: vertical;
+      min-height: 80px;
+      margin-top: var(--cf-md);
+      transition: border-color var(--cf-transition);
+      color: var(--cf-text);
+    }
+
+    .cf-outra-descricao:focus {
+      outline: none;
+      border-color: var(--cf-primary);
+      box-shadow: 0 0 0 3px var(--cf-primary-bg);
+    }
+
+    .cf-char-counter {
+      text-align: right;
+      font-size: var(--cf-text-xs);
+      color: var(--cf-text-muted);
+      margin-top: var(--cf-xs);
+    }
+
+    /* ── SKELETON DO GRID (carregamento inicial) ── */
+    .cf-skeleton-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: var(--cf-lg);
+      margin-bottom: var(--cf-lg);
+    }
+
+    .cf-skeleton-card {
+      background: var(--cf-bg-card);
+      border: 1px solid var(--cf-border);
+      border-radius: var(--cf-radius-lg);
+      padding: var(--cf-lg);
+    }
+
+    /* ── EMPTY STATE ─────────────────────────────── */
+    .cf-empty-state {
+      text-align: center;
+      padding: var(--cf-xl) var(--cf-lg);
+      color: var(--cf-text-muted);
+      grid-column: 1 / -1;
+    }
+
+    .cf-empty-state-icon {
+      font-size: 4rem;
+      margin-bottom: var(--cf-md);
+      opacity: .5;
+    }
+
+    .cf-empty-state p {
+      font-size: var(--cf-text-base);
+    }
+
+    /* ── BOTTOM STICKY BAR ───────────────────────── */
+    .cf-bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--cf-bg-card);
+      border-top: 2px solid var(--cf-border);
+      padding: var(--cf-lg) var(--cf-lg);
+      box-shadow: 0 -4px 12px rgba(0,0,0,.1);
+      z-index: var(--z-sticky, 200);
+    }
+
+    .cf-bottom-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--cf-lg);
+    }
+
+    .cf-selected-list {
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--cf-sm);
+    }
+
+    /* chips usam .tag do design system como base */
+    .cf-selected-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--cf-sm);
+      padding: var(--cf-sm) var(--cf-md);
+      background: var(--cf-primary);
+      color: white;
+      border-radius: var(--radius-full, 9999px);
+      font-size: var(--cf-text-sm);
+      font-weight: var(--cf-fw-medium);
+    }
+
+    .cf-chip-priority {
+      background: rgba(255,255,255,.3);
+      padding: 2px 6px;
+      border-radius: var(--radius-full, 9999px);
+      font-size: var(--cf-text-xs);
+      font-weight: var(--cf-fw-bold);
+    }
+
+    .cf-chip-remove {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background var(--cf-transition);
+    }
+
+    .cf-chip-remove:hover { background: rgba(255,255,255,.2); }
+
+    .cf-summary-box {
+      background: var(--cf-bg-hover);
+      padding: var(--cf-sm) var(--cf-md);
+      border-radius: var(--cf-radius);
+      font-size: var(--cf-text-sm);
+      line-height: 1.5;
+      max-width: 400px;
+      border: 1px solid var(--cf-border);
+    }
+
+    .cf-summary-title {
+      font-weight: var(--cf-fw-bold);
+      margin-bottom: var(--cf-xs);
+      color: var(--cf-text);
+    }
+
+    /* btn-save: extensão do .btn .btn-primary */
+    .cf-btn-save {
+      padding: var(--cf-md) var(--cf-xl);
+      background: var(--cf-primary);
+      color: white;
+      border: none;
+      border-radius: var(--cf-radius-lg);
+      font-size: var(--cf-text-base);
+      font-weight: var(--cf-fw-bold);
+      font-family: var(--cf-font);
+      cursor: pointer;
+      transition: all var(--cf-transition);
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(46,204,113,.3);
+    }
+
+    .cf-btn-save:hover:not(:disabled) {
+      background: var(--cf-primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(46,204,113,.4);
+    }
+
+    .cf-btn-save:disabled {
+      background: var(--color-text-disabled, #bdbdbd);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* ── MODAL DE EVIDÊNCIAS ─────────────────────── */
+    .cf-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      z-index: var(--z-modal, 1000);
+      backdrop-filter: blur(4px);
+    }
+
+    .cf-modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--cf-lg);
+    }
+
+    .cf-modal-content {
+      background: var(--cf-bg-card);
+      border-radius: var(--cf-radius-xl);
+      max-width: 800px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,.3);
+    }
+
+    .cf-modal-header {
+      padding: var(--cf-lg);
+      border-bottom: 2px solid var(--cf-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: var(--cf-lg);
+    }
+
+    .cf-modal-title-section h2 {
+      font-size: var(--cf-text-xl);
+      font-weight: var(--cf-fw-bold);
+      color: var(--cf-text);
+      margin-bottom: var(--cf-xs);
+    }
+
+    .cf-modal-subtitle {
+      font-size: var(--cf-text-sm);
+      color: var(--cf-text-muted);
+    }
+
+    .cf-modal-close {
+      background: var(--cf-bg-hover);
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--cf-transition);
+      flex-shrink: 0;
+      color: var(--cf-text);
+    }
+
+    .cf-modal-close:hover { background: var(--cf-error); color: white; }
+
+    .cf-modal-body { padding: var(--cf-lg); }
+
+    /* Skeleton no modal enquanto carrega estudos */
+    .cf-modal-skeleton {
+      display: flex;
+      flex-direction: column;
+      gap: var(--cf-md);
+    }
+
+    .cf-estudo-card {
+      background: var(--cf-bg-hover);
+      padding: var(--cf-lg);
+      border-radius: var(--cf-radius-lg);
+      margin-bottom: var(--cf-md);
+      border-left: 4px solid var(--cf-info);
+    }
+
+    .cf-estudo-card:last-child { margin-bottom: 0; }
+
+    .cf-estudo-title {
+      font-size: var(--cf-text-base);
+      font-weight: var(--cf-fw-semibold);
+      color: var(--cf-text);
+      margin-bottom: var(--cf-sm);
+      line-height: 1.4;
+    }
+
+    .cf-estudo-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--cf-md);
+      margin-bottom: var(--cf-md);
+      font-size: var(--cf-text-xs);
+      color: var(--cf-text-muted);
+    }
+
+    /* links de estudo — alinhados ao .btn-link-estudo do design system */
+    .cf-estudo-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px /* Intentional: micro-spacing */;
+      padding: var(--cf-sm) var(--cf-md);
+      background: var(--cf-info);
+      color: white;
+      text-decoration: none;
+      border-radius: var(--cf-radius);
+      font-size: var(--cf-text-xs);
+      font-weight: var(--cf-fw-medium);
+      transition: all var(--cf-transition);
+    }
+
+    .cf-estudo-link:hover {
+      background: #1976d2;
+      transform: translateY(-1px);
+    }
+
+    /* ── RESPONSIVO ─────────────────────────────── */
+    @media (max-width: 768px) {
+      body { padding: var(--cf-md); }
+
+      .cf-cards-grid,
+      .cf-skeleton-grid { grid-template-columns: 1fr; }
+
+      .cf-bottom-content {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .cf-summary-box { max-width: none; }
+
+      .cf-btn-save { width: 100%; }
+
+      .cf-status-bar { flex-direction: column; gap: var(--cf-sm); align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="cf-container">
+
+    <!-- ── HEADER ─────────────────────────────── -->
+    <div class="cf-header">
+      <h1>🌿 Suas Condições de Saúde, o Cultivo e a Evidência Científica</h1>
+      <p>
+        Cada condição médica possui um grau de evidência clínica em literatura indexada, exige uma
+        composição específica de canabinoides e demanda um rigor laboratorial (CoA).
+        Selecione até 5 condições prioritárias.
+      </p>
+    </div>
+
+    <!-- ── STATUS BAR ─────────────────────────── -->
+    <div class="cf-status-bar">
+      <div class="cf-status-counter">
+        <span id="countSelected">0</span> de 5 selecionadas
+      </div>
+      <div class="cf-status-coa" id="statusCoA">
+        Selecione condições para ver o perfil de segurança
+      </div>
+    </div>
+
+    <!-- ── FILTERS ────────────────────────────── -->
+    <div class="cf-filters">
+
+      <div class="cf-filter-section">
+        <label class="cf-filter-label" for="inputBusca">🔍 Busca Rápida</label>
+        <input
+          type="text"
+          id="inputBusca"
+          class="cf-search"
+          placeholder="Digite para filtrar por nome, indicação ou CID-10..."
+          aria-label="Busca de comorbidades"
+        />
+      </div>
+
+      <div class="cf-filter-section">
+        <span class="cf-filter-label">📊 Triagem Científica (Grau de Evidência)</span>
+        <div class="cf-filter-buttons" id="filterTriagem" role="group" aria-label="Filtrar por triagem científica">
+          <button class="cf-filter-btn active" data-triagem="">Todas</button>
+          <button class="cf-filter-btn" data-triagem="A">Grau A — Síntese + Ensaio Clínico</button>
+          <button class="cf-filter-btn" data-triagem="B">Grau B — Síntese ou Ensaio</button>
+          <button class="cf-filter-btn" data-triagem="C">Grau C — Observacional</button>
+          <button class="cf-filter-btn" data-triagem="D">Grau D — Pré-clínico</button>
+          <button class="cf-filter-btn" data-triagem="E">Grau E — Insuficiente</button>
+        </div>
+      </div>
+
+      <div class="cf-filter-section">
+        <span class="cf-filter-label">🛡️ Rigor de Laboratório (CoA)</span>
+        <div class="cf-filter-buttons" id="filterCoA" role="group" aria-label="Filtrar por rigor de CoA">
+          <button class="cf-filter-btn active" data-coa="">Todos</button>
+          <button class="cf-filter-btn" data-coa="GRAU_1_ESTRITO">🛡️ Grau 1: Clínico-Farmacopeico Estrito</button>
+          <button class="cf-filter-btn" data-coa="GRAU_2_PADRAO">📋 Grau 2: Clínico Padrão</button>
+          <button class="cf-filter-btn" data-coa="GRAU_3_NEUROPSIQUIATRICO">🧠 Grau 3: Neuropsiquiátrico</button>
+          <button class="cf-filter-btn" data-coa="GRAU_4_TOPICO">🧴 Grau 4: Dermatológico</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── SKELETON (visível durante carregarCatalogo) ── -->
+    <div class="cf-skeleton-grid" id="skeletonGrid">
+      <div class="cf-skeleton-card">
+        <div class="skeleton skeleton-title"></div>
+        <div class="skeleton skeleton-text"></div>
+        <div class="skeleton skeleton-text" style="width:70%"></div>
+        <div class="skeleton" style="height:80px;border-radius:var(--cf-radius);margin-top:var(--cf-md)"></div>
+      </div>
+      <div class="cf-skeleton-card">
+        <div class="skeleton skeleton-title"></div>
+        <div class="skeleton skeleton-text"></div>
+        <div class="skeleton skeleton-text" style="width:55%"></div>
+        <div class="skeleton" style="height:80px;border-radius:var(--cf-radius);margin-top:var(--cf-md)"></div>
+      </div>
+      <div class="cf-skeleton-card">
+        <div class="skeleton skeleton-title"></div>
+        <div class="skeleton skeleton-text"></div>
+        <div class="skeleton skeleton-text" style="width:80%"></div>
+        <div class="skeleton" style="height:80px;border-radius:var(--cf-radius);margin-top:var(--cf-md)"></div>
+      </div>
+    </div>
+
+    <!-- ── CARDS GRID (preenchido por JS) ──────── -->
+    <div class="cf-cards-grid" id="cardsGrid" style="display:none;"></div>
+
+    <!-- ── BOTTOM BAR ────────────────────────────── -->
+    <div class="cf-bottom-bar" id="bottomBar" style="display:none;">
+      <div class="cf-bottom-content">
+        <div class="cf-selected-list" id="selectedList"></div>
+        <div class="cf-summary-box" id="summaryBox">
+          <div class="cf-summary-title">Perfil Ativado:</div>
+          <div id="summaryText">Selecione ao menos uma condição</div>
+        </div>
+        <button class="cf-btn-save" id="btnSave" disabled aria-label="Salvar seleção de comorbidades">
+          💾 Salvar Minhas Condições
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /cf-container -->
+
+  <!-- ── MODAL DE EVIDÊNCIAS ──────────────────── -->
+  <div class="cf-modal" id="modalEvidencias" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="cf-modal-content">
+      <div class="cf-modal-header">
+        <div class="cf-modal-title-section">
+          <h2 id="modalTitle">Estudos Científicos</h2>
+          <p class="cf-modal-subtitle" id="modalSubtitle"></p>
+        </div>
+        <button class="cf-modal-close" id="btnCloseModal" aria-label="Fechar modal">&times;</button>
+      </div>
+      <div class="cf-modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- ── JAVASCRIPT ────────────────────────────── -->
+  <script>
+    /* ── Helper anti-XSS ─────────────────────────── */
+    function _esc(str) {
+      const d = document.createElement('div');
+      d.textContent = String(str ?? '');
+      return d.innerHTML;
+    }
+
+    /* ── Estado global ───────────────────────────── */
+    const state = {
+      catalogo: [],
+      selected: [],
+      filtros: { busca: '', triagem: '', grau_coa: '' }
+    };
+
+    /* ── Toast helper (usa UI.Toast se disponível,
+          fallback para console em ambientes sem o lib) */
+    const Toast = {
+      success: (t, m) => typeof UI !== 'undefined' ? UI.Toast.success(t, m) : console.log('[Toast:success]', t, m),
+      warning: (t, m) => typeof UI !== 'undefined' ? UI.Toast.warning(t, m) : console.warn('[Toast:warning]', t, m),
+      error:   (t, m) => typeof UI !== 'undefined' ? UI.Toast.error(t, m)   : console.error('[Toast:error]', t, m),
+      info:    (t, m) => typeof UI !== 'undefined' ? UI.Toast.info(t, m)    : console.info('[Toast:info]', t, m),
+    };
+
+    /* ── Modal confirm helper ────────────────────── */
+    function confirmar(opts) {
+      if (typeof UI !== 'undefined') {
+        UI.Modal.confirm(opts);
+      } else {
+        // fallback sem a lib
+        if (window.confirm(opts.message)) { opts.onConfirm && opts.onConfirm(); }
+        else                              { opts.onCancel  && opts.onCancel();  }
+      }
+    }
+
+    /* ── Inicialização ───────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function() {
+      carregarCatalogo();
+      setupEventListeners();
+    });
+
+    /* ── Carregar catálogo via API ───────────────── */
+    function carregarCatalogo() {
+      console.log('[ComorbidadeForm] Carregando catálogo via backend...');
+      // Skeleton já visível no HTML
+      
+      google.script.run
+        .withSuccessHandler(function(response) {
+          console.log('[ComorbidadeForm] Catálogo recebido:', response);
+          
+          if (response.ok && response.data && response.data.catalogo) {
+            state.catalogo = response.data.catalogo;
+          } else {
+            console.warn('[ComorbidadeForm] Resposta inválida, usando mock');
+            state.catalogo = getMockCatalogo();
+          }
+          
+          // Oculta skeleton, mostra grid
+          document.getElementById('skeletonGrid').style.display = 'none';
+          document.getElementById('cardsGrid').style.display    = 'grid';
+          renderCards();
+        })
+        .withFailureHandler(function(error) {
+          console.error('[ComorbidadeForm] Erro ao carregar catálogo:', error);
+          
+          // Fallback: usa mock
+          state.catalogo = getMockCatalogo();
+          document.getElementById('skeletonGrid').style.display = 'none';
+          document.getElementById('cardsGrid').style.display    = 'grid';
+          renderCards();
+          
+          Toast.error('Erro ao carregar catálogo. Usando dados offline.');
+        })
+        .apiCall({ action: 'comorbidade.catalogo', token: sessionStorage.getItem('authToken') || '' });
+    }
+
+    /* ── Event listeners ─────────────────────────── */
+    function setupEventListeners() {
+      // Busca com debounce leve
+      let searchTimeout;
+      document.getElementById('inputBusca').addEventListener('input', function(e) {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(function() {
+          state.filtros.busca = e.target.value.toLowerCase();
+          renderCards();
+        }, 200);
+      });
+
+      // Filtros de triagem
+      document.querySelectorAll('#filterTriagem .cf-filter-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('#filterTriagem .cf-filter-btn').forEach(function(b) {
+            b.classList.remove('active');
+            b.setAttribute('aria-pressed', 'false');
+          });
+          this.classList.add('active');
+          this.setAttribute('aria-pressed', 'true');
+          state.filtros.triagem = this.dataset.triagem;
+          renderCards();
+        });
+      });
+
+      // Filtros de CoA
+      document.querySelectorAll('#filterCoA .cf-filter-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('#filterCoA .cf-filter-btn').forEach(function(b) {
+            b.classList.remove('active');
+            b.setAttribute('aria-pressed', 'false');
+          });
+          this.classList.add('active');
+          this.setAttribute('aria-pressed', 'true');
+          state.filtros.grau_coa = this.dataset.coa;
+          renderCards();
+        });
+      });
+
+      // Botão salvar
+      document.getElementById('btnSave').addEventListener('click', salvarComorbidades);
+
+      // Modal close
+      document.getElementById('btnCloseModal').addEventListener('click', closeModal);
+      document.getElementById('modalEvidencias').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+      });
+
+      // Escape fecha modal
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeModal();
+      });
+    }
+
+    /* ── Renderizar cards ─────────────────────────── */
+    function renderCards() {
+      const grid     = document.getElementById('cardsGrid');
+      const filtered = filtrarComorbidades();
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="cf-empty-state">
+            <div class="cf-empty-state-icon">🔍</div>
+            <p>Nenhuma comorbidade encontrada com os filtros aplicados</p>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(function(c) {
+        const sel       = state.selected.find(function(s) { return s.id === c.id; });
+        const isSelected= !!sel;
+        const prioridade= sel ? sel.prioridade : null;
+
+        return `
+          <div class="comorb-card ${isSelected ? 'selected' : ''}"
+               data-id="${c.id}"
+               onclick="toggleCard(${c.id})"
+               role="checkbox"
+               aria-checked="${isSelected}"
+               tabindex="0">
+
+            ${prioridade ? `<div class="cf-priority-badge" aria-label="Prioridade ${prioridade}">${prioridade}º</div>` : ''}
+
+            <div class="comorb-card-head">
+              <div class="comorb-card-title">${_esc(c.nome_terapeutica)}</div>
+              <div class="comorb-card-badges">
+                <span class="cf-badge cf-badge-triagem-${c.triagem.toLowerCase()}">
+                  Triagem ${_esc(c.triagem)} (${_esc(c.total_evidencias)} estudos)
+                </span>
+                <span class="cf-badge ${getBadgeClassCoA(c.grau_coa_exigido)}">
+                  ${_esc(formatGrauCoA(c.grau_coa_exigido))}
+                </span>
+              </div>
+            </div>
+
+            <div class="comorb-card-indication">${_esc(c.indicacao)}</div>
+
+            <div class="comorb-card-specs">
+              <div class="cf-spec-row">
+                <span class="cf-spec-label">Quimiotipo:</span>
+                <span class="cf-spec-value">${_esc(formatQuimiotipo(c.quimiotipo_alvo))}</span>
+              </div>
+              <div class="cf-spec-row">
+                <span class="cf-spec-label">Terpenos:</span>
+                <span class="cf-spec-value">${_esc(c.terpenos_focalizados)}</span>
+              </div>
+              <div class="cf-spec-row">
+                <span class="cf-spec-label">Solo:</span>
+                <span class="cf-spec-value">${_esc(formatManejo(c.manejo_solo_ideal))}</span>
+              </div>
+            </div>
+
+            <div class="comorb-card-foot">
+              <button class="cf-btn-estudos" onclick="abrirEstudos(${c.id}, event)">
+                📚 Ver ${_esc(c.total_evidencias)} Estudos Indexados
+              </button>
+              <div class="cf-agro-alert">${_esc(c.descricao_curta)}</div>
+            </div>
+
+            ${c.id === 46 && isSelected ? renderOutraDescricao(sel) : ''}
+          </div>`;
+      }).join('');
+
+      // Re-ligar tabindex para navegação por teclado
+      document.querySelectorAll('.comorb-card').forEach(function(card) {
+        card.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleCard(Number(card.dataset.id));
+          }
+        });
+      });
+    }
+
+    /* ── "Outra condição" textarea ───────────────── */
+    function renderOutraDescricao(sel) {
+      const desc = _esc(sel.outra_descricao || '');
+      const len  = (sel.outra_descricao || '').length;
+      return `
+        <textarea
+          class="cf-outra-descricao"
+          placeholder="Descreva a condição clínica (mínimo 5 caracteres)..."
+          maxlength="300"
+          aria-label="Descrição da outra condição clínica"
+          oninput="updateOutraDescricao(46, this.value)"
+          onclick="event.stopPropagation()"
+        >${desc}</textarea>
+        <div class="cf-char-counter">${len}/300 caracteres</div>`;
+    }
+
+    function updateOutraDescricao(id, value) {
+      const item = state.selected.find(function(s) { return s.id === id; });
+      if (item) { item.outra_descricao = value; updateUI(); }
+    }
+
+    /* ── Toggle card ─────────────────────────────── */
+    function toggleCard(id) {
+      const index = state.selected.findIndex(function(s) { return s.id === id; });
+
+      if (index >= 0) {
+        state.selected.splice(index, 1);
+        state.selected.forEach(function(s, i) { s.prioridade = i + 1; });
+      } else {
+        if (state.selected.length >= 5) {
+          // Shake visual + Toast (sem alert())
+          const card = document.querySelector('[data-id="' + id + '"]');
+          if (card) {
+            card.classList.add('shake');
+            setTimeout(function() { card.classList.remove('shake'); }, 300);
+          }
+          Toast.warning(
+            'Limite atingido',
+            'Você já selecionou 5 condições. Remova uma para adicionar outra.'
+          );
+          return;
+        }
+
+        state.selected.push({
+          id: id,
+          prioridade: state.selected.length + 1,
+          outra_descricao: id === 46 ? '' : null
+        });
+      }
+
+      updateUI();
+    }
+
+    function removeSelection(id) {
+      const index = state.selected.findIndex(function(s) { return s.id === id; });
+      if (index >= 0) {
+        state.selected.splice(index, 1);
+        state.selected.forEach(function(s, i) { s.prioridade = i + 1; });
+        updateUI();
+      }
+    }
+
+    /* ── Atualizar UI ────────────────────────────── */
+    function updateUI() {
+      renderCards();
+      updateStatusBar();
+      updateBottomBar();
+    }
+
+    function updateStatusBar() {
+      document.getElementById('countSelected').textContent = state.selected.length;
+      const statusCoA = document.getElementById('statusCoA');
+
+      if (state.selected.length === 0) {
+        statusCoA.textContent = 'Selecione condições para ver o perfil de segurança';
+        statusCoA.className   = 'cf-status-coa';
+        return;
+      }
+
+      const grauMaximo = calcularGrauMaximo();
+      statusCoA.textContent = 'Perfil Ativado: ' + formatGrauCoA(grauMaximo);
+      statusCoA.className   = 'cf-status-coa ' + getStatusClassCoA(grauMaximo);
+    }
+
+    function updateBottomBar() {
+      const bottomBar  = document.getElementById('bottomBar');
+      const btnSave    = document.getElementById('btnSave');
+
+      if (state.selected.length === 0) {
+        bottomBar.style.display = 'none';
+        return;
+      }
+
+      bottomBar.style.display = 'block';
+
+      // Chips
+      document.getElementById('selectedList').innerHTML = state.selected.map(function(s) {
+        const c = state.catalogo.find(function(cat) { return cat.id === s.id; });
+        return `
+          <div class="cf-selected-chip" role="listitem">
+            <span class="cf-chip-priority">${s.prioridade}º</span>
+            <span>${_esc(c ? c.nome_terapeutica : '')}</span>
+            <button class="cf-chip-remove"
+                    onclick="event.stopPropagation();removeSelection(${s.id})"
+                    aria-label="Remover ${_esc(c ? c.nome_terapeutica : '')}">&times;</button>
+          </div>`;
+      }).join('');
+
+      // Resumo
+      const grauMaximo    = calcularGrauMaximo();
+      const totalEstudos  = state.selected.reduce(function(sum, s) {
+        const c = state.catalogo.find(function(cat) { return cat.id === s.id; });
+        return sum + (c ? c.total_evidencias : 0);
+      }, 0);
+      const manejoPredom = getManejoPredom();
+
+      document.getElementById('summaryText').innerHTML =
+        'Exige <strong>' + _esc(formatGrauCoA(grauMaximo)) + '</strong> com cultivo em ' +
+        '<strong>' + _esc(manejoPredom) + '</strong> e respaldo em ' +
+        '<strong>' + _esc(totalEstudos) + ' estudos clínicos</strong>.';
+
+      // Estado do botão salvar
+      const validacao = validarSelecao();
+      btnSave.disabled = !validacao.valido;
+      btnSave.title    = validacao.valido ? '' : validacao.erro;
+    }
+
+    /* ── Validação ───────────────────────────────── */
+    function validarSelecao() {
+      if (state.selected.length === 0)
+        return { valido: false, erro: 'Selecione ao menos uma condição' };
+
+      const outra = state.selected.find(function(s) { return s.id === 46; });
+      if (outra && (!outra.outra_descricao || outra.outra_descricao.length < 5))
+        return { valido: false, erro: 'Campo "Outra condição" requer descrição de no mínimo 5 caracteres' };
+
+      return { valido: true };
+    }
+
+    /* ── Salvar comorbidades ──────────────────────── */
+    function salvarComorbidades() {
+      const validacao = validarSelecao();
+      if (!validacao.valido) {
+        Toast.warning('Atenção', validacao.erro);
+        return;
+      }
+
+      // TODO: Integrar com api.callBackend('comorbidade.salvar', {paciente_id, selecoes})
+      console.log('Salvando comorbidades:', state.selected);
+
+      window.dispatchEvent(new CustomEvent('comorbidades-salvas', {
+        detail: {
+          selecoes: state.selected,
+          grau_coa_maximo: calcularGrauMaximo()
+        }
+      }));
+
+      // Toast no lugar do alert()
+      Toast.success('Condições salvas!', 'Suas comorbidades foram registradas com sucesso.');
+    }
+
+    /* ── Modal de estudos ────────────────────────── */
+    function abrirEstudos(id, event) {
+      event.stopPropagation();
+
+      const c = state.catalogo.find(function(cat) { return cat.id === id; });
+      if (!c) return;
+
+      document.getElementById('modalTitle').textContent    = c.nome_terapeutica;
+      document.getElementById('modalSubtitle').textContent =
+        'Triagem ' + c.triagem + ' — ' + c.total_evidencias + ' estudos indexados';
+
+      // Skeleton no modal enquanto parseia
+      const body = document.getElementById('modalBody');
+      body.innerHTML = `
+        <div class="cf-modal-skeleton">
+          ${Array(3).fill(`
+            <div class="cf-estudo-card">
+              <div class="skeleton skeleton-title"></div>
+              <div class="skeleton skeleton-text"></div>
+              <div class="skeleton skeleton-text" style="width:60%"></div>
+            </div>`).join('')}
+        </div>`;
+
+      document.getElementById('modalEvidencias').classList.add('active');
+
+      // Delay mínimo para skeleton ser visível (boa prática UX)
+      setTimeout(function() {
+        try {
+          const estudos = JSON.parse(c.estudos_prioritarios_json || '[]');
+
+          if (!estudos.length) {
+            body.innerHTML = `
+              <div class="cf-empty-state">
+                <div class="cf-empty-state-icon">📚</div>
+                <p>Nenhum estudo prioritário catalogado</p>
+              </div>`;
+            return;
+          }
+
+          body.innerHTML = estudos.map(function(e) {
+            const doiUrl = e.doi
+              ? `https://doi.org/${encodeURIComponent(e.doi)}`
+              : null;
+            const altUrl = (!e.doi && e.url) ? e.url : null;
+
+            return `
+              <div class="cf-estudo-card">
+                <div class="cf-estudo-title">${_esc(e.titulo)}</div>
+                <div class="cf-estudo-meta">
+                  <span>📅 ${_esc(e.ano)}</span>
+                  <span>🔬 ${_esc(e.tipo_estudo)}</span>
+                  <span>📊 Oxford ${_esc(e.grau_oxford)}</span>
+                  ${e.pmid ? `<span>🆔 PMID: ${_esc(e.pmid)}</span>` : ''}
+                </div>
+                ${doiUrl ? `<a href="${doiUrl}" target="_blank" rel="noopener noreferrer" class="cf-estudo-link">📖 Ler Estudo (DOI)</a>` : ''}
+                ${altUrl ? `<a href="${encodeURI(altUrl)}" target="_blank" rel="noopener noreferrer" class="cf-estudo-link">📖 Ler Estudo</a>` : ''}
+              </div>`;
+          }).join('');
+
+        } catch(err) {
+          body.innerHTML = `
+            <div class="alert alert-error" style="margin:0">
+              <div class="alert-icon">✕</div>
+              <div class="alert-content">
+                <div class="alert-title">Erro ao carregar estudos</div>
+                <div class="alert-message">${_esc(err.message)}</div>
+              </div>
+            </div>`;
+        }
+      }, 300);
+    }
+
+    function closeModal() {
+      document.getElementById('modalEvidencias').classList.remove('active');
+    }
+
+    /* ── Filtros ─────────────────────────────────── */
+    function filtrarComorbidades() {
+      return state.catalogo.filter(function(c) {
+        if (state.filtros.busca) {
+          const t = state.filtros.busca;
+          if (!(c.nome_terapeutica.toLowerCase().includes(t) ||
+                c.indicacao.toLowerCase().includes(t) ||
+                c.cid10_sugerido.toLowerCase().includes(t))) return false;
+        }
+        if (state.filtros.triagem  && c.triagem !== state.filtros.triagem) return false;
+        if (state.filtros.grau_coa && c.grau_coa_exigido !== state.filtros.grau_coa) return false;
+        return true;
+      });
+    }
+
+    /* ── Cálculos ────────────────────────────────── */
+    function calcularGrauMaximo() {
+      if (!state.selected.length) return null;
+      const hierarquia = {
+        'GRAU_1_ESTRITO': 4, 'GRAU_3_NEUROPSIQUIATRICO': 3,
+        'GRAU_2_PADRAO': 2,  'GRAU_4_TOPICO': 1, 'AVALIADO_MEDICO': 0
+      };
+      let maxPeso = 0, maxGrau = 'GRAU_4_TOPICO';
+      state.selected.forEach(function(s) {
+        const c = state.catalogo.find(function(cat) { return cat.id === s.id; });
+        if (c) {
+          const peso = hierarquia[c.grau_coa_exigido] || 0;
+          if (peso > maxPeso) { maxPeso = peso; maxGrau = c.grau_coa_exigido; }
+        }
+      });
+      return maxGrau;
+    }
+
+    function getManejoPredom() {
+      if (!state.selected.length) return '';
+      const manejos = {};
+      state.selected.forEach(function(s) {
+        const c = state.catalogo.find(function(cat) { return cat.id === s.id; });
+        if (c) manejos[c.manejo_solo_ideal] = (manejos[c.manejo_solo_ideal] || 0) + 1;
+      });
+      let maxCount = 0, predominante = '';
+      for (var m in manejos) {
+        if (manejos[m] > maxCount) { maxCount = manejos[m]; predominante = m; }
+      }
+      return formatManejo(predominante);
+    }
+
+    /* ── Formatadores ────────────────────────────── */
+    function formatGrauCoA(grau) {
+      return { 'GRAU_1_ESTRITO':'🛡️ CoA Grau 1 (Estrito)', 'GRAU_2_PADRAO':'📋 CoA Grau 2 (Padrão)',
+               'GRAU_3_NEUROPSIQUIATRICO':'🧠 CoA Grau 3 (Neuropsiq.)',
+               'GRAU_4_TOPICO':'🧴 CoA Grau 4 (Tópico)', 'AVALIADO_MEDICO':'⚕️ Avaliado pelo Médico' }[grau] || grau;
+    }
+
+    function formatQuimiotipo(tipo) {
+      return { 'TIPO_I_THC':'Tipo I (THC dominante)', 'TIPO_II_EQUILIBRADO':'Tipo II (THC:CBD 1:1)',
+               'TIPO_III_CBD':'Tipo III (CBD dominante)', 'TIPO_IV_CBG':'Tipo IV (CBG)',
+               'DEFINIR_MEDICO':'A definir pelo médico' }[tipo] || tipo;
+    }
+
+    function formatManejo(manejo) {
+      return { 'SOLO_VIVO_ORGANICO':'🌱 Solo Vivo Orgânico', 'HIDROPONIA_MINERAL':'💧 Hidroponia Mineral',
+               'SUBSTRATO_TRICHODERMA':'🍄 Substrato c/ Trichoderma',
+               'AVALIACAO_INDIVIDUAL':'🔬 Avaliação Individual' }[manejo] || manejo;
+    }
+
+    function getBadgeClassCoA(grau) {
+      return { 'GRAU_1_ESTRITO':'cf-badge-coa-1', 'GRAU_2_PADRAO':'cf-badge-coa-2',
+               'GRAU_3_NEUROPSIQUIATRICO':'cf-badge-coa-3', 'GRAU_4_TOPICO':'cf-badge-coa-4' }[grau] || 'cf-badge-coa-2';
+    }
+
+    function getStatusClassCoA(grau) {
+      return { 'GRAU_1_ESTRITO':'grau-1', 'GRAU_2_PADRAO':'grau-2',
+               'GRAU_3_NEUROPSIQUIATRICO':'grau-3', 'GRAU_4_TOPICO':'grau-4' }[grau] || '';
+    }
+
+    /* ── Mock data (substituir por chamada real) ── */
+    function getMockCatalogo() {
+      return [
+        { id:1, codigo:'CANABICA_ANTIEPILEPTICA', nome_terapeutica:'Canábica Antiepilética',
+          indicacao:'Epilepsias refratárias, síndrome de Dravet e Lennox-Gastaut',
+          triagem:'B', cid10_sugerido:'G40', total_evidencias:22,
+          estudos_prioritarios_json: JSON.stringify([{
+            titulo:'Cannabidiol for drug-resistant epilepsy',
+            doi:'10.1016/j.seizure.2025.04.017', pmid:'39270448',
+            tipo_estudo:'Ensaio Clínico Randomizado', ano:2025, grau_oxford:'1B'
+          }]),
+          quimiotipo_alvo:'TIPO_III_CBD', terpenos_focalizados:'Linalol',
+          manejo_solo_ideal:'HIDROPONIA_MINERAL', grau_coa_exigido:'GRAU_1_ESTRITO',
+          descricao_curta:'Redução de crises epilépticas refratárias com CBD purificado', ativo:true },
+
+        { id:3, codigo:'CANABICA_ANALGESICA', nome_terapeutica:'Canábica Analgésica',
+          indicacao:'Dor crônica e neuropática',
+          triagem:'A', cid10_sugerido:'R52', total_evidencias:22,
+          estudos_prioritarios_json: JSON.stringify([{
+            titulo:'Cannabis and cannabinoids for chronic pain',
+            doi:'10.1097/01.ju.0001110040.79467.6e.16',
+            tipo_estudo:'Metanálise de Ensaios Clínicos', ano:2024, grau_oxford:'1A'
+          }]),
+          quimiotipo_alvo:'TIPO_II_EQUILIBRADO', terpenos_focalizados:'Beta-Cariofileno, Mirceno',
+          manejo_solo_ideal:'SOLO_VIVO_ORGANICO', grau_coa_exigido:'GRAU_2_PADRAO',
+          descricao_curta:'Controle de dor crônica com evidência clínica forte (Grau A)', ativo:true },
+
+        { id:4, codigo:'CANABICA_ANSIOLITICA', nome_terapeutica:'Canábica Ansiolítica',
+          indicacao:'Transtornos de ansiedade',
+          triagem:'B', cid10_sugerido:'F41', total_evidencias:17,
+          estudos_prioritarios_json: JSON.stringify([{
+            titulo:'Cannabidiol for anxiety disorders',
+            doi:'10.1089/can.2022.0225',
+            tipo_estudo:'Ensaio Clínico Controlado', ano:2023, grau_oxford:'1B'
+          }]),
+          quimiotipo_alvo:'TIPO_III_CBD', terpenos_focalizados:'Limoneno, Linalol',
+          manejo_solo_ideal:'SOLO_VIVO_ORGANICO', grau_coa_exigido:'GRAU_3_NEUROPSIQUIATRICO',
+          descricao_curta:'Redução de ansiedade com controle estrito de THC', ativo:true },
+
+        { id:46, codigo:'CANABICA_OUTRA', nome_terapeutica:'Outra condição não listada',
+          indicacao:'Condição clínica sob demanda individualizada',
+          triagem:'E', cid10_sugerido:'Z00', total_evidencias:0,
+          estudos_prioritarios_json:'[]',
+          quimiotipo_alvo:'DEFINIR_MEDICO', terpenos_focalizados:'Customizado',
+          manejo_solo_ideal:'AVALIACAO_INDIVIDUAL', grau_coa_exigido:'AVALIADO_MEDICO',
+          descricao_curta:'Avaliação médica e agronômica individualizada', ativo:true }
+      ];
+    }
+  </script>
+</body>
+</html>

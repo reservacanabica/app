@@ -1,0 +1,766 @@
+<!--
+  CannaDesignSystem.html
+  Design System completo para Reserva Canabica
+  Inspirado no sistema "Up Oracular" do Aquaponia
+  Tema: Cannabis medicinal profissional
+  Versão: 1.0.0
+-->
+
+<style id="canna-design-system-tokens">
+/**
+ * ========================================================================
+ * CANNA DESIGN SYSTEM - Tokens de Design
+ * ========================================================================
+ * Sistema de design profissional para gestão de cannabis medicinal
+ * Compliance: WCAG 2.1 AA, Material Design 3 principles
+ */
+
+:root {
+  /* ===== Color Scheme ===== */
+  color-scheme: dark;
+  
+  /* === Primary Colors (Cannabis Green Palette) === */
+  --canna-green-50: #E8F5E9;
+  --canna-green-100: #C8E6C9;
+  --canna-green-200: #A5D6A7;
+  --canna-green-300: #81C784;
+  --canna-green-400: #66BB6A;
+  --canna-green-500: #4CAF50;   /* Primary */
+  --canna-green-600: #43A047;
+  --canna-green-hover: #45a049;
+  --canna-green-active: #3d8b40;
+  --canna-green-700: #388E3C;
+  --canna-green-800: #2E7D32;   /* Primary Strong */
+  --canna-green-900: #1B5E20;   /* Primary Darker */
+  
+  /* === Surface Colors === */
+  --canna-bg: #0D0D0D;           /* Background base */
+  --canna-bg-elevated: #121212;  /* Elevated surfaces */
+  --canna-surface: #1A1A1A;      /* Cards, panels */
+  --canna-surface-variant: #1E1E1E;
+  --canna-overlay: rgba(0, 0, 0, 0.6);
+  
+  /* === Text Colors === */
+  --canna-text-primary: #E8E8E8;
+  --canna-text-secondary: #B8B8B8;
+  --canna-text-tertiary: #8F8F8F;
+  --canna-text-disabled: #5F5F5F;
+  --canna-text-on-primary: #FFFFFF;
+  
+  /* === Border & Divider === */
+  --canna-border: #2C2C2C;
+  --canna-border-strong: #3A3A3A;
+  --canna-divider: #262626;
+  
+  /* === Semantic Colors === */
+  --canna-success: #4CAF50;
+  --canna-success-bg: rgba(76, 175, 80, 0.1);
+  --canna-warning: #FFA726;
+  --canna-warning-bg: rgba(255, 167, 38, 0.1);
+  --canna-error: #EF5350;
+  --canna-error-bg: rgba(239, 83, 80, 0.1);
+  --canna-info: #42A5F5;
+  --canna-info-bg: rgba(66, 165, 245, 0.1);
+  
+  /* === Accent Colors === */
+  --canna-accent-primary: var(--canna-green-500);
+  --canna-accent-secondary: #7CB342;  /* Light Green */
+  --canna-accent-tertiary: #9CCC65;   /* Even lighter */
+  
+  /* ===== Typography ===== */
+  --canna-font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", sans-serif;
+  --canna-font-family-mono: "SF Mono", "Monaco", "Cascadia Code", "Roboto Mono", monospace;
+  
+  /* Font Sizes (Fluid Typography) */
+  --canna-text-xs: clamp(0.7rem, 0.65rem + 0.25vw, 0.75rem);
+  --canna-text-sm: clamp(0.82rem, 0.78rem + 0.2vw, 0.88rem);
+  --canna-text-base: clamp(0.95rem, 0.9rem + 0.25vw, 1rem);
+  --canna-text-lg: clamp(1.1rem, 1rem + 0.5vw, 1.25rem);
+  --canna-text-xl: clamp(1.3rem, 1.2rem + 0.5vw, 1.5rem);
+  --canna-text-2xl: clamp(1.6rem, 1.4rem + 1vw, 2rem);
+  --canna-text-3xl: clamp(2rem, 1.8rem + 1vw, 2.5rem);
+  --canna-text-4xl: clamp(2.5rem, 2rem + 2.5vw, 3.5rem);
+  
+  /* Font Weights */
+  --canna-font-light: 300;
+  --canna-font-normal: 400;
+  --canna-font-medium: 500;
+  --canna-font-semibold: 600;
+  --canna-font-bold: 700;
+  --canna-font-extrabold: 800;
+  
+  /* Line Heights */
+  --canna-leading-tight: 1.25;
+  --canna-leading-snug: 1.375;
+  --canna-leading-normal: 1.5;
+  --canna-leading-relaxed: 1.625;
+  --canna-leading-loose: 2;
+  
+  /* ===== Spacing System (4px base) ===== */
+  /* NOTE: css-tokens.html is the canonical source for --canna-space-* tokens */
+  /* These definitions match css-tokens.html for standalone usage */
+  --canna-space-0: 0;
+  --canna-space-1: 0.25rem;  /* 4px */
+  --canna-space-2: 0.5rem;   /* 8px */
+  --canna-space-3: 0.75rem;  /* 12px */
+  --canna-space-4: 1rem;     /* 16px */
+  --canna-space-5: 1.25rem;  /* 20px */
+  --canna-space-6: 1.5rem;   /* 24px */
+  --canna-space-8: 2rem;     /* 32px */
+  --canna-space-10: 2.5rem;  /* 40px */
+  --canna-space-12: 3rem;    /* 48px */
+  --canna-space-16: 4rem;    /* 64px */
+  --canna-space-20: 5rem;    /* 80px */
+  --canna-space-24: 6rem;    /* 96px */
+  
+  /* ===== Border Radius ===== */
+  --canna-radius-none: 0;
+  --canna-radius-sm: 6px;       /* 6px (updated from 4px) */
+  --canna-radius-base: 0.5rem;  /* 8px (deprecated - use md) */
+  --canna-radius-md: 12px;      /* 12px */
+  --canna-radius-lg: 16px;      /* 16px */
+  --canna-radius-xl: 1.25rem;   /* 20px */
+  --canna-radius-2xl: 1.5rem;   /* 24px */
+  --canna-radius-full: 9999px;
+  
+  /* ===== Shadows ===== */
+  --canna-shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --canna-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --canna-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.15), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --canna-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --canna-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --canna-shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  --canna-shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+  --canna-shadow-glow: 0 0 15px rgba(76, 175, 80, 0.3);
+  
+  /* ===== Z-Index Scale ===== */
+  --canna-z-base: 0;
+  --canna-z-dropdown: 1000;
+  --canna-z-sticky: 1100;
+  --canna-z-fixed: 1200;
+  --canna-z-modal-backdrop: 1300;
+  --canna-z-modal: 1400;
+  --canna-z-popover: 1500;
+  --canna-z-tooltip: 1600;
+  --canna-z-toast: 2000;
+  --canna-z-max: 2147483647;
+  
+  /* ===== Transitions ===== */
+  --canna-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --canna-transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --canna-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --canna-transition-slower: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Easing Functions */
+  --canna-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --canna-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --canna-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* ===== Component-Specific ===== */
+  --canna-input-height: 2.75rem;       /* 44px - Touch-friendly */
+  --canna-button-height: 2.75rem;      /* 44px */
+  --canna-button-height-sm: 2rem;      /* 32px */
+  --canna-button-height-lg: 3.25rem;   /* 52px */
+  
+  --canna-navbar-height: 4rem;         /* 64px */
+  --canna-sidebar-width: 16rem;        /* 256px */
+  --canna-sidebar-width-collapsed: 4.5rem;  /* 72px */
+  
+  /* ===== Breakpoints (for reference in JS) ===== */
+  --canna-screen-sm: 640px;
+  --canna-screen-md: 768px;
+  --canna-screen-lg: 1024px;
+  --canna-screen-xl: 1280px;
+  --canna-screen-2xl: 1536px;
+}
+
+/* Dark mode enhancements (optional light mode support) */
+@media (prefers-color-scheme: light) {
+  :root[data-theme="auto"] {
+    --canna-bg: #FAFAFA;
+    --canna-surface: #FFFFFF;
+    --canna-text-primary: #1A1A1A;
+    --canna-text-secondary: #5F5F5F;
+    --canna-border: #E0E0E0;
+  }
+}
+</style>
+
+<style id="canna-design-system-base">
+/**
+ * ========================================================================
+ * CANNA DESIGN SYSTEM - Base Styles
+ * ========================================================================
+ */
+
+/* === Reset & Normalize === */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  text-size-adjust: 100%;
+  font-size: 16px;
+}
+
+html, body {
+  min-height: 100vh;
+  background-color: var(--canna-bg);
+  color: var(--canna-text-primary);
+  font-family: var(--canna-font-family);
+  font-size: var(--canna-text-base);
+  line-height: var(--canna-leading-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+/* === Typography === */
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: var(--canna-font-semibold);
+  line-height: var(--canna-leading-tight);
+  color: var(--canna-text-primary);
+}
+
+h1 { font-size: var(--canna-text-4xl); }
+h2 { font-size: var(--canna-text-3xl); }
+h3 { font-size: var(--canna-text-2xl); }
+h4 { font-size: var(--canna-text-xl); }
+h5 { font-size: var(--canna-text-lg); }
+h6 { font-size: var(--canna-text-base); }
+
+p {
+  margin: 0;
+  color: var(--canna-text-secondary);
+}
+
+a {
+  color: var(--canna-accent-primary);
+  text-decoration: none;
+  transition: color var(--canna-transition-fast);
+}
+
+a:hover {
+  color: var(--canna-green-400);
+  text-decoration: underline;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--canna-accent-primary);
+  outline-offset: 2px;
+  border-radius: var(--canna-radius-sm);
+}
+
+code {
+  font-family: var(--canna-font-family-mono);
+  font-size: 0.9em;
+  padding: 0.125rem 0.375rem;
+  background-color: var(--canna-surface-variant);
+  border: 1px solid var(--canna-border);
+  border-radius: var(--canna-radius-sm);
+}
+
+pre {
+  font-family: var(--canna-font-family-mono);
+  font-size: var(--canna-text-sm);
+  padding: var(--canna-space-4);
+  background-color: var(--canna-surface-variant);
+  border: 1px solid var(--canna-border);
+  border-radius: var(--canna-radius-md);
+  overflow-x: auto;
+}
+
+/* === Lists === */
+ul, ol {
+  margin: 0;
+  padding-left: var(--canna-space-6);
+}
+
+li {
+  margin-bottom: var(--canna-space-2);
+}
+
+/* === Horizontal Rule === */
+hr {
+  border: 0;
+  border-top: 1px solid var(--canna-divider);
+  margin: var(--canna-space-6) 0;
+}
+
+/* === Images === */
+img, svg, video, canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* === Tables === */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+th, td {
+  padding: var(--canna-space-3) var(--canna-space-4);
+  text-align: left;
+  border-bottom: 1px solid var(--canna-border);
+}
+
+th {
+  font-weight: var(--canna-font-semibold);
+  color: var(--canna-text-primary);
+  background-color: var(--canna-surface-variant);
+}
+
+tr:hover {
+  background-color: var(--canna-surface-variant);
+}
+
+/* === Accessibility === */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.focus-visible:focus-visible {
+  outline: 2px solid var(--canna-accent-primary);
+  outline-offset: 2px;
+}
+
+/* === Scrollbars (Webkit) === */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--canna-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--canna-border-strong);
+  border-radius: var(--canna-radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--canna-text-tertiary);
+}
+
+/* === Selection === */
+::selection {
+  background-color: rgba(76, 175, 80, 0.3);
+  color: var(--canna-text-primary);
+}
+
+/* === Print Styles === */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  
+  a {
+    color: black;
+    text-decoration: underline;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}
+</style>
+
+<style id="canna-design-system-components">
+/**
+ * ========================================================================
+ * CANNA DESIGN SYSTEM - Component Styles
+ * ========================================================================
+ */
+
+/* === Container === */
+.canna-container {
+  width: 100%;
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--canna-space-4);
+  padding-right: var(--canna-space-4);
+}
+
+.canna-container-fluid {
+  width: 100%;
+  padding-left: var(--canna-space-4);
+  padding-right: var(--canna-space-4);
+}
+
+/* === Card === */
+.canna-card {
+  background-color: var(--canna-surface);
+  border: 1px solid var(--canna-border);
+  border-radius: var(--canna-radius-lg);
+  padding: var(--canna-space-6);
+  box-shadow: var(--canna-shadow-sm);
+  transition: box-shadow var(--canna-transition-base);
+}
+
+.canna-card:hover {
+  box-shadow: var(--canna-shadow-md);
+}
+
+.canna-card-header {
+  margin-bottom: var(--canna-space-4);
+  padding-bottom: var(--canna-space-4);
+  border-bottom: 1px solid var(--canna-divider);
+}
+
+.canna-card-body {
+  flex: 1;
+}
+
+.canna-card-footer {
+  margin-top: var(--canna-space-4);
+  padding-top: var(--canna-space-4);
+  border-top: 1px solid var(--canna-divider);
+}
+
+/* === Button === */
+.canna-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--canna-space-2);
+  height: var(--canna-button-height);
+  padding: 0 var(--canna-space-6);
+  font-size: var(--canna-text-base);
+  font-weight: var(--canna-font-medium);
+  line-height: 1;
+  color: var(--canna-text-on-primary);
+  background-color: var(--canna-accent-primary);
+  border: 1px solid transparent;
+  border-radius: var(--canna-radius-md);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: all var(--canna-transition-base);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.canna-btn:hover:not(:disabled) {
+  background-color: var(--canna-green-600);
+  box-shadow: var(--canna-shadow-md);
+  transform: translateY(-1px);
+}
+
+.canna-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--canna-shadow-sm);
+}
+
+.canna-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.canna-btn:focus-visible {
+  outline: 2px solid var(--canna-accent-primary);
+  outline-offset: 2px;
+}
+
+/* Button Variants */
+.canna-btn-secondary {
+  background-color: var(--canna-surface-variant);
+  color: var(--canna-text-primary);
+  border-color: var(--canna-border);
+}
+
+.canna-btn-secondary:hover:not(:disabled) {
+  background-color: var(--canna-surface);
+  border-color: var(--canna-border-strong);
+}
+
+.canna-btn-ghost {
+  background-color: transparent;
+  color: var(--canna-text-primary);
+  border-color: transparent;
+}
+
+.canna-btn-ghost:hover:not(:disabled) {
+  background-color: var(--canna-surface-variant);
+}
+
+.canna-btn-danger {
+  background-color: var(--canna-error);
+  color: white;
+}
+
+.canna-btn-danger:hover:not(:disabled) {
+  background-color: #E53935;
+}
+
+/* Button Sizes */
+.canna-btn-sm {
+  height: var(--canna-button-height-sm);
+  padding: 0 var(--canna-space-4);
+  font-size: var(--canna-text-sm);
+}
+
+.canna-btn-lg {
+  height: var(--canna-button-height-lg);
+  padding: 0 var(--canna-space-8);
+  font-size: var(--canna-text-lg);
+}
+
+/* === Form Controls === */
+.canna-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--canna-space-2);
+}
+
+.canna-label {
+  display: block;
+  font-size: var(--canna-text-sm);
+  font-weight: var(--canna-font-medium);
+  color: var(--canna-text-secondary);
+}
+
+.canna-input,
+.canna-select,
+.canna-textarea {
+  width: 100%;
+  height: var(--canna-input-height);
+  padding: 0 var(--canna-space-4);
+  font-size: var(--canna-text-base);
+  color: var(--canna-text-primary);
+  background-color: var(--canna-surface);
+  border: 1px solid var(--canna-border);
+  border-radius: var(--canna-radius-md);
+  transition: all var(--canna-transition-base);
+}
+
+.canna-textarea {
+  min-height: 6rem;
+  padding: var(--canna-space-3) var(--canna-space-4);
+  resize: vertical;
+}
+
+.canna-input:focus,
+.canna-select:focus,
+.canna-textarea:focus {
+  outline: none;
+  border-color: var(--canna-accent-primary);
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.canna-input::placeholder,
+.canna-textarea::placeholder {
+  color: var(--canna-text-tertiary);
+}
+
+.canna-input:disabled,
+.canna-select:disabled,
+.canna-textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--canna-bg-elevated);
+}
+
+/* Form States */
+.canna-field.has-error .canna-input,
+.canna-field.has-error .canna-select,
+.canna-field.has-error .canna-textarea {
+  border-color: var(--canna-error);
+}
+
+.canna-field-error {
+  display: flex;
+  align-items: center;
+  gap: var(--canna-space-1);
+  font-size: var(--canna-text-xs);
+  color: var(--canna-error);
+}
+
+.canna-field-hint {
+  font-size: var(--canna-text-xs);
+  color: var(--canna-text-tertiary);
+}
+
+/* === Badge === */
+.canna-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.625rem;
+  font-size: var(--canna-text-xs);
+  font-weight: var(--canna-font-semibold);
+  line-height: 1;
+  color: var(--canna-text-on-primary);
+  background-color: var(--canna-accent-primary);
+  border-radius: var(--canna-radius-full);
+  white-space: nowrap;
+}
+
+.canna-badge-secondary {
+  background-color: var(--canna-surface-variant);
+  color: var(--canna-text-secondary);
+}
+
+.canna-badge-success {
+  background-color: var(--canna-success);
+}
+
+.canna-badge-warning {
+  background-color: var(--canna-warning);
+  color: #000;
+}
+
+.canna-badge-error {
+  background-color: var(--canna-error);
+}
+
+/* === Toast Notification === */
+.canna-toast {
+  position: fixed;
+  right: var(--canna-space-4);
+  bottom: var(--canna-space-4);
+  z-index: var(--canna-z-toast);
+  min-width: 280px;
+  max-width: min(420px, calc(100vw - 2rem));
+  padding: var(--canna-space-4);
+  background-color: var(--canna-surface);
+  border: 1px solid var(--canna-border);
+  border-radius: var(--canna-radius-lg);
+  box-shadow: var(--canna-shadow-xl);
+  opacity: 0;
+  transform: translateY(1rem);
+  transition: all var(--canna-transition-base);
+  pointer-events: none;
+}
+
+.canna-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.canna-toast-success {
+  border-left: 4px solid var(--canna-success);
+}
+
+.canna-toast-error {
+  border-left: 4px solid var(--canna-error);
+}
+
+.canna-toast-warning {
+  border-left: 4px solid var(--canna-warning);
+}
+
+.canna-toast-info {
+  border-left: 4px solid var(--canna-info);
+}
+
+/* === Utility Classes === */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.d-flex { display: flex; }
+.d-block { display: block; }
+.d-inline { display: inline; }
+.d-inline-block { display: inline-block; }
+.d-none { display: none; }
+
+.flex-column { flex-direction: column; }
+.flex-row { flex-direction: row; }
+.align-items-center { align-items: center; }
+.justify-content-between { justify-content: space-between; }
+.justify-content-center { justify-content: center; }
+.gap-2 { gap: var(--canna-space-2); }
+.gap-4 { gap: var(--canna-space-4); }
+
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+
+.m-0 { margin: 0; }
+.mt-2 { margin-top: var(--canna-space-2); }
+.mt-4 { margin-top: var(--canna-space-4); }
+.mb-2 { margin-bottom: var(--canna-space-2); }
+.mb-4 { margin-bottom: var(--canna-space-4); }
+
+.p-0 { padding: 0; }
+.p-2 { padding: var(--canna-space-2); }
+.p-4 { padding: var(--canna-space-4); }
+
+/* === Loading States === */
+.canna-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--canna-surface) 0%,
+    var(--canna-surface-variant) 50%,
+    var(--canna-surface) 100%
+  );
+  background-size: 200% 100%;
+  animation: canna-skeleton 1.5s ease-in-out infinite;
+}
+
+@keyframes canna-skeleton {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.canna-spinner {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid var(--canna-border);
+  border-top-color: var(--canna-accent-primary);
+  border-radius: var(--canna-radius-full);
+  animation: canna-spin 0.6s linear infinite;
+}
+
+@keyframes canna-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* === Responsive Utilities === */
+@media (max-width: 768px) {
+  .hide-mobile { display: none !important; }
+}
+
+@media (min-width: 769px) {
+  .hide-desktop { display: none !important; }
+}
+
+/* === Form Busy State === */
+form[aria-busy="true"] {
+  opacity: 0.7;
+  pointer-events: none;
+  cursor: wait;
+}
+
+form[aria-busy="true"] .canna-btn {
+  opacity: 0.6;
+}
+</style>
+
+<!-- Icon System Integration -->
+<?!= include('CannaIcons') ?>

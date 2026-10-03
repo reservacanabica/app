@@ -1,0 +1,714 @@
+<!--
+COMPONENTE: accessibility-manager.html
+PAPEL: Gerenciador de acessibilidade client-side
+
+PRINCIPAIS FUNCIONALIDADES:
+- Gerencia foco e navegação por teclado
+- Implementa skip links e atalhos
+- Monitora e corrige problemas ARIA em tempo real
+- Fornece feedback de acessibilidade para desenvolvedores
+- Gerencia modo alto contraste
+
+INTEGRAÇÕES:
+- AccessibilityService (backend)
+- Todos os componentes HTML
+
+STATUS: PRODUÇÃO
+-->
+<script>
+/**
+ * @fileoverview AccessibilityManager - Gerenciador de Acessibilidade Client-Side
+ * @version 1.0.0
+ */
+
+(function() {
+  'use strict';
+
+  /**
+   * Gerenciador de Acessibilidade
+   * @namespace
+   */
+  window.AccessibilityManager = {
+    
+    // ========================================================================
+    // CONFIGURAÇÃO
+    // ========================================================================
+    
+    config: {
+      enableSkipLinks: true,
+      enableKeyboardShortcuts: true,
+      enableFocusIndicator: true,
+      enableAriaLiveRegions: true,
+      enableHighContrast: false,
+      debugMode: false
+    },
+
+    // Estado interno
+    _state: {
+      initialized: false,
+      focusHistory: [],
+      currentFocus: null,
+      liveRegions: {},
+      shortcuts: {}
+    },
+
+    // ========================================================================
+    // INICIALIZAÇÃO
+    // ========================================================================
+
+    /**
+     * Inicializa o gerenciador de acessibilidade
+     * @param {Object} options - Opções de configuração
+     */
+    init: function(options) {
+      if (this._state.initialized) {
+        console.warn('[A11y] Gerenciador já inicializado');
+        return;
+      }
+
+      // Mesclar configurações
+      Object.assign(this.config, options || {});
+
+      // Setup de recursos
+      if (this.config.enableSkipLinks) {
+        this._setupSkipLinks();
+      }
+
+      if (this.config.enableKeyboardShortcuts) {
+        this._setupKeyboardShortcuts();
+      }
+
+      if (this.config.enableFocusIndicator) {
+        this._setupFocusManagement();
+      }
+
+      if (this.config.enableAriaLiveRegions) {
+        this._setupLiveRegions();
+      }
+
+      // Monitorar mudanças no DOM
+      this._setupMutationObserver();
+
+      // Checar preferências do usuário
+      this._checkUserPreferences();
+
+      this._state.initialized = true;
+      this._log('Gerenciador de acessibilidade inicializado', this.config);
+    },
+
+    // ========================================================================
+    // SKIP LINKS
+    // ========================================================================
+
+    /**
+     * Cria skip links para navegação rápida
+     * @private
+     */
+    _setupSkipLinks: function() {
+      var skipNav = document.createElement('nav');
+      skipNav.setAttribute('aria-label', 'Links de navegação rápida');
+      skipNav.className = 'skip-links';
+      skipNav.innerHTML = `
+        <a href="#main-content" class="skip-link">Pular para conteúdo principal</a>
+        <a href="#nav-menu" class="skip-link">Pular para menu de navegação</a>
+        <a href="#search" class="skip-link">Pular para busca</a>
+        <a href="#footer" class="skip-link">Pular para rodapé</a>
+      `;
+
+      // Inserir no início do body
+      document.body.insertBefore(skipNav, document.body.firstChild);
+
+      // Adicionar estilos
+      this._addSkipLinkStyles();
+
+      this._log('Skip links configurados');
+    },
+
+    /**
+     * Adiciona estilos para skip links
+     * @private
+     */
+    _addSkipLinkStyles: function() {
+      var style = document.createElement('style');
+      style.textContent = `
+        .skip-links {
+          position: absolute;
+          top: -1000px;
+          left: -1000px;
+          width: 1px;
+          height: 1px;
+          overflow: hidden;
+        }
+        
+        .skip-link:focus {
+          position: fixed;
+          top: 10px;
+          left: 10px;
+          z-index: 10000;
+          width: auto;
+          height: auto;
+          padding: 10px /* Intentional: badge/UI padding */ 20px;
+          background: #000;
+          color: #fff;
+          text-decoration: none;
+          border-radius: 6px;
+          font-weight: bold;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        /* Indicador de foco global */
+        *:focus-visible {
+          outline: 3px solid #0066cc;
+          outline-offset: 2px;
+        }
+        
+        /* Remover outline padrão apenas quando focus-visible não for suportado */
+        *:focus:not(:focus-visible) {
+          outline: none;
+        }
+        
+        /* Modo alto contraste */
+        body.high-contrast {
+          background: #000 !important;
+          color: #fff !important;
+        }
+        
+        body.high-contrast a {
+          color: #ffff00 !important;
+        }
+        
+        body.high-contrast button {
+          background: #fff !important;
+          color: #000 !important;
+          border: 2px solid #fff !important;
+        }
+      `;
+      document.head.appendChild(style);
+    },
+
+    // ========================================================================
+    // ATALHOS DE TECLADO
+    // ========================================================================
+
+    /**
+     * Configura atalhos de teclado globais
+     * @private
+     */
+    _setupKeyboardShortcuts: function() {
+      var self = this;
+
+      // Atalhos padrão
+      this.registerShortcut('?', function() {
+        self.showKeyboardShortcuts();
+      }, 'Mostrar atalhos de teclado');
+
+      this.registerShortcut('/', function() {
+        self.focusSearch();
+      }, 'Focar campo de busca');
+
+      this.registerShortcut('h', function() {
+        self.goToHome();
+      }, 'Ir para página inicial', { ctrl: true });
+
+      this.registerShortcut('c', function() {
+        self.toggleHighContrast();
+      }, 'Alternar modo alto contraste', { alt: true });
+
+      // Listener global
+      document.addEventListener('keydown', function(e) {
+        self._handleKeyboardShortcut(e);
+      });
+
+      this._log('Atalhos de teclado configurados');
+    },
+
+    /**
+     * Registra um atalho de teclado
+     * @param {string} key - Tecla
+     * @param {Function} handler - Função a executar
+     * @param {string} description - Descrição do atalho
+     * @param {Object} modifiers - Modificadores (ctrl, alt, shift)
+     */
+    registerShortcut: function(key, handler, description, modifiers) {
+      var shortcutKey = this._createShortcutKey(key, modifiers);
+      this._state.shortcuts[shortcutKey] = {
+        key: key,
+        handler: handler,
+        description: description,
+        modifiers: modifiers || {}
+      };
+    },
+
+    /**
+     * Cria chave única para atalho
+     * @private
+     */
+    _createShortcutKey: function(key, modifiers) {
+      var parts = [];
+      if (modifiers && modifiers.ctrl) parts.push('ctrl');
+      if (modifiers && modifiers.alt) parts.push('alt');
+      if (modifiers && modifiers.shift) parts.push('shift');
+      parts.push(key.toLowerCase());
+      return parts.join('+');
+    },
+
+    /**
+     * Processa evento de teclado
+     * @private
+     */
+    _handleKeyboardShortcut: function(e) {
+      // Ignorar se estiver em input
+      if (['INPUT', 'TEXTAREA', 'SELECT'].indexOf(e.target.tagName) >= 0) {
+        return;
+      }
+
+      var shortcutKey = this._createShortcutKey(e.key, {
+        ctrl: e.ctrlKey,
+        alt: e.altKey,
+        shift: e.shiftKey
+      });
+
+      var shortcut = this._state.shortcuts[shortcutKey];
+      if (shortcut) {
+        e.preventDefault();
+        shortcut.handler(e);
+      }
+    },
+
+    /**
+     * Mostra dialog com atalhos disponíveis
+     */
+    showKeyboardShortcuts: function() {
+      var shortcuts = Object.values(this._state.shortcuts);
+      var html = '<h2>Atalhos de Teclado</h2><dl class="shortcuts-list">';
+      
+      shortcuts.forEach(function(shortcut) {
+        var keys = [];
+        if (shortcut.modifiers.ctrl) keys.push('Ctrl');
+        if (shortcut.modifiers.alt) keys.push('Alt');
+        if (shortcut.modifiers.shift) keys.push('Shift');
+        keys.push(shortcut.key.toUpperCase());
+        
+        html += '<dt><kbd>' + keys.join('</kbd> + <kbd>') + '</kbd></dt>';
+        html += '<dd>' + shortcut.description + '</dd>';
+      });
+      
+      html += '</dl>';
+      
+      // Usar sistema de modal existente
+      if (window.showModal) {
+        window.showModal({
+          title: 'Atalhos de Teclado',
+          content: html,
+          buttons: [{ label: 'Fechar', action: 'close' }]
+        });
+      } else {
+        alert(html.replace(/<[^>]+>/g, '\n'));
+      }
+    },
+
+    // ========================================================================
+    // GERENCIAMENTO DE FOCO
+    // ========================================================================
+
+    /**
+     * Configura gerenciamento de foco
+     * @private
+     */
+    _setupFocusManagement: function() {
+      var self = this;
+
+      // Monitorar mudanças de foco
+      document.addEventListener('focusin', function(e) {
+        self._onFocusChange(e.target);
+      });
+
+      // Adicionar indicadores de foco
+      this._addFocusStyles();
+
+      this._log('Gerenciamento de foco configurado');
+    },
+
+    /**
+     * Callback de mudança de foco
+     * @private
+     */
+    _onFocusChange: function(element) {
+      // Salvar histórico
+      this._state.focusHistory.push(this._state.currentFocus);
+      if (this._state.focusHistory.length > 10) {
+        this._state.focusHistory.shift();
+      }
+
+      this._state.currentFocus = element;
+
+      // Debug
+      if (this.config.debugMode) {
+        console.log('[A11y] Foco:', element, {
+          tagName: element.tagName,
+          role: element.getAttribute('role'),
+          ariaLabel: element.getAttribute('aria-label'),
+          ariaLabelledBy: element.getAttribute('aria-labelledby')
+        });
+      }
+    },
+
+    /**
+     * Adiciona estilos de foco
+     * @private
+     */
+    _addFocusStyles: function() {
+      // Já incluído em _addSkipLinkStyles
+    },
+
+    /**
+     * Move foco para elemento
+     * @param {string|Element} target - Seletor ou elemento
+     * @param {Object} options - Opções
+     */
+    moveFocusTo: function(target, options) {
+      var element = typeof target === 'string' 
+        ? document.querySelector(target)
+        : target;
+
+      if (!element) {
+        this._warn('Elemento não encontrado para foco', target);
+        return false;
+      }
+
+      // Tornar focável se necessário
+      if (element.tabIndex === -1 && options && options.makeFocusable) {
+        element.tabIndex = 0;
+      }
+
+      element.focus();
+
+      // Scroll para visibilidade
+      if (options && options.scroll !== false) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      return true;
+    },
+
+    /**
+     * Retorna foco para elemento anterior
+     */
+    returnFocus: function() {
+      var previousElement = this._state.focusHistory.pop();
+      if (previousElement && previousElement.isConnected) {
+        previousElement.focus();
+        return true;
+      }
+      return false;
+    },
+
+    /**
+     * Trap foco dentro de um container (para modais)
+     * @param {Element} container - Container
+     */
+    trapFocus: function(container) {
+      var focusableElements = container.querySelectorAll(
+        'a[href], button:not([disabled]), textarea:not([disabled]), ' +
+        'input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+
+      if (focusableElements.length === 0) return;
+
+      var firstElement = focusableElements[0];
+      var lastElement = focusableElements[focusableElements.length - 1];
+
+      container.addEventListener('keydown', function(e) {
+        if (e.key !== 'Tab') return;
+
+        if (e.shiftKey) {
+          // Shift + Tab
+          if (document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          // Tab
+          if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
+      });
+
+      // Focar primeiro elemento
+      firstElement.focus();
+    },
+
+    // ========================================================================
+    // REGIÕES ARIA LIVE
+    // ========================================================================
+
+    /**
+     * Configura regiões ARIA live
+     * @private
+     */
+    _setupLiveRegions: function() {
+      // Criar regiões padrão
+      this.createLiveRegion('notifications', 'polite');
+      this.createLiveRegion('alerts', 'assertive');
+      this.createLiveRegion('status', 'polite');
+
+      this._log('Regiões ARIA live configuradas');
+    },
+
+    /**
+     * Cria região ARIA live
+     * @param {string} id - ID da região
+     * @param {string} politeness - 'polite'|'assertive'|'off'
+     */
+    createLiveRegion: function(id, politeness) {
+      var region = document.createElement('div');
+      region.id = 'aria-live-' + id;
+      region.setAttribute('role', 'status');
+      region.setAttribute('aria-live', politeness || 'polite');
+      region.setAttribute('aria-atomic', 'true');
+      region.className = 'sr-only';
+      
+      document.body.appendChild(region);
+      this._state.liveRegions[id] = region;
+
+      return region;
+    },
+
+    /**
+     * Anuncia mensagem em região live
+     * @param {string} message - Mensagem
+     * @param {string} region - ID da região ('notifications'|'alerts'|'status')
+     */
+    announce: function(message, region) {
+      region = region || 'notifications';
+      var liveRegion = this._state.liveRegions[region];
+
+      if (!liveRegion) {
+        this._warn('Região live não encontrada', region);
+        return;
+      }
+
+      // Limpar conteúdo anterior
+      liveRegion.textContent = '';
+
+      // Adicionar mensagem após pequeno delay (necessário para screen readers)
+      setTimeout(function() {
+        liveRegion.textContent = message;
+      }, 100);
+
+      // Limpar após 5 segundos
+      setTimeout(function() {
+        liveRegion.textContent = '';
+      }, 5000);
+
+      this._log('Anúncio:', message, 'em', region);
+    },
+
+    // ========================================================================
+    // MODO ALTO CONTRASTE
+    // ========================================================================
+
+    /**
+     * Alterna modo alto contraste
+     */
+    toggleHighContrast: function() {
+      this.config.enableHighContrast = !this.config.enableHighContrast;
+      
+      if (this.config.enableHighContrast) {
+        document.body.classList.add('high-contrast');
+        localStorage.setItem('a11y-high-contrast', 'true');
+        this.announce('Modo alto contraste ativado', 'status');
+      } else {
+        document.body.classList.remove('high-contrast');
+        localStorage.removeItem('a11y-high-contrast');
+        this.announce('Modo alto contraste desativado', 'status');
+      }
+    },
+
+    /**
+     * Verifica preferências do usuário
+     * @private
+     */
+    _checkUserPreferences: function() {
+      // Checar preferência de alto contraste salva
+      if (localStorage.getItem('a11y-high-contrast') === 'true') {
+        this.toggleHighContrast();
+      }
+
+      // Checar preferência do sistema (prefers-contrast)
+      if (window.matchMedia && window.matchMedia('(prefers-contrast: high)').matches) {
+        if (!this.config.enableHighContrast) {
+          this.toggleHighContrast();
+        }
+      }
+
+      // Checar preferência de movimento reduzido
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.documentElement.style.setProperty('--animation-duration', '0.01ms');
+        this._log('Modo movimento reduzido detectado');
+      }
+    },
+
+    // ========================================================================
+    // MUTATION OBSERVER
+    // ========================================================================
+
+    /**
+     * Configura observer para mudanças no DOM
+     * @private
+     */
+    _setupMutationObserver: function() {
+      var self = this;
+      
+      var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.type === 'childList') {
+            mutation.addedNodes.forEach(function(node) {
+              if (node.nodeType === 1) { // Element node
+                self._validateAccessibility(node);
+              }
+            });
+          }
+        });
+      });
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+    },
+
+    /**
+     * Valida acessibilidade de elemento
+     * @private
+     */
+    _validateAccessibility: function(element) {
+      if (!this.config.debugMode) return;
+
+      // Verificar botões sem label
+      if (element.tagName === 'BUTTON') {
+        if (!element.textContent.trim() && 
+            !element.getAttribute('aria-label') && 
+            !element.getAttribute('aria-labelledby')) {
+          this._warn('Botão sem label acessível', element);
+        }
+      }
+
+      // Verificar imagens sem alt
+      if (element.tagName === 'IMG') {
+        if (!element.hasAttribute('alt')) {
+          this._warn('Imagem sem atributo alt', element);
+        }
+      }
+
+      // Verificar inputs sem label
+      if (['INPUT', 'SELECT', 'TEXTAREA'].indexOf(element.tagName) >= 0) {
+        var id = element.id;
+        if (id) {
+          var label = document.querySelector('label[for="' + id + '"]');
+          if (!label && !element.getAttribute('aria-label') && !element.getAttribute('aria-labelledby')) {
+            this._warn('Input sem label associado', element);
+          }
+        }
+      }
+    },
+
+    // ========================================================================
+    // AÇÕES DE NAVEGAÇÃO
+    // ========================================================================
+
+    /**
+     * Foca campo de busca
+     */
+    focusSearch: function() {
+      var searchInput = document.querySelector('#search, [role="search"] input, input[type="search"]');
+      if (searchInput) {
+        searchInput.focus();
+        this.announce('Campo de busca focado', 'status');
+      }
+    },
+
+    /**
+     * Vai para página inicial
+     */
+    goToHome: function() {
+      window.location.href = '/';
+    },
+
+    // ========================================================================
+    // UTILITIES
+    // ========================================================================
+
+    /**
+     * Adiciona classe .sr-only globalmente
+     */
+    addScreenReaderOnlyClass: function() {
+      var style = document.createElement('style');
+      style.textContent = `
+        .sr-only {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border-width: 0;
+        }
+        
+        .sr-only-focusable:focus {
+          position: static;
+          width: auto;
+          height: auto;
+          padding: inherit;
+          margin: inherit;
+          overflow: visible;
+          clip: auto;
+          white-space: normal;
+        }
+      `;
+      document.head.appendChild(style);
+    },
+
+    /**
+     * Log de debug
+     * @private
+     */
+    _log: function() {
+      if (this.config.debugMode) {
+        console.log.apply(console, ['[A11y]'].concat(Array.prototype.slice.call(arguments)));
+      }
+    },
+
+    /**
+     * Warning
+     * @private
+     */
+    _warn: function() {
+      if (this.config.debugMode) {
+        console.warn.apply(console, ['[A11y]'].concat(Array.prototype.slice.call(arguments)));
+      }
+    }
+
+  };
+
+  // ========================================================================
+  // AUTO-INICIALIZAÇÃO
+  // ========================================================================
+
+  // Inicializar quando DOM estiver pronto
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      window.AccessibilityManager.init();
+      window.AccessibilityManager.addScreenReaderOnlyClass();
+    });
+  } else {
+    window.AccessibilityManager.init();
+    window.AccessibilityManager.addScreenReaderOnlyClass();
+  }
+
+})();
+</script>

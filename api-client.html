@@ -1,0 +1,660 @@
+
+/**
+ * API CLIENT
+ * Cliente para Google Apps Script usando google.script.run
+ * Compatível com HTML Service do GAS
+ */
+
+class APIClient {
+  constructor() {
+    this.token = null;
+    this.interceptors = {
+      request: [],
+      response: [],
+      error: []
+    };
+    this.cache = new Map();
+    this.cacheTTL = 300000; // 5 min default
+  }
+
+  /**
+   * Set authentication token
+   */
+  setToken(token) {
+    this.token = token;
+    if (token) {
+      localStorage.setItem('canabica_token', token);
+    } else {
+      localStorage.removeItem('canabica_token');
+    }
+  }
+
+  /**
+   * Get stored token
+   */
+  getToken() {
+    return this.token || localStorage.getItem('canabica_token');
+  }
+
+  /**
+   * Add request interceptor
+   */
+  addRequestInterceptor(callback) {
+    this.interceptors.request.push(callback);
+  }
+
+  /**
+   * Add response interceptor
+   */
+  addResponseInterceptor(callback) {
+    this.interceptors.response.push(callback);
+  }
+
+  /**
+   * Add error interceptor
+   */
+  addErrorInterceptor(callback) {
+    this.interceptors.error.push(callback);
+  }
+
+  /**
+   * Generate UUID v4 for correlationId
+   */
+  _generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  /**
+   * Call backend via google.script.run
+   */
+  async callBackend(action, data) {
+    const token = this.getToken();
+    const context = {
+      action: action,
+      data: data || {},
+      token: token,
+      correlationId: this._generateUUID()
+    };
+
+    // Request interceptors
+    for (const interceptor of this.interceptors.request) {
+      await interceptor(context);
+    }
+
+    return new Promise((resolve, reject) => {
+      google.script.run
+        .withSuccessHandler((response) => {
+          // Response interceptors
+          Promise.all(this.interceptors.response.map(i => i(response)))
+            .then(() => {
+              if (response && response.success) {
+                resolve(response);
+              } else {
+                const error = new APIError(
+                  (response && response.error && response.error.message) || 'Erro desconhecido',
+                  response && response.statusCode,
+                  response
+                );
+                // Error interceptors
+                Promise.all(this.interceptors.error.map(i => i(error)))
+                  .finally(() => reject(error));
+              }
+            });
+        })
+        .withFailureHandler((error) => {
+          const apiError = new APIError(error.message || 'Falha na chamada ao backend', 500, error);
+          // Error interceptors
+          Promise.all(this.interceptors.error.map(i => i(apiError)))
+            .finally(() => reject(apiError));
+        })
+        .routeRequest(context);
+    });
+  }
+
+  /**
+   * Refresh token automatically
+   */
+  async refreshToken() {
+    try {
+      const response = await this.callBackend('auth.refresh', {});
+      if (response.data && response.data.token) {
+        this.setToken(response.data.token);
+        return response.data.token;
+      }
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Generic request wrapper
+   */
+  async request(action, data = null) {
+    return this.callBackend(action, data);
+  }
+
+  /**
+   * GET-like request (list/read operations)
+   */
+  async get(action, data = null) {
+    // Check cache
+    const cacheKey = action + JSON.stringify(data);
+    const cached = this.cache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
+      return cached.data;
+    }
+
+    const response = await this.callBackend(action, data);
+
+    // Store in cache
+    this.cache.set(cacheKey, {
+      data: response,
+      timestamp: Date.now()
+    });
+
+    return response;
+  }
+
+  /**
+   * POST-like request (create operations)
+   */
+  async post(action, data) {
+    return this.callBackend(action, data);
+  }
+
+  /**
+   * PUT-like request (update operations)
+   */
+  async put(action, data) {
+    return this.callBackend(action, data);
+  }
+
+  /**
+   * DELETE-like request (delete operations)
+   */
+  async delete(action, data) {
+    return this.callBackend(action, data);
+  }
+
+  /**
+   * Clear cache
+   */
+  clearCache() {
+    this.cache.clear();
+  }
+
+  /**
+   * Check if authenticated
+   */
+  isAuthenticated() {
+    return !!this.getToken();
+  }
+}
+
+/**
+ * API Error
+ */
+class APIError extends Error {
+  constructor(message, status, data) {
+    super(message);
+    this.status = status;
+    this.data = data;
+    this.name = 'APIError';
+  }
+}
+
+/**
+ * Global API client instance
+ */
+const api = new APIClient();
+
+/**
+ * Setup interceptors
+ */
+
+// Auto-refresh token if 401
+// Backend v2.0 retorna tanto error.status quanto error.data.statusCode
+api.addErrorInterceptor(async (error) => {
+  if (error.status === 401 || (error.data && error.data.statusCode === 401)) {
+    console.warn('Token expirado ou inválido');
+    api.setToken(null);
+    window.dispatchEvent(new CustomEvent('auth-expired'));
+  }
+});
+
+// Log errors
+api.addErrorInterceptor(async (error) => {
+  console.error('API Error:', error);
+});
+
+
+// ============================================================================
+// API METHODS — DOMÍNIO DE QUALIDADE DE INSUMOS (PROMPT 2)
+// ============================================================================
+
+/**
+ * INSUMOS
+ */
+
+/**
+ * Cria novo insumo
+ * @param {Object} data - Dados do insumo
+ * @param {string} data.nomeComercial - Nome comercial (obrigatório)
+ * @param {string} data.tipoSal - Tipo de sal (obrigatório)
+ * @param {string} data.fabricante - Fabricante (obrigatório)
+ * @param {string} [data.paisOrigem] - País de origem
+ * @param {string} [data.registroMAPAEstabelecimento] - Registro MAPA estabelecimento
+ * @param {string} [data.registroMAPAProduto] - Registro MAPA produto
+ * @param {string} [data.agenteQuelante] - EDTA, DTPA ou EDDHA
+ * @param {number} [data.solubilidade_gL_20C] - Solubilidade em g/L a 20°C
+ * @param {number} [data.purezaPercentual] - Pureza em % (0-100)
+ * @param {string} [data.driveFichaTecnicaURL] - URL da ficha técnica
+ * @param {string} [data.ativo] - ATIVO ou INATIVO
+ * @returns {Promise<Object>} Insumo criado
+ */
+async function createInsumo(data) {
+  return api.post('insumos.create', data);
+}
+
+/**
+ * Lista insumos com filtros e paginação
+ * @param {Object} [filters] - Filtros
+ * @param {string} [filters.fabricante] - Filtrar por fabricante
+ * @param {string} [filters.tipoSal] - Filtrar por tipo de sal
+ * @param {string} [filters.ativo] - Filtrar por status (ATIVO, INATIVO)
+ * @param {Object} [pagination] - Paginação
+ * @param {number} [pagination.page=1] - Página
+ * @param {number} [pagination.pageSize=20] - Itens por página
+ * @returns {Promise<Object>} Lista de insumos
+ */
+async function listInsumos(filters = {}, pagination = {page: 1, pageSize: 20}) {
+  return api.get('insumos.list', {filters, pagination});
+}
+
+/**
+ * Busca insumo por ID
+ * @param {string} id - ID do insumo
+ * @returns {Promise<Object>} Insumo encontrado
+ */
+async function getInsumo(id) {
+  return api.get('insumos.get', {id});
+}
+
+/**
+ * Atualiza insumo
+ * @param {string} id - ID do insumo
+ * @param {Object} updates - Campos a atualizar
+ * @returns {Promise<Object>} Insumo atualizado
+ */
+async function updateInsumo(id, updates) {
+  return api.put('insumos.update', {...updates, id});
+}
+
+/**
+ * Deleta insumo (soft delete - marca como INATIVO)
+ * @param {string} id - ID do insumo
+ * @returns {Promise<Object>} Confirmação de deleção
+ */
+async function deleteInsumo(id) {
+  return api.delete('insumos.delete', {id});
+}
+
+/**
+ * LOTES CoA
+ */
+
+/**
+ * Cria novo lote CoA
+ * @param {Object} data - Dados do lote
+ * @param {string} data.insumoId - ID do insumo (FK, obrigatório)
+ * @param {string} data.numeroLote - Número do lote (obrigatório)
+ * @param {string} [data.dataFabricacao] - Data de fabricação (ISO 8601)
+ * @param {string} [data.dataValidade] - Data de validade (ISO 8601)
+ * @param {string} [data.laboratorioEmissor] - Laboratório emissor do CoA
+ * @param {string} [data.teor_Pb_ppm] - Teor de chumbo em ppm
+ * @param {string} [data.teor_Cd_ppm] - Teor de cádmio em ppm
+ * @param {string} [data.teor_As_ppm] - Teor de arsênio em ppm
+ * @param {string} [data.teor_Hg_ppm] - Teor de mercúrio em ppm
+ * @param {string} [data.statusAuditoria] - PENDENTE, APROVADO, ALERTA, REPROVADO, BLOQUEADO
+ * @param {string} [data.statusLiberacao] - PENDENTE, LIBERADO, QUARENTENA, BLOQUEADO
+ * @param {string} [data.drivePdfCoAURL] - URL do PDF do CoA
+ * @param {string} [data.auditorEmail] - Email do auditor
+ * @returns {Promise<Object>} Lote criado
+ */
+async function createLoteCoA(data) {
+  return api.post('lotes.create', data);
+}
+
+/**
+ * Lista lotes CoA com filtros e paginação
+ * @param {Object} [filters] - Filtros
+ * @param {string} [filters.insumoId] - Filtrar por insumo
+ * @param {string} [filters.statusAuditoria] - Filtrar por status de auditoria
+ * @param {string} [filters.statusLiberacao] - Filtrar por status de liberação
+ * @param {Object} [pagination] - Paginação
+ * @returns {Promise<Object>} Lista de lotes
+ */
+async function listLotesCoA(filters = {}, pagination = {page: 1, pageSize: 20}) {
+  return api.get('lotes.list', {filters, pagination});
+}
+
+/**
+ * Busca lote CoA por ID
+ * @param {string} id - ID do lote
+ * @returns {Promise<Object>} Lote encontrado
+ */
+async function getLoteCoA(id) {
+  return api.get('lotes.get', {id});
+}
+
+/**
+ * Atualiza lote CoA
+ * @param {string} id - ID do lote
+ * @param {Object} updates - Campos a atualizar
+ * @returns {Promise<Object>} Lote atualizado
+ */
+async function updateLoteCoA(id, updates) {
+  return api.put('lotes.update', {...updates, id});
+}
+
+/**
+ * Deleta lote CoA
+ * @param {string} id - ID do lote
+ * @returns {Promise<Object>} Confirmação de deleção
+ */
+async function deleteLoteCoA(id) {
+  return api.delete('lotes.delete', {id});
+}
+
+/**
+ * RECEITAS FERTIRRIGAÇÃO
+ */
+
+/**
+ * Cria nova receita de fertirrigação
+ * @param {Object} data - Dados da receita
+ * @param {string} data.nomeFase - Nome da fase de cultivo (obrigatório)
+ * @param {number} [data.alvo_P_ppm] - Alvo de P em ppm
+ * @param {number} [data.alvo_N_NO3_ppm] - Alvo de N-NO3 em ppm
+ * @param {number} [data.alvo_N_NH4_ppm] - Alvo de N-NH4 em ppm
+ * @param {number} [data.alvo_K_ppm] - Alvo de K em ppm
+ * @param {number} [data.alvo_Ca_ppm] - Alvo de Ca em ppm
+ * @param {number} [data.alvo_Mg_ppm] - Alvo de Mg em ppm
+ * @param {number} [data.alvo_Fe_ppm] - Alvo de Fe em ppm
+ * @param {string} [data.quelatoExigido] - EDTA, DTPA ou EDDHA
+ * @param {number} [data.pH_SolucaoAlvo] - pH alvo (0-14)
+ * @param {number} [data.EC_Alvo_dS_m] - EC alvo em dS/m
+ * @param {string} [data.ruleVersion] - Versão da regra
+ * @returns {Promise<Object>} Receita criada
+ */
+async function createReceita(data) {
+  return api.post('receitas.create', data);
+}
+
+/**
+ * Lista receitas com filtros e paginação
+ * @param {Object} [filters] - Filtros
+ * @param {string} [filters.nomeFase] - Filtrar por fase (pattern)
+ * @param {string} [filters.quelatoExigido] - Filtrar por quelato
+ * @param {Object} [pagination] - Paginação
+ * @returns {Promise<Object>} Lista de receitas
+ */
+async function listReceitas(filters = {}, pagination = {page: 1, pageSize: 20}) {
+  return api.get('receitas.list', {filters, pagination});
+}
+
+/**
+ * Busca receita por ID
+ * @param {string} id - ID da receita
+ * @returns {Promise<Object>} Receita encontrada
+ */
+async function getReceita(id) {
+  return api.get('receitas.get', {id});
+}
+
+/**
+ * Atualiza receita
+ * @param {string} id - ID da receita
+ * @param {Object} updates - Campos a atualizar
+ * @returns {Promise<Object>} Receita atualizada
+ */
+async function updateReceita(id, updates) {
+  return api.put('receitas.update', {...updates, id});
+}
+
+/**
+ * Deleta receita
+ * @param {string} id - ID da receita
+ * @returns {Promise<Object>} Confirmação de deleção
+ */
+async function deleteReceita(id) {
+  return api.delete('receitas.delete', {id});
+}
+
+/**
+ * PROTOCOLOS BIOLÓGICOS
+ */
+
+/**
+ * Cria novo protocolo biológico
+ * @param {Object} data - Dados do protocolo
+ * @param {string} data.nomeProtocolo - Nome do protocolo (obrigatório)
+ * @param {string} [data.faseCultivo] - PROPAGACAO, VEGETATIVA, FLORACAO
+ * @param {string} [data.tipoAplicacao] - FOLIAR, SOLO, INOCULACAO
+ * @param {number} [data.ecMaximo_dS_m] - EC máximo em dS/m
+ * @param {number} [data.pHMinimo] - pH mínimo (0-14)
+ * @param {number} [data.pHMaximo] - pH máximo (0-14)
+ * @param {string} [data.incompatibilidades] - Descrição de incompatibilidades
+ * @param {string} [data.observacoes] - Observações gerais
+ * @param {string} [data.ativo] - ATIVO ou INATIVO
+ * @returns {Promise<Object>} Protocolo criado
+ */
+async function createProtocolo(data) {
+  return api.post('protocolos.create', data);
+}
+
+/**
+ * Lista protocolos com filtros e paginação
+ * @param {Object} [filters] - Filtros
+ * @param {string} [filters.ativo] - Filtrar por status (ATIVO, INATIVO)
+ * @param {string} [filters.faseCultivo] - Filtrar por fase de cultivo
+ * @param {string} [filters.tipoAplicacao] - Filtrar por tipo de aplicação
+ * @param {Object} [pagination] - Paginação
+ * @returns {Promise<Object>} Lista de protocolos
+ */
+async function listProtocolos(filters = {}, pagination = {page: 1, pageSize: 20}) {
+  return api.get('protocolos.list', {filters, pagination});
+}
+
+/**
+ * Busca protocolo por ID
+ * @param {string} id - ID do protocolo
+ * @returns {Promise<Object>} Protocolo encontrado
+ */
+async function getProtocolo(id) {
+  return api.get('protocolos.get', {id});
+}
+
+/**
+ * Atualiza protocolo
+ * @param {string} id - ID do protocolo
+ * @param {Object} updates - Campos a atualizar
+ * @returns {Promise<Object>} Protocolo atualizado
+ */
+async function updateProtocolo(id, updates) {
+  return api.put('protocolos.update', {...updates, id});
+}
+
+/**
+ * Deleta protocolo (soft delete - marca como INATIVO)
+ * @param {string} id - ID do protocolo
+ * @returns {Promise<Object>} Confirmação de deleção
+ */
+async function deleteProtocolo(id) {
+  return api.delete('protocolos.delete', {id});
+}
+
+/**
+ * PARECERES COMPATIBILIDADE
+ */
+
+/**
+ * Cria novo parecer manualmente
+ * @param {Object} data - Dados do parecer
+ * @param {string} data.receitaId - ID da receita (obrigatório)
+ * @param {string} data.protocoloId - ID do protocolo (obrigatório)
+ * @param {Array<string>} [data.loteIds] - Array de IDs de lotes
+ * @param {string} [data.veredicto] - Veredicto manual
+ * @param {string} [data.alertas] - Alertas identificados
+ * @param {string} [data.bloqueios] - Bloqueios identificados
+ * @returns {Promise<Object>} Parecer criado
+ */
+async function createParecer(data) {
+  return api.post('pareceres.create', data);
+}
+
+/**
+ * Lista pareceres com filtros e paginação
+ * @param {Object} [filters] - Filtros
+ * @param {string} [filters.receitaId] - Filtrar por receita
+ * @param {string} [filters.protocoloId] - Filtrar por protocolo
+ * @param {string} [filters.veredicto] - Filtrar por veredicto
+ * @param {Object} [pagination] - Paginação
+ * @returns {Promise<Object>} Lista de pareceres
+ */
+async function listPareceres(filters = {}, pagination = {page: 1, pageSize: 20}) {
+  return api.get('pareceres.list', {filters, pagination});
+}
+
+/**
+ * Busca parecer por ID
+ * @param {string} id - ID do parecer
+ * @returns {Promise<Object>} Parecer encontrado
+ */
+async function getParecer(id) {
+  return api.get('pareceres.get', {id});
+}
+
+/**
+ * ANÁLISE AUTOMÁTICA DE COMPATIBILIDADE ⭐
+ * 
+ * Executa análise automática com 4 regras de negócio:
+ * 1. REGRA_PH_RANGE - pH da receita dentro do range do protocolo
+ * 2. REGRA_EC_MAXIMO - EC da receita não excede máximo do protocolo
+ * 3. REGRA_QUELATO_INCOMPATIVEL - Quelato não está em incompatibilidades
+ * 4. REGRA_LOTE_NAO_LIBERADO - Lotes com status LIBERADO
+ * 
+ * @param {string} receitaId - ID da receita (obrigatório)
+ * @param {string} protocoloId - ID do protocolo (obrigatório)
+ * @param {Array<string>} [loteIds=[]] - Array de IDs de lotes a verificar
+ * @returns {Promise<Object>} Parecer automático gerado
+ * @returns {Object.veredicto} COMPATIVEL | COMPATIVEL_COM_RESSALVAS | INCOMPATIVEL | REVISAO_HUMANA
+ * @returns {Object.alertas} String com alertas separados por ';'
+ * @returns {Object.bloqueios} String com bloqueios separados por ';'
+ * @returns {Object.regrasAcionadas} String com códigos das regras acionadas
+ * @returns {Object.evidencias} Descrição da análise realizada
+ * 
+ * @example
+ * const parecer = await analisarCompatibilidade(
+ *   'receita-uuid',
+ *   'protocolo-uuid',
+ *   ['lote-uuid-1', 'lote-uuid-2']
+ * );
+ * 
+ * if (parecer.data.veredicto === 'COMPATIVEL') {
+ *   console.log('✅ Pode prosseguir');
+ * } else if (parecer.data.veredicto === 'COMPATIVEL_COM_RESSALVAS') {
+ *   console.warn('⚠️ Atenção:', parecer.data.alertas);
+ * } else {
+ *   console.error('❌ Bloqueado:', parecer.data.bloqueios);
+ * }
+ */
+async function analisarCompatibilidade(receitaId, protocoloId, loteIds = []) {
+  return api.post('pareceres.analisar', {
+    receitaId,
+    protocoloId,
+    loteIds
+  });
+}
+
+/**
+ * Validates biological compatibility parameters before parecer creation
+ * 
+ * @param {Object} params - Validation parameters
+ * @param {string} params.faseCultivo - Cultivation phase (PROPAGACAO, VEGETATIVA, FLORACAO)
+ * @param {string} params.metodoAplicacao - Application method (FOLIAR, SOLO, INOCULACAO)
+ * @param {string} [params.tipoInsumo] - Input type (optional)
+ * @param {string} [params.cultivo] - Cultivo ID (optional)
+ * @param {string} [params.lote] - Lote ID (optional)
+ * @param {string} [params.protocolo] - Protocolo ID (optional)
+ * @param {string} [params.receitaId] - Receita ID (optional)
+ * @returns {Promise<Object>} Validation result with veredicto, alertas, bloqueios
+ * 
+ * @example
+ * const result = await validateBioCompatibility({
+ *   faseCultivo: 'VEGETATIVA',
+ *   metodoAplicacao: 'FOLIAR'
+ * });
+ * 
+ * if (result.data.compativel) {
+ *   console.log('✅ Compatível');
+ * } else {
+ *   console.warn('❌ Incompatível:', result.data.bloqueios);
+ * }
+ */
+async function validateBioCompatibility(params) {
+  return api.post('bio.validate', params);
+}
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Busca lotes LIBERADOS de um insumo específico
+ * @param {string} insumoId - ID do insumo
+ * @returns {Promise<Array>} Array de lotes liberados
+ */
+async function getLotesLiberadosByInsumo(insumoId) {
+  const response = await listLotesCoA({
+    insumoId,
+    statusLiberacao: 'LIBERADO'
+  }, {page: 1, pageSize: 100});
+  
+  // Backend v2.0 retorna array direto em response.data (não .items)
+  return response.data || [];
+}
+
+/**
+ * Busca protocolos compatíveis com pH específico
+ * @param {number} ph - Valor de pH
+ * @returns {Promise<Array>} Array de protocolos compatíveis
+ */
+async function getProtocolosCompatiblesByPH(ph) {
+  const response = await listProtocolos({ativo: 'ATIVO'}, {page: 1, pageSize: 100});
+  // Backend v2.0 retorna array direto em response.data (não .items)
+  const protocolos = response.data || [];
+  
+  return protocolos.filter(p => ph >= p.pHMinimo && ph <= p.pHMaximo);
+}
+
+/**
+ * Busca último parecer entre receita e protocolo
+ * @param {string} receitaId - ID da receita
+ * @param {string} protocoloId - ID do protocolo
+ * @returns {Promise<Object|null>} Último parecer ou null
+ */
+async function getLatestParecer(receitaId, protocoloId) {
+  const response = await listPareceres({
+    receitaId,
+    protocoloId
+  }, {page: 1, pageSize: 1});
+  
+  // Backend v2.0 retorna array direto em response.data (não .items)
+  const pareceres = response.data || [];
+  return pareceres.length > 0 ? pareceres[0] : null;
+}

@@ -1,0 +1,887 @@
+<!--
+⚠️ ARQUIVO LEGADO — NÃO PRODUTIVO
+Este arquivo não é mais servido por rotas ativas.
+A versão produtiva está em: index.html (inclui layout.html como área autenticada)
+Manter apenas como referência histórica ou remover em limpeza futura.
+Data de descontinuação: 2026-01-20
+Motivo: Padronização visual — casca única (index.html → layout.html)
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2d5016">
+  <meta name="description" content="Reserva Canábica - Sistema de Gestão Científica">
+  <title>Reserva Canábica - Sistema Científico</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  
+  <?!= include('design-system') ?>
+  
+  <style>
+    /* ==========================================
+       APP SHELL ARCHITECTURE
+       ========================================== */
+    
+    .app-shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background: var(--surface-base);
+    }
+    
+    /* ==========================================
+       TOP NAVIGATION BAR
+       ========================================== */
+    
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: var(--z-sticky);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      padding: 0 var(--space-6);
+      background: linear-gradient(135deg, var(--neutral-800) 0%, var(--neutral-900) 100%);
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: var(--font-bold);
+      font-size: var(--text-lg);
+      transition: opacity var(--transition-base);
+    }
+    
+    .topbar-brand:hover {
+      opacity: 0.85;
+    }
+    
+    .topbar-brand-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      border-radius: var(--radius-lg);
+      color: white;
+    }
+    
+    .topbar-brand-icon .material-icons {
+      font-size: 24px;
+    }
+    
+    .topbar-brand-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+    
+    .topbar-brand-name {
+      font-size: var(--text-base);
+      font-weight: var(--font-bold);
+      letter-spacing: 0.02em;
+    }
+    
+    .topbar-brand-tagline {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      font-weight: var(--font-normal);
+    }
+    
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+    
+    .topbar-search {
+      position: relative;
+      width: 320px;
+    }
+    
+    .topbar-search input {
+      width: 100%;
+      height: 40px;
+      padding: 0 var(--space-10) 0 var(--space-4);
+      background: var(--neutral-700);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+      transition: all var(--transition-base);
+    }
+    
+    .topbar-search input:focus {
+      border-color: var(--color-primary);
+      background: rgba(58, 107, 30, 0.08);
+    }
+    
+    .topbar-search-icon {
+      position: absolute;
+      right: var(--space-3);
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-tertiary);
+      pointer-events: none;
+    }
+    
+    .topbar-user {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-2) var(--space-3);
+      background: var(--neutral-700);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all var(--transition-base);
+    }
+    
+    .topbar-user:hover {
+      background: var(--neutral-600);
+      border-color: var(--color-primary);
+    }
+    
+    .topbar-user-avatar {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: var(--font-bold);
+      font-size: var(--text-sm);
+    }
+    
+    .topbar-user-name {
+      font-size: var(--text-sm);
+      font-weight: var(--font-medium);
+      color: var(--text-primary);
+    }
+    
+    /* ==========================================
+       SIDEBAR NAVIGATION
+       ========================================== */
+    
+    .app-body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    
+    .sidebar {
+      width: 280px;
+      background: var(--surface-raised);
+      border-right: 1px solid var(--border-color);
+      overflow-y: auto;
+      transition: transform var(--transition-base);
+    }
+    
+    .sidebar-header {
+      padding: var(--space-5) var(--space-4);
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .sidebar-title {
+      font-size: var(--text-sm);
+      font-weight: var(--font-semibold);
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-2);
+    }
+    
+    .sidebar-nav {
+      padding: var(--space-4);
+    }
+    
+    .nav-section {
+      margin-bottom: var(--space-6);
+    }
+    
+    .nav-section-title {
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--text-xs);
+      font-weight: var(--font-semibold);
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: var(--space-2);
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-4);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: var(--text-sm);
+      font-weight: var(--font-medium);
+      border-radius: var(--radius-lg);
+      transition: all var(--transition-base);
+      cursor: pointer;
+      position: relative;
+    }
+    
+    .nav-item:hover {
+      background: rgba(58, 107, 30, 0.08);
+      color: var(--text-primary);
+    }
+    
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(58, 107, 30, 0.15), rgba(58, 107, 30, 0.08));
+      color: var(--color-primary-light);
+      font-weight: var(--font-semibold);
+    }
+    
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 60%;
+      background: var(--color-primary-light);
+      border-radius: 0 2px 2px 0;
+    }
+    
+    .nav-item .material-icons {
+      font-size: 20px;
+    }
+    
+    .nav-badge {
+      margin-left: auto;
+      padding: var(--space-1) var(--space-2);
+      background: rgba(58, 107, 30, 0.15);
+      border-radius: var(--radius-full);
+      color: var(--color-primary-light);
+      font-size: 11px;
+      font-weight: var(--font-semibold);
+    }
+    
+    /* ==========================================
+       MAIN CONTENT AREA
+       ========================================== */
+    
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      background: var(--surface-base);
+    }
+    
+    .content-wrapper {
+      padding: var(--space-8);
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    
+    .page-header {
+      margin-bottom: var(--space-8);
+    }
+    
+    .page-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-bottom: var(--space-3);
+      color: var(--text-tertiary);
+      font-size: var(--text-sm);
+    }
+    
+    .breadcrumb-separator {
+      font-size: 16px;
+    }
+    
+    .page-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--space-3);
+    }
+    
+    .page-title {
+      font-size: var(--text-4xl);
+      font-weight: var(--font-extrabold);
+      color: var(--text-primary);
+      margin: 0;
+    }
+    
+    .page-description {
+      color: var(--text-secondary);
+      font-size: var(--text-base);
+      line-height: var(--leading-relaxed);
+      margin: 0;
+    }
+    
+    /* ==========================================
+       MOBILE MENU TOGGLE
+       ========================================== */
+    
+    .mobile-menu-toggle {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      cursor: pointer;
+      border-radius: var(--radius-md);
+      transition: background var(--transition-base);
+    }
+    
+    .mobile-menu-toggle:hover {
+      background: var(--neutral-700);
+    }
+    
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: calc(var(--z-sticky) - 1);
+      backdrop-filter: blur(4px);
+    }
+    
+    /* ==========================================
+       RESPONSIVE
+       ========================================== */
+    
+    @media (max-width: 1024px) {
+      .topbar-search {
+        width: 240px;
+      }
+      
+      .topbar-brand-tagline {
+        display: none;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .mobile-menu-toggle {
+        display: flex;
+      }
+      
+      .sidebar {
+        position: fixed;
+        top: 64px;
+        left: 0;
+        bottom: 0;
+        z-index: var(--z-sticky);
+        transform: translateX(-100%);
+      }
+      
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      
+      .sidebar-overlay.show {
+        display: block;
+      }
+      
+      .topbar-search {
+        display: none;
+      }
+      
+      .topbar-user-name {
+        display: none;
+      }
+      
+      .content-wrapper {
+        padding: var(--space-4);
+      }
+      
+      .page-title {
+        font-size: var(--text-3xl);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Top Navigation Bar -->
+    <header class="topbar">
+      <div style="display: flex; align-items: center; gap: var(--space-4);">
+        <button class="mobile-menu-toggle" id="mobile-menu-btn" aria-label="Menu">
+          <span class="material-icons">menu</span>
+        </button>
+        
+        <a href="#" class="topbar-brand" onclick="navigateTo('dashboard'); return false;">
+          <div class="topbar-brand-icon">
+            <span class="material-icons">eco</span>
+          </div>
+          <div class="topbar-brand-text">
+            <span class="topbar-brand-name">RESERVA CANÁBICA</span>
+            <span class="topbar-brand-tagline">Sistema Científico</span>
+          </div>
+        </a>
+      </div>
+      
+      <div class="topbar-actions">
+        <div class="topbar-search">
+          <input 
+            type="search" 
+            placeholder="Buscar estudos, experimentos..." 
+            aria-label="Busca global">
+          <span class="material-icons topbar-search-icon">search</span>
+        </div>
+        
+        <div class="topbar-user" onclick="toggleUserMenu()" role="button" aria-label="Menu do usuário">
+          <div class="topbar-user-avatar">RC</div>
+          <span class="topbar-user-name">Pesquisador</span>
+          <span class="material-icons" style="font-size: 16px; color: var(--text-tertiary);">
+            expand_more
+          </span>
+        </div>
+      </div>
+    </header>
+    
+    <div class="app-body">
+      <!-- Sidebar Navigation -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-title">Navegação</div>
+        </div>
+        
+        <nav class="sidebar-nav" role="navigation" aria-label="Menu principal">
+          <!-- Dashboard -->
+          <div class="nav-section">
+            <div class="nav-section-title">Painel</div>
+            <a class="nav-item active" onclick="navigateTo('dashboard'); return false;">
+              <span class="material-icons">dashboard</span>
+              <span>Dashboard</span>
+            </a>
+            <a class="nav-item" onclick="navigateTo('reports'); return false;">
+              <span class="material-icons">analytics</span>
+              <span>Relatórios</span>
+            </a>
+          </div>
+          
+          <!-- Gestão Científica -->
+          <div class="nav-section">
+            <div class="nav-section-title">Gestão Científica</div>
+            <a class="nav-item" onclick="navigateTo('study-list'); return false;">
+              <span class="material-icons">science</span>
+              <span>Estudos</span>
+              <span class="nav-badge" id="studies-badge">0</span>
+            </a>
+            <a class="nav-item" onclick="navigateTo('experiment-list'); return false;">
+              <span class="material-icons">biotech</span>
+              <span>Experimentos</span>
+              <span class="nav-badge" id="experiments-badge">0</span>
+            </a>
+            <a class="nav-item" onclick="navigateTo('observation-list'); return false;">
+              <span class="material-icons">visibility</span>
+              <span>Observações</span>
+              <span class="nav-badge" id="observations-badge">0</span>
+            </a>
+          </div>
+          
+          <!-- Documentação -->
+          <div class="nav-section">
+            <div class="nav-section-title">Documentação</div>
+            <a class="nav-item" onclick="navigateTo('reference-list'); return false;">
+              <span class="material-icons">menu_book</span>
+              <span>Referências</span>
+            </a>
+            <a class="nav-item" onclick="navigateTo('evidence-list'); return false;">
+              <span class="material-icons">description</span>
+              <span>Evidências</span>
+            </a>
+            <a class="nav-item" onclick="navigateTo('validation-list'); return false;">
+              <span class="material-icons">verified</span>
+              <span>Validações</span>
+            </a>
+          </div>
+          
+          <!-- Nova Seção: Análise Paciente -->
+          <div class="nav-section">
+            <div class="nav-section-title">Análise Personalizada</div>
+            <a class="nav-item" onclick="navigateTo('analise-cultivo'); return false;">
+              <span class="material-icons">spa</span>
+              <span>Análise de Cultivo</span>
+            </a>
+            <a class="nav-item" onclick="navigateTo('analise-substratos'); return false;">
+              <span class="material-icons">eco</span>
+              <span>Análise de Substratos</span>
+            </a>
+          </div>
+          
+          <!-- Análise Médica -->
+          <div class="nav-section">
+            <div class="nav-section-title">Análise Médica</div>
+            <a class="nav-item" onclick="navigateTo('clusters-visualization'); return false;">
+              <span class="material-icons">hub</span>
+              <span>Agrupamentos</span>
+            </a>
+            <a class="nav-item" onclick="navigateTo('relatorio-medico'); return false;">
+              <span class="material-icons">assessment</span>
+              <span>Relatório Médico</span>
+            </a>
+          </div>
+          
+          <!-- Administração -->
+          <div class="nav-section">
+            <div class="nav-section-title">Administração</div>
+            <a class="nav-item" onclick="navigateTo('users-list'); return false;">
+              <span class="material-icons">people</span>
+              <span>Usuários</span>
+            </a>
+            <a class="nav-item" onclick="navigateTo('settings'); return false;">
+              <span class="material-icons">settings</span>
+              <span>Configurações</span>
+            </a>
+            <a class="nav-item" onclick="navigateTo('audit-log'); return false;">
+              <span class="material-icons">history</span>
+              <span>Auditoria</span>
+            </a>
+          </div>
+          
+          <!-- Sistema -->
+          <div class="nav-section">
+            <div class="nav-section-title">Sistema</div>
+            <a class="nav-item" onclick="navigateTo('health'); return false;">
+              <span class="material-icons">health_and_safety</span>
+              <span>Saúde</span>
+            </a>
+            <a class="nav-item" onclick="handleLogout(); return false;">
+              <span class="material-icons">logout</span>
+              <span>Sair</span>
+            </a>
+          </div>
+        </nav>
+      </aside>
+      
+      <!-- Sidebar Overlay for Mobile -->
+      <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+      
+      <!-- Main Content -->
+      <main class="main-content" role="main">
+        <div class="content-wrapper" id="app-content">
+          <!-- Conteúdo dinâmico será carregado aqui -->
+          <?!= include('dashboard-enhanced') ?>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+    
+    // Estado global da aplicação
+    const AppState = {
+      currentView: 'dashboard',
+      user: null,
+      sidebarOpen: false
+    };
+    
+    /**
+     * Sistema de navegação SPA - IMPLEMENTAÇÃO COMPLETA
+     */
+    window.navigateTo = function(view, params) {
+      console.log('Navigating to:', view, params || {});
+      
+      // 1. Atualizar estado
+      AppState.currentView = view;
+      AppState.viewParams = params || {};
+      
+      // 2. Atualizar nav items ativos
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      const activeItem = document.querySelector(`[onclick*="'${view}'"]`);
+      if (activeItem) activeItem.classList.add('active');
+      
+      // 3. Fechar sidebar em mobile
+      if (window.innerWidth <= 768) {
+        closeSidebar();
+      }
+      
+      // 4. CARREGAR CONTEÚDO REAL
+      const contentArea = document.getElementById('app-content') || 
+                          document.querySelector('.main-content') ||
+                          document.querySelector('main');
+      
+      if (!contentArea) {
+        console.error('Área de conteúdo não encontrada');
+        return;
+      }
+      
+      // Mostrar loading
+      contentArea.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;min-height:400px;">
+          <div class="loading-spinner" style="text-align:center;">
+            <div style="border:4px solid #f3f3f3;border-top:4px solid var(--color-primary);border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin:0 auto 1rem;"></div>
+            <p style="color:var(--text-secondary);">Carregando ${view}...</p>
+          </div>
+        </div>
+        <style>
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        </style>
+      `;
+      
+      // Mapa de rotas (view → arquivo HTML)
+      const routes = {
+        'dashboard': 'dashboard-enhanced',
+        'study-list': 'study-list',
+        'study-form': 'StudyFormCanabica',
+        'experiment-list': 'experiment-list',
+        'experiment-form': 'experiment-form',
+        'observation-list': 'observation-list',
+        'observation-form': 'observation-form',
+        'reference-list': 'reference-list',
+        'reference-form': 'reference-form',
+        'evidence-list': 'evidence-list',
+        'evidence-form': 'evidence-form',
+        'validation-list': 'validation-list',
+        'users-list': 'users-list',
+        'settings': 'settings',
+        'audit-log': 'audit-log',
+        'health': 'health',
+        'reports': 'reports',
+        'insumo-list': 'insumo-list',
+        'insumo-form': 'insumo-form',
+        'insumo-view': 'insumo-view',
+        'lote-list': 'lote-list',
+        'lote-form': 'lote-form',
+        'lote-view': 'lote-view',
+        'receita-list': 'receita-list',
+        'receita-form': 'receita-form',
+        'protocolo-list': 'protocolo-list',
+        'protocolo-form': 'protocolo-form',
+        'parecer-list': 'parecer-list',
+        'parecer-form': 'parecer-form',
+        'parecer-view': 'parecer-view',
+        'comorbidade-form': 'comorbidade-form',
+        'quality-dashboard': 'quality-dashboard',
+        'analise-cultivo': 'analise-cultivo',
+        'analise-substratos': 'analise-substratos',
+        'clusters-visualization': 'clusters-visualization',
+        'relatorio-medico': 'relatorio-medico'
+      };
+      
+      const templateFile = routes[view];
+      
+      if (!templateFile) {
+        contentArea.innerHTML = `
+          <div class="error-state" style="text-align:center;padding:3rem;">
+            <span class="material-icons" style="font-size:64px;color:var(--color-warning);">warning</span>
+            <h2 style="margin:1rem 0;color:var(--text-primary);">Página não encontrada</h2>
+            <p style="color:var(--text-secondary);margin-bottom:2rem;">A view "${view}" não está mapeada.</p>
+            <button onclick="navigateTo('dashboard')" class="btn btn-primary">
+              <span class="material-icons">home</span>
+              Voltar ao Dashboard
+            </button>
+          </div>
+        `;
+        return;
+      }
+      
+      // Carregar via google.script.run
+      google.script.run
+        .withSuccessHandler(function(html) {
+          contentArea.innerHTML = html;
+          
+          // Scroll to top
+          if (contentArea.scrollTop) contentArea.scrollTop = 0;
+          window.scrollTo(0, 0);
+          
+          // Disparar evento customizado para inicialização da view
+          const event = new CustomEvent('viewLoaded', { 
+            detail: { view: view, params: params || {} } 
+          });
+          document.dispatchEvent(event);
+          
+          // Se há parâmetros (ex: id para edição), passar para view
+          if (params && typeof window.initViewWithParams === 'function') {
+            window.initViewWithParams(view, params);
+          }
+        })
+        .withFailureHandler(function(error) {
+          console.error('Erro ao carregar view:', error);
+          contentArea.innerHTML = `
+            <div class="error-state" style="text-align:center;padding:3rem;">
+              <span class="material-icons" style="font-size:64px;color:var(--color-danger);">error_outline</span>
+              <h2 style="margin:1rem 0;color:var(--text-primary);">Erro ao carregar</h2>
+              <p style="color:var(--text-secondary);">Não foi possível carregar a página "${view}".</p>
+              <p class="error-message" style="color:var(--color-danger);font-family:monospace;font-size:0.875rem;margin:1rem 0;">${error.message || error}</p>
+              <div style="display:flex;gap:1rem;justify-content:center;margin-top:2rem;">
+                <button onclick="navigateTo('${view}')" class="btn btn-secondary">
+                  <span class="material-icons">refresh</span>
+                  Tentar Novamente
+                </button>
+                <button onclick="navigateTo('dashboard')" class="btn btn-primary">
+                  <span class="material-icons">home</span>
+                  Voltar ao Dashboard
+                </button>
+              </div>
+            </div>
+          `;
+        })
+        .include(templateFile);
+    };
+    
+    /**
+     * Toggle mobile sidebar
+     */
+    document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+      toggleSidebar();
+    });
+    
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      
+      AppState.sidebarOpen = !AppState.sidebarOpen;
+      
+      if (AppState.sidebarOpen) {
+        sidebar.classList.add('open');
+        overlay.classList.add('show');
+      } else {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('show');
+      }
+    }
+    
+    window.closeSidebar = function() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      
+      AppState.sidebarOpen = false;
+      sidebar.classList.remove('open');
+      overlay.classList.remove('show');
+    };
+    
+    /**
+     * User menu toggle
+     */
+    window.toggleUserMenu = function() {
+      // Implementar dropdown menu
+      console.log('Toggle user menu');
+    };
+    
+    /**
+     * Logout handler
+     */
+    window.handleLogout = function() {
+      if (typeof UI !== 'undefined' && UI.Modal) {
+        UI.Modal.confirm({
+          title: 'Sair do sistema',
+          message: 'Deseja realmente sair do sistema?',
+          confirmText: 'Sair',
+          cancelText: 'Cancelar',
+          onConfirm: function() {
+            setTimeout(() => { window.location.href = './login-enhanced.html'; }, 500);
+          }
+        });
+      } else if (window.confirm('Deseja realmente sair do sistema?')) {
+        setTimeout(() => { window.location.href = './login-enhanced.html'; }, 500);
+      }
+    };
+    
+    /**
+     * Carregar contadores da sidebar via backend real
+     * CORREÇÃO #4b: Conectado a dashboard.counts + auth.validate
+     */
+    function loadSidebarBadges() {
+      const token = sessionStorage.getItem('authToken') || '';
+
+      google.script.run
+        .withSuccessHandler(function(response) {
+          if (response && response.ok && response.data && response.data.counts) {
+            const c = response.data.counts;
+            const studiesBadge      = document.getElementById('studies-badge');
+            const experimentsBadge  = document.getElementById('experiments-badge');
+            const observationsBadge = document.getElementById('observations-badge');
+            if (studiesBadge)      studiesBadge.textContent      = c.studies      || '0';
+            if (experimentsBadge)  experimentsBadge.textContent  = c.experiments  || '0';
+            if (observationsBadge) observationsBadge.textContent = c.observations || '0';
+          }
+        })
+        .withFailureHandler(function(error) {
+          console.warn('[App] Falha ao carregar badges:', error);
+        })
+        .apiCall({ action: 'dashboard.counts', token: token });
+    }
+
+    /**
+     * Carregar dados do usuário logado e exibir na topbar
+     */
+    function loadCurrentUser() {
+      const token = sessionStorage.getItem('authToken') || '';
+      if (!token) return;
+
+      google.script.run
+        .withSuccessHandler(function(response) {
+          if (response && response.ok && response.data && response.data.user) {
+            const user = response.data.user;
+            // Atualizar nome/avatar na topbar se existir
+            const userNameEl = document.querySelector('.topbar-user-name');
+            const userRoleEl = document.querySelector('.topbar-user-role');
+            if (userNameEl) userNameEl.textContent = user.displayName || user.username || '';
+            if (userRoleEl) userRoleEl.textContent = user.role || '';
+          }
+        })
+        .withFailureHandler(function(error) {
+          console.warn('[App] Falha ao carregar usuário:', error);
+        })
+        .apiCall({ action: 'auth.validate', token: token });
+    }
+
+    /**
+     * Busca global
+     */
+    const searchInput = document.querySelector('.topbar-search input');
+    if (searchInput) {
+      searchInput.addEventListener('input', function(e) {
+        const query = e.target.value;
+        if (query.length > 2) {
+          console.log('[App] Busca global:', query);
+          // TODO: implementar busca global quando rota estiver disponível
+        }
+      });
+    }
+
+    /**
+     * Inicialização
+     */
+    function init() {
+      loadSidebarBadges();
+      loadCurrentUser();
+    }
+    
+    // Init quando DOM estiver pronto
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+    
+  })();
+  </script>
+</body>
+</html>

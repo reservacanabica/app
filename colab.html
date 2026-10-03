@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Google Colab - Canabica</title>
+</head>
+<body>
+
+<div id="colab-page" class="colab-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <h2><i data-feather="microscope" class="icon icon-lg" aria-hidden="true"></i> Google Colab Integration</h2>
+      <p>Exporte estudos para análise em Google Colab</p>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="colab-content">
+    <!-- Overview Card -->
+    <div class="card">
+      <h3><i data-feather="bar-chart-2" class="icon icon-md" aria-hidden="true"></i> Sobre a Integração</h3>
+      <p>
+        Esta integração permite exportar seus dados de estudos, experimentos e observações 
+        diretamente para Google Colab para análise avançada e visualizações científicas.
+      </p>
+      <ul>
+        <li><i data-feather="check-circle" class="icon icon-sm" aria-hidden="true"></i> Exportar dados em formato JSON/CSV</li>
+        <li><i data-feather="check-circle" class="icon icon-sm" aria-hidden="true"></i> Análise com Python (pandas, matplotlib, scipy)</li>
+        <li><i data-feather="check-circle" class="icon icon-sm" aria-hidden="true"></i> Sincronizar resultados de volta</li>
+        <li><i data-feather="check-circle" class="icon icon-sm" aria-hidden="true"></i> Histórico de análises</li>
+      </ul>
+    </div>
+
+    <!-- Study Selection -->
+    <div class="card">
+      <h3><i data-feather="book" class="icon icon-md" aria-hidden="true"></i> Selecionar Estudo para Exportar</h3>
+      <div class="form-group">
+        <label for="study-select">Estudo:</label>
+        <select id="study-select" class="form-control">
+          <option value="">Carregando estudos...</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="format-select">Formato de Exportação:</label>
+        <select id="format-select" class="form-control">
+          <option value="json">JSON (estruturado)</option>
+          <option value="csv">CSV (tabular)</option>
+          <option value="both">Ambos (JSON + CSV)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="include-raw" checked />
+          Incluir dados brutos (raw)
+        </label>
+        <label>
+          <input type="checkbox" id="include-summary" checked />
+          Incluir resumo agregado
+        </label>
+        <label>
+          <input type="checkbox" id="include-metadata" checked />
+          Incluir metadados
+        </label>
+      </div>
+
+      <button class="button button-primary" data-click="handleExportToColab">
+        <i data-feather="upload" class="icon icon-sm" aria-hidden="true"></i> Exportar para Colab
+      </button>
+    </div>
+
+    <!-- Export Status -->
+    <div id="export-status" class="card" style="display: none;">
+      <h3><i data-feather="upload" class="icon icon-md" aria-hidden="true"></i> Status de Exportação</h3>
+      <div id="status-message" class="status-message"></div>
+      <div id="status-details" class="status-details"></div>
+    </div>
+
+    <!-- Colab Notebook Link -->
+    <div id="colab-link-card" class="card" style="display: none;">
+      <h3><i data-feather="zap" class="icon icon-md" aria-hidden="true"></i> Abrir em Google Colab</h3>
+      <p>Seu notebook está pronto! Clique no link abaixo para abrir em Google Colab:</p>
+      <a id="colab-link" href="#" target="_blank" class="button button-primary" style="display: inline-block;">
+        <i data-feather="link" class="icon icon-sm" aria-hidden="true"></i> Abrir Notebook
+      </a>
+      <p class="text-muted">
+        O notebook contém células pré-configuradas para análise de seus dados.
+      </p>
+    </div>
+
+    <!-- Analysis History -->
+    <div class="card">
+      <h3><i data-feather="clipboard" class="icon icon-md" aria-hidden="true"></i> Histórico de Análises</h3>
+      <div id="analysis-history" class="history-list">
+        <p class="text-muted">Carregando histórico...</p>
+      </div>
+    </div>
+
+    <!-- Template Notebooks -->
+    <div class="card">
+      <h3><i data-feather="book-open" class="icon icon-md" aria-hidden="true"></i> Notebooks Pré-configurados</h3>
+      <div class="templates-grid">
+        <div class="template-card">
+          <h4><i data-feather="search" class="icon icon-sm" aria-hidden="true"></i> Análise Exploratória</h4>
+          <p>Estatísticas descritivas, distribuições e correlações</p>
+          <button class="button button-secondary" data-click="loadTemplate" data-template="eda">
+            Usar Template
+          </button>
+        </div>
+        <div class="template-card">
+          <h4><i data-feather="trending-up" class="icon icon-sm" aria-hidden="true"></i> Visualizações</h4>
+          <p>Gráficos, heatmaps e time-series</p>
+          <button class="button button-secondary" data-click="loadTemplate" data-template="viz">
+            Usar Template
+          </button>
+        </div>
+        <div class="template-card">
+          <h4><i data-feather="bar-chart-2" class="icon icon-sm" aria-hidden="true"></i> Modelagem</h4>
+          <p>Regressão, classificação e clustering</p>
+          <button class="button button-secondary" data-click="loadTemplate" data-template="modeling">
+            Usar Template
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Raw Data Preview -->
+    <div class="card">
+      <h3><i data-feather="eye" class="icon icon-md" aria-hidden="true"></i> Pré-visualização de Dados</h3>
+      <div id="data-preview" class="data-preview">
+        <p class="text-muted">Selecione um estudo para visualizar os dados</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* PAGE HEADER */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xl);
+  background: linear-gradient(135deg, var(--primary) 0%, #229954 100%);
+  color: white;
+  margin-bottom: var(--spacing-lg);
+}
+
+.page-header-left h2 {
+  margin: 0 0 5px 0;
+  font-size: 1.8rem;
+}
+
+.page-header-left p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+/* CONTENT */
+.colab-content {
+  padding: 0 var(--spacing-lg) var(--spacing-lg);
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.card {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.card h3 {
+  margin-top: 0;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--bg-secondary);
+  padding-bottom: var(--spacing-md);
+}
+
+.card p {
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.card ul {
+  margin: var(--spacing-md) 0;
+  padding-left: 20px;
+}
+
+.card li {
+  margin: var(--spacing-sm) 0;
+}
+
+/* FORM */
+.form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-primary);
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px /* Intentional: badge/UI padding */ 12px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.95rem;
+  font-family: var(--font-family);
+  transition: all var(--transition);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
+}
+
+.form-group input[type="checkbox"] {
+  margin-right: var(--spacing-sm);
+  cursor: pointer;
+}
+
+.form-group label {
+  display: flex;
+  align-items: center;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+/* STATUS */
+.status-message {
+  padding: var(--spacing-md);
+  background-color: #e3f2fd;
+  border-left: 4px solid var(--primary);
+  color: #1565c0;
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-md);
+}
+
+.status-details {
+  padding: var(--spacing-md);
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  font-family: monospace;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* LINKS */
+#colab-link {
+  text-decoration: none;
+  margin-bottom: var(--spacing-lg);
+}
+
+/* HISTORY */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.history-item {
+  padding: var(--spacing-md);
+  background-color: var(--bg-secondary);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--border-radius);
+}
+
+.history-item-title {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.history-item-meta {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+/* TEMPLATES GRID */
+.templates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-md);
+}
+
+.template-card {
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  border: 2px solid var(--border-color);
+  transition: all var(--transition);
+}
+
+.template-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+}
+
+.template-card h4 {
+  margin: 0 0 var(--spacing-sm) 0;
+  color: var(--text-primary);
+}
+
+.template-card p {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: 0.9rem;
+}
+
+.template-card .button {
+  width: 100%;
+}
+
+/* DATA PREVIEW */
+.data-preview {
+  max-height: 400px;
+  overflow-y: auto;
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  font-family: monospace;
+  font-size: 0.85rem;
+}
+
+.data-preview pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* TEXT UTILITIES */
+.text-muted {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* BUTTONS */
+.button {
+  padding: 10px /* Intentional: badge/UI padding */ 16px;
+  border: none;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.button-primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.button-primary:hover {
+  background-color: #229954;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.button-secondary {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 2px solid var(--border-color);
+}
+
+.button-secondary:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* RESPONSIVO */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .colab-content {
+    padding: 0 var(--spacing-md) var(--spacing-md);
+  }
+
+  .templates-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: var(--spacing-md);
+  }
+}
+</style>
+
+<script>
+<?!= include("api-client.html"); ?>
+<?!= include("crud-service.html"); ?>
+
+class ColabPage {
+  constructor() {
+    this.studiesCrud = CRUDFactory.studies();
+    this.studies = [];
+    this.selectedStudyId = null;
+    this.analysisHistory = [];
+
+    this.initialize();
+  }
+
+  async initialize() {
+    try {
+      await this.loadStudies();
+      this.populateStudySelect();
+      this.loadAnalysisHistory();
+      this.attachEventListeners();
+    } catch (error) {
+      console.error('Initialize error:', error);
+      this.showError('Erro ao carregar dados');
+    }
+  }
+
+  async loadStudies() {
+    try {
+      const response = await this.studiesCrud.list();
+      this.studies = response.data || response || [];
+    } catch (error) {
+      console.error('Error loading studies:', error);
+    }
+  }
+
+  populateStudySelect() {
+    const select = document.getElementById('study-select');
+    const options = this.studies.map(s => 
+      `<option value="${s.id}">${s.name}</option>`
+    ).join('');
+    
+    select.innerHTML = '<option value="">Selecione um estudo...</option>' + options;
+    
+    select.addEventListener('change', (e) => {
+      this.selectedStudyId = e.target.value;
+      if (this.selectedStudyId) {
+        this.loadStudyPreview();
+      }
+    });
+  }
+
+  async loadStudyPreview() {
+    try {
+      const study = await this.studiesCrud.get(this.selectedStudyId);
+      const preview = document.getElementById('data-preview');
+      preview.innerHTML = `<pre>${JSON.stringify(study, null, 2)}</pre>`;
+    } catch (error) {
+      console.error('Error loading preview:', error);
+    }
+  }
+
+  async handleExportToColab() {
+    if (!this.selectedStudyId) {
+      if (typeof UI !== 'undefined') UI.Toast.warning('Selecione um estudo', 'Por favor, selecione um estudo antes de exportar.');
+      else console.warn('Por favor, selecione um estudo');
+      return;
+    }
+
+    const format = document.getElementById('format-select').value;
+    const includeRaw = document.getElementById('include-raw').checked;
+    const includeSummary = document.getElementById('include-summary').checked;
+    const includeMetadata = document.getElementById('include-metadata').checked;
+
+    try {
+      this.showStatus('📤 Exportando dados...');
+
+      const response = await api.post('/colab/export', {
+        studyId: this.selectedStudyId,
+        format,
+        includeRaw,
+        includeSummary,
+        includeMetadata
+      });
+
+      if (response.colabNotebookUrl) {
+        this.showStatus('✅ Exportação concluída!');
+        this.showColabLink(response.colabNotebookUrl);
+        this.addToHistory(this.selectedStudyId, format);
+      }
+
+    } catch (error) {
+      console.error('Export error:', error);
+      this.showStatus('❌ Erro na exportação: ' + error.message, 'error');
+    }
+  }
+
+  showStatus(message, type = 'success') {
+    const card = document.getElementById('export-status');
+    const msg = document.getElementById('status-message');
+    
+    card.style.display = 'block';
+    msg.textContent = message;
+    msg.style.borderColor = type === 'error' ? '#e74c3c' : var(--primary);
+    msg.style.backgroundColor = type === 'error' ? '#fee' : '#e3f2fd';
+    msg.style.color = type === 'error' ? '#c00' : '#1565c0';
+  }
+
+  showColabLink(url) {
+    const card = document.getElementById('colab-link-card');
+    const link = document.getElementById('colab-link');
+    
+    card.style.display = 'block';
+    link.href = url;
+  }
+
+  async addToHistory(studyId, format) {
+    const study = this.studies.find(s => s.id === studyId);
+    this.analysisHistory.unshift({
+      studyName: study.name,
+      format,
+      timestamp: new Date().toLocaleString('pt-BR')
+    });
+
+    // Manter apenas últimas 10
+    this.analysisHistory = this.analysisHistory.slice(0, 10);
+    this.renderHistory();
+  }
+
+  renderHistory() {
+    const container = document.getElementById('analysis-history');
+    
+    if (this.analysisHistory.length === 0) {
+      container.innerHTML = '<p class="text-muted">Nenhuma análise realizada ainda</p>';
+      return;
+    }
+
+    const html = this.analysisHistory.map((item, idx) => `
+      <div class="history-item">
+        <div class="history-item-title">${idx + 1}. ${item.studyName}</div>
+        <div class="history-item-meta">Formato: ${item.format} • ${item.timestamp}</div>
+      </div>
+    `).join('');
+
+    container.innerHTML = html;
+  }
+
+  loadAnalysisHistory() {
+    this.renderHistory();
+  }
+
+  loadTemplate(templateName) {
+    const templateUrls = {
+      eda: 'https://colab.research.google.com/notebooks/templates/canabica_eda.ipynb',
+      viz: 'https://colab.research.google.com/notebooks/templates/canabica_viz.ipynb',
+      modeling: 'https://colab.research.google.com/notebooks/templates/canabica_modeling.ipynb'
+    };
+
+    const url = templateUrls[templateName];
+    if (url) {
+      window.open(url, '_blank');
+    }
+  }
+
+  attachEventListeners() {
+    document.querySelectorAll('[data-click]').forEach(btn => {
+      const action = btn.getAttribute('data-click');
+      const template = btn.getAttribute('data-template');
+      
+      btn.addEventListener('click', () => {
+        if (action === 'handleExportToColab') {
+          this.handleExportToColab();
+        } else if (action === 'loadTemplate' && template) {
+          this.loadTemplate(template);
+        }
+      });
+    });
+  }
+
+  showError(message) {
+    console.error(message);
+  }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  new ColabPage();
+});
+</script>
+
+</body>
+</html>

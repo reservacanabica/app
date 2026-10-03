@@ -1,0 +1,624 @@
+<!--
+COMPONENTE: demo-integration.html
+PAPEL: Demonstração completa da integração frontend-backend.
+
+FUNCIONALIDADES:
+- CRUD completo de estudos
+- Autenticação e autorização
+- Componentes reativos
+- Cache e loading states
+- Error handling
+- Real-time updates
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo - Integração Frontend-Backend</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #f9fafb;
+      color: #1a1a1a;
+    }
+    
+    .demo-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: var(--canna-space-5);
+    }
+    
+    .demo-header {
+      background: white;
+      border-radius: 12px;
+      padding: var(--canna-space-6);
+      margin-bottom: var(--canna-space-6);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .demo-header h1 {
+      font-size: 28px;
+      margin-bottom: var(--canna-space-2);
+    }
+    
+    .demo-header p {
+      color: #6b7280;
+      font-size: 16px;
+    }
+    
+    .demo-grid {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: var(--canna-space-6);
+    }
+    
+    .demo-sidebar {
+      background: white;
+      border-radius: 12px;
+      padding: var(--canna-space-6);
+      height: fit-content;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .demo-sidebar h2 {
+      font-size: 18px;
+      margin-bottom: var(--canna-space-4);
+    }
+    
+    .demo-menu {
+      list-style: none;
+    }
+    
+    .demo-menu li {
+      margin-bottom: var(--canna-space-2);
+    }
+    
+    .demo-menu a {
+      display: block;
+      padding: 10px /* Intentional: badge/UI padding */ 16px;
+      color: #4b5563;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    
+    .demo-menu a:hover {
+      background: #f3f4f6;
+      color: #2563eb;
+    }
+    
+    .demo-menu a.active {
+      background: #dbeafe;
+      color: #2563eb;
+      font-weight: 500;
+    }
+    
+    .demo-main {
+      background: white;
+      border-radius: 12px;
+      padding: var(--canna-space-6);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      min-height: 600px;
+    }
+    
+    .demo-section {
+      display: none;
+    }
+    
+    .demo-section.active {
+      display: block;
+    }
+    
+    .demo-section h2 {
+      font-size: 22px;
+      margin-bottom: var(--canna-space-5);
+      padding-bottom: var(--canna-space-3);
+      border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .status-card {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--canna-space-4);
+      margin-bottom: var(--canna-space-6);
+    }
+    
+    .status-item {
+      padding: var(--canna-space-4);
+      background: #f9fafb;
+      border-radius: 6px;
+      border-left: 3px solid #2563eb;
+    }
+    
+    .status-item strong {
+      display: block;
+      font-size: 12px;
+      color: #6b7280;
+      text-transform: uppercase;
+      margin-bottom: var(--canna-space-1);
+    }
+    
+    .status-item span {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+    
+    .btn {
+      padding: 10px /* Intentional: badge/UI padding */ 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+    
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    
+    .btn-secondary:hover {
+      background: #e5e7eb;
+    }
+    
+    .code-block {
+      background: #1f2937;
+      color: #f9fafb;
+      padding: var(--canna-space-4);
+      border-radius: 6px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      margin: var(--canna-space-4) 0;
+    }
+    
+    .response-viewer {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: var(--canna-space-4);
+      margin-top: 16px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .response-viewer pre {
+      margin: 0;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    
+    .api-test-form {
+      display: flex;
+      gap: var(--canna-space-3);
+      margin: var(--canna-space-4) 0;
+    }
+    
+    .api-test-form input,
+    .api-test-form select {
+      flex: 1;
+      padding: var(--canna-space-2) 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    
+    .feature-list {
+      list-style: none;
+      margin: var(--canna-space-5) 0;
+    }
+    
+    .feature-list li {
+      padding: var(--canna-space-3) 16px;
+      background: #f9fafb;
+      border-left: 3px solid #10b981;
+      margin-bottom: 8px;
+      border-radius: 6px;
+    }
+    
+    .feature-list li::before {
+      content: '✓ ';
+      color: #10b981;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <div class="demo-header">
+      <h1>🔗 Integração Frontend-Backend</h1>
+      <p>Demonstração completa da arquitetura moderna do Canabica WebApp</p>
+    </div>
+    
+    <div class="demo-grid">
+      <aside class="demo-sidebar">
+        <h2>📋 Menu</h2>
+        <ul class="demo-menu">
+          <li><a href="#overview" class="active" data-section="overview">Visão Geral</a></li>
+          <li><a href="#architecture" data-section="architecture">Arquitetura</a></li>
+          <li><a href="#api-test" data-section="api-test">Teste de API</a></li>
+          <li><a href="#components" data-section="components">Componentes</a></li>
+          <li><a href="#state" data-section="state">Estado Global</a></li>
+          <li><a href="#examples" data-section="examples">Exemplos</a></li>
+        </ul>
+        
+        <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
+          <div class="status-item">
+            <strong>Status</strong>
+            <span id="connection-status">🟢 Online</span>
+          </div>
+        </div>
+      </aside>
+      
+      <main class="demo-main">
+        <!-- Overview Section -->
+        <section id="overview-section" class="demo-section active">
+          <h2>Visão Geral da Integração</h2>
+          
+          <div class="status-card">
+            <div class="status-item">
+              <strong>Backend</strong>
+              <span>52 arquivos .gs</span>
+            </div>
+            <div class="status-item">
+              <strong>Frontend</strong>
+              <span>50+ componentes</span>
+            </div>
+            <div class="status-item">
+              <strong>API Endpoints</strong>
+              <span id="endpoint-count">30+</span>
+            </div>
+            <div class="status-item">
+              <strong>Score Geral</strong>
+              <span>80.1/100</span>
+            </div>
+          </div>
+          
+          <h3>✨ Funcionalidades Implementadas</h3>
+          <ul class="feature-list">
+            <li><strong>ApiService (52_ApiService.gs):</strong> Camada unificada de API com validação, cache e rate limiting</li>
+            <li><strong>ApiClient (api-client.html):</strong> Cliente JavaScript moderno com retry logic e interceptors</li>
+            <li><strong>Component System (component-base.html):</strong> Web Components reativos com lifecycle hooks</li>
+            <li><strong>Store Global:</strong> Gerenciamento de estado reativo e previsível</li>
+            <li><strong>Autenticação:</strong> Sistema completo com tokens e refresh automático</li>
+            <li><strong>Cache Inteligente:</strong> Cache client e server-side com invalidação</li>
+            <li><strong>Error Handling:</strong> Tratamento robusto de erros em todas as camadas</li>
+            <li><strong>Loading States:</strong> Feedback visual automático em todas as operações</li>
+          </ul>
+          
+          <button class="btn btn-primary" onclick="testConnection()">🔄 Testar Conexão</button>
+          <button class="btn btn-secondary" onclick="viewArchitecture()">📐 Ver Arquitetura</button>
+        </section>
+        
+        <!-- Architecture Section -->
+        <section id="architecture-section" class="demo-section">
+          <h2>Arquitetura da Integração</h2>
+          
+          <h3>📦 Camadas</h3>
+          <div style="margin: var(--canna-space-5) 0;">
+            <pre class="code-block">
+┌─────────────────────────────────────────┐
+│         FRONTEND (HTML/JS)              │
+├─────────────────────────────────────────┤
+│  • Web Components (study-list, etc)     │
+│  • API Client (api-client.html)         │
+│  • Store Global (reactive state)        │
+│  • UI Components (loading, toast)       │
+└─────────────────┬───────────────────────┘
+                  │ HTTP/JSON
+┌─────────────────▼───────────────────────┐
+│      API LAYER (52_ApiService.gs)       │
+├─────────────────────────────────────────┤
+│  • Request validation                   │
+│  • Authentication/Authorization         │
+│  • Rate limiting                        │
+│  • Caching                              │
+│  • Response formatting                  │
+└─────────────────┬───────────────────────┘
+                  │
+┌─────────────────▼───────────────────────┐
+│       ROUTER (03_Router.gs)             │
+├─────────────────────────────────────────┤
+│  • Action routing                       │
+│  • Permission checking                  │
+│  • Handler delegation                   │
+└─────────────────┬───────────────────────┘
+                  │
+┌─────────────────▼───────────────────────┐
+│    SERVICES (Study, Experiment, etc)    │
+├─────────────────────────────────────────┤
+│  • Business logic                       │
+│  • Validation                           │
+│  • Repository calls                     │
+└─────────────────┬───────────────────────┘
+                  │
+┌─────────────────▼───────────────────────┐
+│    REPOSITORIES (StudyRepo, etc)        │
+├─────────────────────────────────────────┤
+│  • Data access                          │
+│  • CRUD operations                      │
+│  • Query building                       │
+└─────────────────┬───────────────────────┘
+                  │
+┌─────────────────▼───────────────────────┐
+│   GATEWAY (14_SpreadsheetGateway.gs)    │
+├─────────────────────────────────────────┤
+│  • Spreadsheet operations               │
+│  • Data transformation                  │
+│  • Connection management                │
+└─────────────────────────────────────────┘</pre>
+          </div>
+          
+          <h3>🔄 Fluxo de Requisição</h3>
+          <ol style="line-height: 2;">
+            <li><strong>Cliente faz chamada:</strong> <code>api.listStudies()</code></li>
+            <li><strong>API Client:</strong> Adiciona token, executa interceptors</li>
+            <li><strong>ApiService:</strong> Valida schema, verifica autenticação</li>
+            <li><strong>Router:</strong> Roteia para handler correto</li>
+            <li><strong>Service:</strong> Executa lógica de negócio</li>
+            <li><strong>Repository:</strong> Busca dados do Google Sheets</li>
+            <li><strong>Resposta:</strong> Formata e retorna JSON padronizado</li>
+            <li><strong>Cliente:</strong> Atualiza UI reativamente</li>
+          </ol>
+        </section>
+        
+        <!-- API Test Section -->
+        <section id="api-test-section" class="demo-section">
+          <h2>Teste de API</h2>
+          
+          <div class="api-test-form">
+            <select id="api-action">
+              <option value="system.ping">system.ping</option>
+              <option value="system.info">system.info</option>
+              <option value="system.health">system.health</option>
+              <option value="studies.list">studies.list</option>
+              <option value="experiments.list">experiments.list</option>
+              <option value="maturity.backend">maturity.backend</option>
+              <option value="maturity.frontend">maturity.frontend</option>
+            </select>
+            <button class="btn btn-primary" onclick="testApi()">▶️ Executar</button>
+            <button class="btn btn-secondary" onclick="clearResponse()">🗑️ Limpar</button>
+          </div>
+          
+          <div id="api-response" class="response-viewer" style="display: none;">
+            <pre id="api-response-content"></pre>
+          </div>
+        </section>
+        
+        <!-- Components Section -->
+        <section id="components-section" class="demo-section">
+          <h2>Componentes Reativos</h2>
+          
+          <h3>📦 Componente: study-list</h3>
+          <div class="code-block">
+&lt;study-list auto-load="true"&gt;&lt;/study-list&gt;
+          </div>
+          
+          <p>Demonstração do componente:</p>
+          <div style="border: 2px dashed #e5e7eb; border-radius: 12px; padding: var(--canna-space-5); margin: var(--canna-space-5) 0;">
+            <study-list auto-load="true"></study-list>
+          </div>
+          
+          <h3>🎯 Eventos do Componente</h3>
+          <ul class="feature-list">
+            <li><strong>studies-loaded:</strong> Disparado quando estudos são carregados</li>
+            <li><strong>study-selected:</strong> Disparado ao clicar em "Ver"</li>
+            <li><strong>study-edit:</strong> Disparado ao clicar em "Editar"</li>
+            <li><strong>study-create:</strong> Disparado ao clicar em "Novo Estudo"</li>
+            <li><strong>error:</strong> Disparado em caso de erro</li>
+          </ul>
+        </section>
+        
+        <!-- State Section -->
+        <section id="state-section" class="demo-section">
+          <h2>Estado Global</h2>
+          
+          <p>O estado global é gerenciado pelo <code>window.store</code>:</p>
+          
+          <div class="status-card">
+            <div class="status-item">
+              <strong>Autenticado</strong>
+              <span id="state-auth">—</span>
+            </div>
+            <div class="status-item">
+              <strong>Usuário</strong>
+              <span id="state-user">—</span>
+            </div>
+            <div class="status-item">
+              <strong>Loading</strong>
+              <span id="state-loading">—</span>
+            </div>
+            <div class="status-item">
+              <strong>Cache Entries</strong>
+              <span id="state-cache">—</span>
+            </div>
+          </div>
+          
+          <button class="btn btn-primary" onclick="refreshState()">🔄 Atualizar Estado</button>
+          <button class="btn btn-secondary" onclick="clearCache()">🗑️ Limpar Cache</button>
+          
+          <h3>📊 Estado Completo</h3>
+          <div class="response-viewer">
+            <pre id="state-viewer"></pre>
+          </div>
+        </section>
+        
+        <!-- Examples Section -->
+        <section id="examples-section" class="demo-section">
+          <h2>Exemplos de Código</h2>
+          
+          <h3>1️⃣ Fazer Login</h3>
+          <div class="code-block">
+// Login
+const response = await api.login('user@example.com', 'password');
+console.log('Usuário:', response.user);
+console.log('Token:', response.session.token);
+          </div>
+          
+          <h3>2️⃣ Listar Estudos</h3>
+          <div class="code-block">
+// Listar com filtros e paginação
+const studies = await api.listStudies(
+  { status: 'ACTIVE', search: 'canabis' },
+  { page: 1, pageSize: 20 }
+);
+console.log('Estudos:', studies);
+          </div>
+          
+          <h3>3️⃣ Criar Estudo</h3>
+          <div class="code-block">
+// Criar novo estudo
+const newStudy = await api.createStudy({
+  title: 'Novo Estudo',
+  description: 'Descrição do estudo',
+  status: 'DRAFT'
+});
+console.log('Criado:', newStudy);
+          </div>
+          
+          <h3>4️⃣ Usar Componente Reativo</h3>
+          <div class="code-block">
+// HTML
+&lt;study-list auto-load="true"&gt;&lt;/study-list&gt;
+
+// JavaScript - Escutar eventos
+const studyList = document.querySelector('study-list');
+studyList.addEventListener('study-selected', (e) => {
+  console.log('Estudo selecionado:', e.detail.id);
+});
+          </div>
+          
+          <h3>5️⃣ Gerenciar Estado</h3>
+          <div class="code-block">
+// Ler estado
+const state = store.getState();
+console.log('Usuário:', state.user);
+
+// Atualizar estado
+store.setState({ loading: true });
+
+// Escutar mudanças
+store.subscribe('user', (newUser, oldUser) => {
+  console.log('Usuário mudou:', newUser);
+});
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+  
+  <script>
+    // Navigation
+    document.querySelectorAll('.demo-menu a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const section = e.target.dataset.section;
+        
+        // Update menu
+        document.querySelectorAll('.demo-menu a').forEach(a => a.classList.remove('active'));
+        e.target.classList.add('active');
+        
+        // Update sections
+        document.querySelectorAll('.demo-section').forEach(s => s.classList.remove('active'));
+        document.getElementById(section + '-section').classList.add('active');
+      });
+    });
+    
+    // Test connection
+    async function testConnection() {
+      try {
+        window.showLoading('Testando conexão...');
+        const result = await window.api.ping();
+        window.hideLoading();
+        window.showToast('✅ Conexão OK: ' + JSON.stringify(result), 'success');
+      } catch (error) {
+        window.hideLoading();
+        window.showToast('❌ Erro: ' + error.message, 'error');
+      }
+    }
+    
+    // Test API
+    async function testApi() {
+      const action = document.getElementById('api-action').value;
+      const responseDiv = document.getElementById('api-response');
+      const responseContent = document.getElementById('api-response-content');
+      
+      try {
+        window.showLoading('Executando ' + action + '...');
+        const result = await window.api.call(action, {
+          skipAuth: action.startsWith('system.ping') || action.startsWith('system.info')
+        });
+        window.hideLoading();
+        
+        responseContent.textContent = JSON.stringify(result, null, 2);
+        responseDiv.style.display = 'block';
+        window.showToast('✅ Sucesso', 'success');
+      } catch (error) {
+        window.hideLoading();
+        responseContent.textContent = JSON.stringify({
+          error: error.message,
+          code: error.code,
+          category: error.category
+        }, null, 2);
+        responseDiv.style.display = 'block';
+        window.showToast('❌ Erro na requisição', 'error');
+      }
+    }
+    
+    function clearResponse() {
+      document.getElementById('api-response').style.display = 'none';
+    }
+    
+    // View architecture
+    function viewArchitecture() {
+      document.querySelector('[data-section="architecture"]').click();
+    }
+    
+    // Refresh state
+    function refreshState() {
+      const state = window.store.getState();
+      document.getElementById('state-auth').textContent = state.authenticated ? '✅ Sim' : '❌ Não';
+      document.getElementById('state-user').textContent = state.user ? state.user.email : 'Nenhum';
+      document.getElementById('state-loading').textContent = state.loading ? '⏳ Sim' : '✅ Não';
+      document.getElementById('state-cache').textContent = window.api.cache.size;
+      document.getElementById('state-viewer').textContent = JSON.stringify(state, null, 2);
+    }
+    
+    // Clear cache
+    function clearCache() {
+      window.api.clearCache();
+      window.showToast('Cache limpo', 'success');
+      refreshState();
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      refreshState();
+      
+      // Update state every 5 seconds
+      setInterval(refreshState, 5000);
+    });
+  </script>
+</body>
+</html>

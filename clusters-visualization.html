@@ -1,0 +1,999 @@
+<!--
+COMPONENTE: clusters-visualization.html
+PAPEL: Widget de visualização de clusters e heatmap de correlação de comorbidades
+
+PRINCIPAIS FUNCIONALIDADES:
+- Visualizar clusters de comorbidades similares
+- Scatter plot com Chart.js
+- Heatmap de correlação (Jaccard Index)
+- Lista interativa de clusters com membros
+- Pares altamente correlacionados
+
+INTEGRAÇÕES:
+- API: comorbidade.clusters
+- API: comorbidade.heatmap_correlacao
+- Chart.js para visualizações
+
+STATUS: v1.0 — Workflow #3
+DATA: 2026-10-01
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agrupamentos de Comorbidades</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f7fa;
+      padding: var(--canna-space-5);
+      color: #2c3e50;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    
+    header {
+      background: white;
+      padding: var(--canna-space-6);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: var(--canna-space-6);
+    }
+    
+    h1 {
+      font-size: 28px;
+      color: #2c3e50;
+      margin-bottom: var(--canna-space-2);
+      display: flex;
+      align-items: center;
+      gap: var(--canna-space-3);
+    }
+    
+    h1 .icon {
+      font-size: 32px;
+    }
+    
+    .subtitle {
+      color: #7f8c8d;
+      font-size: 16px;
+    }
+    
+    /* Loading & Error States */
+    .loading-state, .error-state, .empty-state {
+      background: white;
+      padding: var(--canna-space-12);
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--canna-space-4);
+    }
+    
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #e0e0e0;
+      border-top-color: #9b59b6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .error-state, .empty-state {
+      display: none;
+    }
+    
+    .error-state {
+      color: #e74c3c;
+    }
+    
+    .empty-state {
+      color: #7f8c8d;
+    }
+    
+    .empty-state .icon {
+      font-size: 64px;
+      margin-bottom: var(--canna-space-4);
+      opacity: 0.3;
+    }
+    
+    /* Content Area */
+    .content {
+      display: none;
+    }
+    
+    .content.visible {
+      display: block;
+    }
+    
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: var(--canna-space-5);
+      margin-bottom: var(--canna-space-6);
+    }
+    
+    .stat-card {
+      background: white;
+      padding: var(--canna-space-6);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: var(--canna-space-4);
+      transition: transform 0.2s;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+    
+    .stat-card .icon-wrapper {
+      width: 64px;
+      height: 64px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+    
+    .stat-card.clusters .icon-wrapper {
+      background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+    }
+    
+    .stat-card.comorbidades .icon-wrapper {
+      background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+    }
+    
+    .stat-card.pacientes .icon-wrapper {
+      background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+    }
+    
+    .stat-card .info h3 {
+      font-size: 14px;
+      color: #7f8c8d;
+      font-weight: 500;
+      margin-bottom: var(--canna-space-1);
+    }
+    
+    .stat-card .info .value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #2c3e50;
+      line-height: 1;
+    }
+    
+    /* Controls */
+    .controls {
+      background: white;
+      padding: var(--canna-space-5);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: var(--canna-space-6);
+      display: flex;
+      gap: var(--canna-space-4);
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px /* Intentional: micro-spacing */;
+    }
+    
+    .control-group label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #7f8c8d;
+    }
+    
+    .control-group input,
+    .control-group select {
+      padding: var(--canna-space-2) 12px;
+      border: 1px solid #dfe6e9;
+      border-radius: 6px;
+      font-size: 14px;
+      min-width: 120px;
+    }
+    
+    button {
+      padding: 10px /* Intentional: badge/button padding */ 20px;
+      background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(108, 92, 231, 0.4);
+    }
+    
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    /* Tabs */
+    .tabs {
+      background: white;
+      padding: 0;
+      border-radius: 12px 12px 0 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: flex;
+      overflow: hidden;
+    }
+    
+    .tab {
+      flex: 1;
+      padding: var(--canna-space-4);
+      text-align: center;
+      background: #f8f9fa;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 600;
+      color: #7f8c8d;
+    }
+    
+    .tab:hover {
+      background: #e9ecef;
+    }
+    
+    .tab.active {
+      background: white;
+      border-bottom-color: #6c5ce7;
+      color: #6c5ce7;
+    }
+    
+    .tab-content {
+      display: none;
+      background: white;
+      padding: var(--canna-space-6);
+      border-radius: 0 0 12px 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* Charts */
+    .chart-wrapper {
+      position: relative;
+      height: 500px;
+      margin-bottom: var(--canna-space-6);
+    }
+    
+    /* Clusters List */
+    .clusters-list {
+      display: grid;
+      gap: var(--canna-space-4);
+    }
+    
+    .cluster-card {
+      background: #f8f9fa;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      padding: var(--canna-space-5);
+      margin-bottom: var(--canna-space-4);
+      transition: all 0.2s;
+    }
+    
+    .cluster-card:hover {
+      border-color: #6c5ce7;
+      box-shadow: 0 4px 12px rgba(108, 92, 231, 0.15);
+    }
+    
+    .cluster-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      cursor: pointer;
+    }
+    
+    .cluster-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #2c3e50;
+      display: flex;
+      align-items: center;
+      gap: 10px /* Intentional: badge/button padding */;
+    }
+    
+    .cluster-badge {
+      display: inline-block;
+      padding: var(--canna-space-1) 12px;
+      background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+      color: white;
+      border-radius: var(--radius-full, 9999px);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .cluster-meta {
+      font-size: 14px;
+      color: #7f8c8d;
+      display: flex;
+      gap: var(--canna-space-4);
+    }
+    
+    .cluster-members {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--canna-space-3);
+      margin-top: var(--canna-space-3);
+    }
+    
+    .member-item {
+      background: white;
+      padding: var(--canna-space-3);
+      border-radius: 12px;
+      border-left: 4px solid #6c5ce7;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .member-id {
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    
+    .member-stats {
+      font-size: 12px;
+      color: #7f8c8d;
+    }
+    
+    /* Heatmap */
+    .heatmap-container {
+      overflow-x: auto;
+      margin-bottom: var(--canna-space-6);
+    }
+    
+    .heatmap-table {
+      border-collapse: collapse;
+      font-size: 11px;
+      min-width: 100%;
+    }
+    
+    .heatmap-table th,
+    .heatmap-table td {
+      width: 40px;
+      height: 40px;
+      text-align: center;
+      border: 1px solid #e9ecef;
+    }
+    
+    .heatmap-table th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    
+    .heatmap-cell {
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    
+    .heatmap-cell:hover {
+      transform: scale(1.1);
+      z-index: 10;
+      box-shadow: 0 0 8px rgba(0,0,0,0.2);
+    }
+    
+    .heatmap-cell[data-value="1.0000"] {
+      background: #6c5ce7;
+      color: white;
+    }
+    
+    /* Pares Correlacionados */
+    .correlations-list {
+      display: grid;
+      gap: var(--canna-space-3);
+    }
+    
+    .correlation-item {
+      background: white;
+      padding: var(--canna-space-4);
+      border-radius: 12px;
+      border-left: 4px solid #fd79a8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s;
+    }
+    
+    .correlation-item:hover {
+      box-shadow: 0 4px 12px rgba(253, 121, 168, 0.2);
+      transform: translateX(4px);
+    }
+    
+    .correlation-pair {
+      flex: 1;
+    }
+    
+    .correlation-ids {
+      font-size: 14px;
+      color: #7f8c8d;
+      margin-bottom: var(--canna-space-1);
+    }
+    
+    .correlation-strength {
+      font-size: 16px;
+      font-weight: 700;
+      color: #2c3e50;
+    }
+    
+    .correlation-badge {
+      padding: 6px /* Intentional: micro-spacing */ 14px;
+      background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+      color: white;
+      border-radius: var(--radius-full, 9999px);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .tabs {
+        flex-direction: column;
+      }
+      
+      .chart-wrapper {
+        height: 350px;
+      }
+      
+      .cluster-members {
+        grid-template-columns: 1fr;
+      }
+      
+      h1 {
+        font-size: 22px;
+      }
+    }
+    
+    /* Accessibility */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header role="banner">
+      <h1>
+        <i data-feather="git-branch" class="icon icon-lg" aria-hidden="true"></i>
+        Agrupamentos de Comorbidades
+      </h1>
+      <p class="subtitle">
+        Análise de clusters e correlações entre comorbidades usando Jaccard Index
+      </p>
+    </header>
+    
+    <!-- Loading State -->
+    <div class="loading-state" id="loadingState" role="status" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <p>Carregando análise de agrupamentos...</p>
+    </div>
+    
+    <!-- Error State -->
+    <div class="error-state" id="errorState" role="alert" aria-live="assertive">
+      <h2><i data-feather="x-circle" class="icon icon-md icon-danger" aria-hidden="true"></i> Erro ao carregar dados</h2>
+      <p id="errorMessage"></p>
+    </div>
+    
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" role="status">
+      <div class="icon"><i data-feather="microscope" class="icon icon-xl icon-muted" aria-hidden="true"></i></div>
+      <h2>Nenhum dado disponível</h2>
+      <p>Não há comorbidades registradas suficientes para análise de agrupamentos.</p>
+    </div>
+    
+    <!-- Content -->
+    <div class="content" id="content" role="main">
+      <!-- Stats Cards -->
+      <div class="stats-grid" role="region" aria-label="Estatísticas gerais">
+        <div class="stat-card clusters">
+          <div class="icon-wrapper" aria-hidden="true"><i data-feather="target" class="icon icon-lg" aria-hidden="true"></i></div>
+          <div class="info">
+            <h3>Total de Clusters</h3>
+            <div class="value" id="totalClusters">0</div>
+          </div>
+        </div>
+        
+        <div class="stat-card comorbidades">
+          <div class="icon-wrapper" aria-hidden="true"><i data-feather="pill" class="icon icon-lg" style="--feather-stroke-width: 2;" aria-hidden="true"></i></div>
+          <div class="info">
+            <h3>Comorbidades Analisadas</h3>
+            <div class="value" id="totalComorbidades">0</div>
+          </div>
+        </div>
+        
+        <div class="stat-card pacientes">
+          <div class="icon-wrapper" aria-hidden="true"><i data-feather="users" class="icon icon-lg" aria-hidden="true"></i></div>
+          <div class="info">
+            <h3>Pacientes na Base</h3>
+            <div class="value" id="totalPacientes">0</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Controls -->
+      <div class="controls" role="region" aria-label="Controles">
+        <div class="control-group">
+          <label for="numClustersInput">Número de Clusters</label>
+          <input 
+            type="number" 
+            id="numClustersInput" 
+            min="2" 
+            max="10" 
+            value="5"
+            aria-label="Número de clusters entre 2 e 10">
+        </div>
+        
+        <button 
+          id="recalcularBtn" 
+          onclick="recalcularClusters()"
+          aria-label="Recalcular clusters com novo número">
+          <i data-feather="refresh-cw" class="icon icon-sm" aria-hidden="true"></i> Recalcular Clusters
+        </button>
+      </div>
+      
+      <!-- Tabs -->
+      <div class="tabs" role="tablist">
+        <div class="tab active" role="tab" aria-selected="true" aria-controls="tab-clusters" onclick="switchTab('clusters')">
+          <i data-feather="target" class="icon icon-sm" aria-hidden="true"></i> Clusters
+        </div>
+        <div class="tab" role="tab" aria-selected="false" aria-controls="tab-heatmap" onclick="switchTab('heatmap')">
+          <i data-feather="grid" class="icon icon-sm" aria-hidden="true"></i> Heatmap
+        </div>
+        <div class="tab" role="tab" aria-selected="false" aria-controls="tab-correlacoes" onclick="switchTab('correlacoes')">
+          <i data-feather="link" class="icon icon-sm" aria-hidden="true"></i> Correlações
+        </div>
+      </div>
+      
+      <!-- Tab: Clusters -->
+      <div class="tab-content active" id="tab-clusters" role="tabpanel" aria-labelledby="tab-clusters-label">
+        <h2 id="tab-clusters-label" class="sr-only">Lista de Clusters</h2>
+        <div class="chart-wrapper" style="margin-bottom: var(--canna-space-8);">
+          <canvas id="scatterChart" aria-label="Gráfico de dispersão mostrando clusters de comorbidades"></canvas>
+        </div>
+        <div id="clustersList" class="clusters-list">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+      
+      <!-- Tab: Heatmap -->
+      <div class="tab-content" id="tab-heatmap" role="tabpanel" aria-labelledby="tab-heatmap-label">
+        <h2 id="tab-heatmap-label" class="sr-only">Heatmap de Correlação</h2>
+        <p style="margin-bottom: var(--canna-space-4); color: #7f8c8d;">
+          Intensidade da cor indica força da correlação (Jaccard Index) entre comorbidades.
+          Valores mais altos (mais escuros) indicam co-ocorrência frequente em pacientes.
+        </p>
+        <div class="heatmap-container" id="heatmapContainer">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+      
+      <!-- Tab: Correlações -->
+      <div class="tab-content" id="tab-correlacoes" role="tabpanel" aria-labelledby="tab-correlacoes-label">
+        <h2 id="tab-correlacoes-label" class="sr-only">Pares Correlacionados</h2>
+        <p style="margin-bottom: var(--canna-space-4); color: #7f8c8d;">
+          Pares de comorbidades com alto índice de Jaccard (> 0.3) — frequentemente presentes juntas em pacientes.
+        </p>
+        <div id="correlacoesList" class="correlations-list">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  
+  <script>
+    // ========================================================================
+    // STATE
+    // ========================================================================
+    let clustersData = null;
+    let heatmapData = null;
+    let scatterChart = null;
+    
+    // ========================================================================
+    // API CALLS
+    // ========================================================================
+    
+    function loadClusters(numClusters) {
+      return new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          .apiCall('comorbidade.clusters', { num_clusters: numClusters || 5 });
+      });
+    }
+    
+    function loadHeatmap() {
+      return new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          .apiCall('comorbidade.heatmap_correlacao', { min_occurrence: 2 });
+      });
+    }
+    
+    // ========================================================================
+    // INITIALIZATION
+    // ========================================================================
+    
+    async function init() {
+      try {
+        showLoading();
+        
+        const [clustersResponse, heatmapResponse] = await Promise.all([
+          loadClusters(5),
+          loadHeatmap()
+        ]);
+        
+        if (!clustersResponse.success) {
+          throw new Error(clustersResponse.message || 'Erro ao carregar clusters');
+        }
+        
+        if (!heatmapResponse.success) {
+          throw new Error(heatmapResponse.message || 'Erro ao carregar heatmap');
+        }
+        
+        clustersData = clustersResponse.data;
+        heatmapData = heatmapResponse.data;
+        
+        if (!clustersData.clusters || clustersData.clusters.length === 0) {
+          showEmpty();
+          return;
+        }
+        
+        renderStats();
+        renderScatterChart();
+        renderClustersList();
+        renderHeatmap();
+        renderCorrelations();
+        
+        showContent();
+        
+      } catch (error) {
+        console.error('Erro na inicialização:', error);
+        showError(error.message || 'Erro desconhecido ao carregar dados');
+      }
+    }
+    
+    // ========================================================================
+    // RENDERING
+    // ========================================================================
+    
+    function renderStats() {
+      document.getElementById('totalClusters').textContent = clustersData.clusters.length || 0;
+      document.getElementById('totalComorbidades').textContent = clustersData.total_comorbidades_analisadas || 0;
+      document.getElementById('totalPacientes').textContent = clustersData.total_pacientes || 0;
+    }
+    
+    function renderScatterChart() {
+      const ctx = document.getElementById('scatterChart').getContext('2d');
+      if (scatterChart) scatterChart.destroy();
+      
+      // Preparar datasets por cluster
+      const datasets = clustersData.clusters.map((cluster, idx) => {
+        const colors = [
+          'rgba(108, 92, 231, 0.8)',
+          'rgba(253, 121, 168, 0.8)',
+          'rgba(116, 185, 255, 0.8)',
+          'rgba(0, 184, 148, 0.8)',
+          'rgba(253, 203, 110, 0.8)',
+          'rgba(214, 48, 49, 0.8)',
+          'rgba(108, 117, 125, 0.8)',
+          'rgba(162, 155, 254, 0.8)',
+          'rgba(255, 107, 107, 0.8)',
+          'rgba(86, 204, 242, 0.8)'
+        ];
+        
+        return {
+          label: `Cluster ${cluster.cluster_id}`,
+          data: cluster.membros.map((m, i) => ({
+            x: idx + (Math.random() * 0.6 - 0.3), // Dispersão horizontal por cluster
+            y: m.total_pacientes
+          })),
+          backgroundColor: colors[idx % colors.length],
+          pointRadius: 8,
+          pointHoverRadius: 12
+        };
+      });
+      
+      scatterChart = new Chart(ctx, {
+        type: 'scatter',
+        data: { datasets: datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top'
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `Cluster ${context.dataset.label} | ${context.parsed.y} pacientes`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Cluster ID'
+              },
+              ticks: {
+                callback: function(value) {
+                  return `C${Math.round(value) + 1}`;
+                }
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Total de Pacientes'
+              },
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+    
+    function renderClustersList() {
+      const container = document.getElementById('clustersList');
+      
+      container.innerHTML = clustersData.clusters.map(c => `
+        <div class="cluster-card">
+          <div class="cluster-header">
+            <div class="cluster-title">
+              <span>Cluster ${c.cluster_id}</span>
+              <span class="cluster-badge">${c.total_membros} comorbidades</span>
+            </div>
+            <div class="cluster-meta">
+              <span><i data-feather="users" class="icon icon-sm" aria-hidden="true"></i> ${c.total_pacientes_impactados} pacientes</span>
+              <span><i data-feather="target" class="icon icon-sm" aria-hidden="true"></i> Centroide: ID ${c.centroid_comorbidade_id}</span>
+            </div>
+          </div>
+          <div class="cluster-members">
+            ${c.membros.map(m => `
+              <div class="member-item">
+                <div>
+                  <div class="member-id">Comorbidade #${m.comorbidade_id}</div>
+                  <div class="member-stats">${m.total_pacientes} pacientes</div>
+                </div>
+                <div class="member-stats">
+                  Similaridade: ${(parseFloat(m.similaridade_ao_centroide) * 100).toFixed(1)}%
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+      
+      if (window.refreshFeatherIcons) window.refreshFeatherIcons();
+    }
+    
+    function renderHeatmap() {
+      const container = document.getElementById('heatmapContainer');
+      const matriz = heatmapData.matriz;
+      const ids = heatmapData.comorbidades_ids;
+      
+      if (!matriz || matriz.length === 0) {
+        container.innerHTML = '<p>Nenhum dado para heatmap</p>';
+        return;
+      }
+      
+      let html = '<table class="heatmap-table" role="table" aria-label="Matriz de correlação"><thead><tr><th></th>';
+      
+      // Header
+      ids.forEach(id => {
+        html += `<th scope="col">${id}</th>`;
+      });
+      html += '</tr></thead><tbody>';
+      
+      // Rows
+      matriz.forEach((row, i) => {
+        html += `<tr><th scope="row">${ids[i]}</th>`;
+        row.forEach((value, j) => {
+          const intensity = Math.round(value * 255);
+          const color = `rgb(${255 - intensity}, ${255 - intensity}, 255)`;
+          html += `<td class="heatmap-cell" 
+                       style="background-color: ${color}; ${value > 0.5 ? 'color: white;' : ''}" 
+                       data-value="${value.toFixed(4)}"
+                       title="ID ${ids[i]} ↔ ID ${ids[j]}: ${value.toFixed(3)}">
+                    ${value.toFixed(2)}
+                  </td>`;
+        });
+        html += '</tr>';
+      });
+      
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+    
+    function renderCorrelations() {
+      const container = document.getElementById('correlacoesList');
+      const pares = heatmapData.pares_altamente_correlacionados || [];
+      
+      if (pares.length === 0) {
+        container.innerHTML = '<p>Nenhum par com alta correlação encontrado (Jaccard > 0.3)</p>';
+        return;
+      }
+      
+      container.innerHTML = pares.map(p => `
+        <div class="correlation-item">
+          <div class="correlation-pair">
+            <div class="correlation-ids">
+              Comorbidade #${p.comorbidade_1} ↔ Comorbidade #${p.comorbidade_2}
+            </div>
+            <div class="correlation-strength">
+              Jaccard Index: ${p.jaccard_index.toFixed(4)}
+            </div>
+          </div>
+          <div class="correlation-badge">
+            ${(p.jaccard_index * 100).toFixed(1)}% similaridade
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    // ========================================================================
+    // INTERACTIONS
+    // ========================================================================
+    
+    async function recalcularClusters() {
+      try {
+        const numClusters = parseInt(document.getElementById('numClustersInput').value);
+        
+        if (numClusters < 2 || numClusters > 10) {
+          alert('Número de clusters deve estar entre 2 e 10');
+          return;
+        }
+        
+        document.getElementById('recalcularBtn').disabled = true;
+        document.getElementById('recalcularBtn').textContent = '⏳ Calculando...';
+        
+        const response = await loadClusters(numClusters);
+        
+        if (!response.success) {
+          throw new Error(response.message);
+        }
+        
+        clustersData = response.data;
+        
+        renderStats();
+        renderScatterChart();
+        renderClustersList();
+        
+        document.getElementById('recalcularBtn').disabled = false;
+        document.getElementById('recalcularBtn').innerHTML = '<i data-feather="refresh-cw" class="icon icon-sm" aria-hidden="true"></i> Recalcular Clusters';
+        if (window.refreshFeatherIcons) window.refreshFeatherIcons();
+        
+      } catch (error) {
+        console.error('Erro ao recalcular:', error);
+        alert('Erro ao recalcular clusters: ' + error.message);
+        document.getElementById('recalcularBtn').disabled = false;
+        document.getElementById('recalcularBtn').innerHTML = '<i data-feather="refresh-cw" class="icon icon-sm" aria-hidden="true"></i> Recalcular Clusters';
+        if (window.refreshFeatherIcons) window.refreshFeatherIcons();
+      }
+    }
+    
+    function switchTab(tabName) {
+      // Update tabs
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+        tab.setAttribute('aria-selected', 'false');
+      });
+      
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      event.target.classList.add('active');
+      event.target.setAttribute('aria-selected', 'true');
+      document.getElementById('tab-' + tabName).classList.add('active');
+    }
+    
+    // ========================================================================
+    // UTILITIES
+    // ========================================================================
+    
+    function showLoading() {
+      document.getElementById('loadingState').style.display = 'flex';
+      document.getElementById('errorState').style.display = 'none';
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('content').classList.remove('visible');
+    }
+    
+    function showError(message) {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorState').style.display = 'block';
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('content').classList.remove('visible');
+      document.getElementById('errorMessage').textContent = message;
+    }
+    
+    function showEmpty() {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorState').style.display = 'none';
+      document.getElementById('emptyState').style.display = 'block';
+      document.getElementById('content').classList.remove('visible');
+    }
+    
+    function showContent() {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorState').style.display = 'none';
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('content').classList.add('visible');
+    }
+    
+    // ========================================================================
+    // ENTRY POINT
+    // ========================================================================
+    
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>

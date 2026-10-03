@@ -1,0 +1,787 @@
+<!--
+COMPONENTE: analise-cultivo.html
+PAPEL: Widget de análise de métodos de cultivo baseado em comorbidades do paciente
+
+PRINCIPAIS FUNCIONALIDADES:
+- Visualizar distribuição de métodos de cultivo recomendados
+- Exibir recomendação principal com percentual
+- Gráfico comparativo com Chart.js
+- Tabela detalhada com mecanismos agro-saúde
+- Badges visuais por método de cultivo
+
+INTEGRAÇÕES:
+- API: comorbidade.analise_cultivo
+- Chart.js para visualizações
+
+STATUS: v1.0 — Workflow #1 completo
+DATA: 2026-10-01
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Análise de Cultivo Personalizada</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f7fa;
+      padding: var(--canna-space-5);
+      color: #2c3e50;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    header {
+      background: white;
+      padding: var(--canna-space-6);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: var(--canna-space-6);
+    }
+    
+    h1 {
+      font-size: 28px;
+      color: #2c3e50;
+      margin-bottom: var(--canna-space-2);
+    }
+    
+    .subtitle {
+      color: #7f8c8d;
+      font-size: 16px;
+    }
+    
+    /* Loading & Error States */
+    .loading-state, .error-state {
+      background: white;
+      padding: var(--canna-space-12);
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--canna-space-4);
+    }
+    
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #e0e0e0;
+      border-top-color: #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .error-state {
+      display: none;
+      color: #e74c3c;
+    }
+    
+    /* Content Area */
+    .content {
+      display: none;
+    }
+    
+    .content.visible {
+      display: block;
+    }
+    
+    /* Recomendação Principal */
+    .recomendacao-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: var(--canna-space-8);
+      border-radius: 16px;
+      margin-bottom: var(--canna-space-6);
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+    }
+    
+    .recomendacao-card h2 {
+      font-size: 18px;
+      opacity: 0.9;
+      margin-bottom: var(--canna-space-4);
+      font-weight: 500;
+    }
+    
+    .cultivo-badge-large {
+      display: flex;
+      align-items: center;
+      gap: var(--canna-space-4);
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      padding: var(--canna-space-6);
+      border-radius: 12px;
+      margin-bottom: var(--canna-space-4);
+    }
+    
+    .cultivo-badge-large .icon {
+      font-size: 48px;
+      line-height: 1;
+    }
+    
+    .cultivo-badge-large .info {
+      flex: 1;
+    }
+    
+    .cultivo-badge-large .nome {
+      display: block;
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .cultivo-badge-large .descricao {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    
+    .cultivo-badge-large .percentual {
+      font-size: 36px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.3);
+      padding: var(--canna-space-3) var(--canna-space-5);
+      border-radius: 12px;
+    }
+    
+    .recomendacao-texto {
+      font-size: 15px;
+      opacity: 0.95;
+    }
+    
+    /* Grid Layout */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--canna-space-6);
+      margin-bottom: var(--canna-space-6);
+    }
+    
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .card {
+      background: white;
+      padding: var(--canna-space-6);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .card h3 {
+      font-size: 18px;
+      margin-bottom: var(--canna-space-5);
+      color: #2c3e50;
+    }
+    
+    /* Distribuição Cards */
+    .distribuicao-grid {
+      display: grid;
+      gap: var(--canna-space-4);
+    }
+    
+    .substrate-card {
+      display: flex;
+      align-items: center;
+      gap: var(--canna-space-3);
+      padding: var(--canna-space-4);
+      border-radius: 12px;
+      background: #f8f9fa;
+      border-left: 4px solid;
+    }
+    
+    .substrate-card.solo-vivo {
+      border-left-color: #8BC34A;
+      background: linear-gradient(90deg, rgba(139, 195, 74, 0.1) 0%, #f8f9fa 100%);
+    }
+    
+    .substrate-card.hidroponia {
+      border-left-color: #03A9F4;
+      background: linear-gradient(90deg, rgba(3, 169, 244, 0.1) 0%, #f8f9fa 100%);
+    }
+    
+    .substrate-card.trichoderma {
+      border-left-color: #9C27B0;
+      background: linear-gradient(90deg, rgba(156, 39, 176, 0.1) 0%, #f8f9fa 100%);
+    }
+    
+    .substrate-card .icon {
+      font-size: 32px;
+    }
+    
+    .substrate-card .info {
+      flex: 1;
+    }
+    
+    .substrate-card .nome {
+      font-weight: 600;
+      font-size: 15px;
+      color: #2c3e50;
+      display: block;
+      margin-bottom: 4px;
+    }
+    
+    .substrate-card .stats {
+      font-size: 13px;
+      color: #7f8c8d;
+    }
+    
+    .substrate-card .percentual {
+      font-size: 24px;
+      font-weight: 700;
+      color: #2c3e50;
+    }
+    
+    /* Chart Container */
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin-top: var(--canna-space-4); /* Intentional: chart rendering margin */
+    }
+    
+    /* Tabela Detalhada */
+    .table-container {
+      overflow-x: auto;
+      margin-top: var(--canna-space-5);
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    
+    thead {
+      background: #f8f9fa;
+    }
+    
+    th {
+      padding: var(--canna-space-3);
+      text-align: left;
+      font-weight: 600;
+      color: #2c3e50;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    
+    td {
+      padding: var(--canna-space-3);
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: top;
+    }
+    
+    tr:hover {
+      background: #f8f9fa;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 4px var(--canna-space-3); /* Intentional: badge horizontal padding */
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    
+    .badge.quimiotipo {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+    
+    .badge.grau-1 {
+      background: #ffebee;
+      color: #c62828;
+    }
+    
+    .badge.grau-2 {
+      background: #fff3e0;
+      color: #e65100;
+    }
+    
+    .badge.grau-3 {
+      background: #fff9c4;
+      color: #f57f17;
+    }
+    
+    .badge.grau-4 {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    
+    .mecanismo-toggle {
+      cursor: pointer;
+      color: #3498db;
+      text-decoration: underline;
+      font-size: 13px;
+    }
+    
+    .mecanismo-toggle:hover {
+      color: #2980b9;
+    }
+    
+    .mecanismo-text {
+      display: none;
+      margin-top: var(--canna-space-2);
+      padding: var(--canna-space-3);
+      background: #f8f9fa;
+      border-radius: 6px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #555;
+    }
+    
+    .mecanismo-text.visible {
+      display: block;
+    }
+    
+    /* Priority Badge */
+    .priority {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #667eea;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    /* Screen Reader Only */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header role="banner">
+      <h1 id="page-title"><i data-feather="leaf" class="icon icon-lg" aria-hidden="true"></i> Análise de Cultivo Personalizada</h1>
+      <p class="subtitle">Recomendações baseadas nas suas comorbidades</p>
+    </header>
+    
+    <!-- Loading State -->
+    <div class="loading-state" id="loadingState" role="status" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <p>Carregando análise personalizada...</p>
+    </div>
+    
+    <!-- Error State -->
+    <div class="error-state" id="errorState" role="alert" aria-live="assertive">
+      <p id="errorMessage"></p>
+      <button onclick="location.reload()" style="margin-top: var(--canna-space-4); padding: var(--canna-space-2) var(--canna-space-4); cursor: pointer;">
+        Tentar Novamente
+      </button>
+    </div>
+    
+    <!-- Content -->
+    <div class="content" id="mainContent" role="main" aria-labelledby="page-title">
+      
+      <!-- Recomendação Principal -->
+      <section class="recomendacao-card" role="region" aria-labelledby="recomendacao-title">
+        <h2 id="recomendacao-title">✨ Método Mais Recomendado para Você</h2>
+        <div class="cultivo-badge-large" id="recomendacaoBadge">
+          <!-- Preenchido dinamicamente -->
+        </div>
+        <p class="recomendacao-texto" id="recomendacaoTexto"></p>
+      </section>
+      
+      <!-- Grid: Distribuição + Gráfico -->
+      <div class="grid">
+        
+        <!-- Distribuição por Método -->
+        <div class="card">
+          <h3><i data-feather="bar-chart-2" class="icon icon-md" aria-hidden="true"></i> Distribuição por Método</h3>
+          <div class="distribuicao-grid" id="distribuicaoGrid">
+            <!-- Preenchido dinamicamente -->
+          </div>
+        </div>
+        
+        <!-- Gráfico -->
+        <div class="card">
+          <h3><i data-feather="trending-up" class="icon icon-md" aria-hidden="true"></i> Visualização Comparativa</h3>
+          <div class="chart-container">
+            <canvas id="cultivoChart" role="img" aria-label="Gráfico de barras mostrando distribuição de métodos de cultivo"></canvas>
+          </div>
+        </div>
+        
+      </div>
+      
+      <!-- Tabela Detalhada -->
+      <div class="card">
+        <h3><i data-feather="microscope" class="icon icon-md" aria-hidden="true"></i> Detalhamento por Comorbidade</h3>
+        <div class="table-container">
+          <table role="table" aria-label="Tabela detalhada de comorbidades e métodos de cultivo">
+            <thead>
+              <tr>
+                <th scope="col">Prioridade</th>
+                <th scope="col">Comorbidade</th>
+                <th scope="col">Quimiotipo</th>
+                <th scope="col">Cultivo Ideal</th>
+                <th scope="col">Grau CoA</th>
+                <th scope="col">Mecanismo</th>
+              </tr>
+            </thead>
+            <tbody id="detalhamentoTableBody">
+              <!-- Preenchido dinamicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  
+  <script>
+    (function() {
+      'use strict';
+      
+      // ========================================================================
+      // STATE
+      // ========================================================================
+      
+      let pacienteId = null;
+      let analiseData = null;
+      
+      // ========================================================================
+      // HELPERS
+      // ========================================================================
+      
+      function getIconeSolo(solo) {
+        const icones = {
+          'SOLO_VIVO_ORGANICO': 'leaf',
+          'HIDROPONIA_MINERAL': 'droplet',
+          'SUBSTRATO_TRICHODERMA': 'flask',
+          'AVALIACAO_INDIVIDUAL': 'microscope'
+        };
+        return icones[solo] || 'leaf';
+      }
+      
+      function formatarNomeSolo(solo) {
+        const nomes = {
+          'SOLO_VIVO_ORGANICO': 'Solo Vivo Orgânico',
+          'HIDROPONIA_MINERAL': 'Hidroponia Mineral',
+          'SUBSTRATO_TRICHODERMA': 'Substrato Trichoderma',
+          'AVALIACAO_INDIVIDUAL': 'Avaliação Individual'
+        };
+        return nomes[solo] || solo.replace(/_/g, ' ');
+      }
+      
+      function getClasseSolo(solo) {
+        const classes = {
+          'SOLO_VIVO_ORGANICO': 'solo-vivo',
+          'HIDROPONIA_MINERAL': 'hidroponia',
+          'SUBSTRATO_TRICHODERMA': 'trichoderma',
+          'AVALIACAO_INDIVIDUAL': 'individual'
+        };
+        return classes[solo] || '';
+      }
+      
+      function getCorSolo(solo) {
+        const cores = {
+          'SOLO_VIVO_ORGANICO': 'rgba(139, 195, 74, 0.8)',
+          'HIDROPONIA_MINERAL': 'rgba(3, 169, 244, 0.8)',
+          'SUBSTRATO_TRICHODERMA': 'rgba(156, 39, 176, 0.8)',
+          'AVALIACAO_INDIVIDUAL': 'rgba(255, 152, 0, 0.8)'
+        };
+        return cores[solo] || 'rgba(96, 125, 139, 0.8)';
+      }
+      
+      function getClasseGrau(grau) {
+        if (grau.indexOf('GRAU_1') !== -1) return 'grau-1';
+        if (grau.indexOf('GRAU_2') !== -1) return 'grau-2';
+        if (grau.indexOf('GRAU_3') !== -1) return 'grau-3';
+        if (grau.indexOf('GRAU_4') !== -1) return 'grau-4';
+        return '';
+      }
+      
+      function getPacienteIdFromSession() {
+        // Tentar obter do sessionStorage
+        const user = sessionStorage.getItem('user');
+        if (user) {
+          try {
+            const userData = JSON.parse(user);
+            return userData.id;
+          } catch (e) {
+            console.error('Erro ao parsear user:', e);
+          }
+        }
+        
+        // Fallback: usar query parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('pacienteId');
+      }
+      
+      function getSessionToken() {
+        return sessionStorage.getItem('token') || '';
+      }
+      
+      // ========================================================================
+      // API CALLS
+      // ========================================================================
+      
+      function carregarAnalise() {
+        pacienteId = getPacienteIdFromSession();
+        
+        if (!pacienteId) {
+          mostrarErro('Paciente não identificado. Faça login novamente.');
+          return;
+        }
+        
+        google.script.run
+          .withSuccessHandler(function(response) {
+            if (response.ok && response.data) {
+              analiseData = response.data;
+              renderizarAnalise(analiseData);
+            } else {
+              mostrarErro(response.error || 'Erro ao carregar análise');
+            }
+          })
+          .withFailureHandler(function(error) {
+            mostrarErro('Erro de conexão: ' + error.message);
+          })
+          .apiCall({
+            action: 'comorbidade.analise_cultivo',
+            token: getSessionToken(),
+            data: { pacienteId: pacienteId }
+          });
+      }
+      
+      // ========================================================================
+      // RENDERING
+      // ========================================================================
+      
+      function renderizarAnalise(data) {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('mainContent').classList.add('visible');
+        
+        // Recomendação Principal
+        renderizarRecomendacao(data.recomendacao_principal, data.total_comorbidades);
+        
+        // Distribuição
+        renderizarDistribuicao(data.distribuicao);
+        
+        // Gráfico
+        renderizarGrafico(data.distribuicao);
+        
+        // Tabela
+        renderizarTabela(data.detalhamento);
+      }
+      
+      function renderizarRecomendacao(rec, total) {
+        const badge = document.getElementById('recomendacaoBadge');
+        const texto = document.getElementById('recomendacaoTexto');
+        
+        badge.innerHTML = 
+          '<i data-feather="' + getIconeSolo(rec.metodo) + '" class="icon icon-lg" aria-hidden="true"></i>' +
+          '<div class="info">' +
+            '<span class="nome">' + formatarNomeSolo(rec.metodo) + '</span>' +
+            '<span class="descricao">' + rec.descricao + '</span>' +
+          '</div>' +
+          '<span class="percentual" aria-label="' + rec.percentual + ' por cento">' + 
+            rec.percentual + '%' +
+          '</span>';
+        
+        if (window.refreshFeatherIcons) window.refreshFeatherIcons();
+        
+        texto.textContent = 
+          rec.count + ' de ' + total + ' comorbidades recomendam este método de cultivo';
+      }
+      
+      function renderizarDistribuicao(distribuicao) {
+        const grid = document.getElementById('distribuicaoGrid');
+        grid.innerHTML = '';
+        
+        // Ordenar por count (decrescente)
+        const metodos = Object.keys(distribuicao).sort(function(a, b) {
+          return distribuicao[b].count - distribuicao[a].count;
+        });
+        
+        metodos.forEach(function(metodo) {
+          const dados = distribuicao[metodo];
+          
+          const card = document.createElement('div');
+          card.className = 'substrate-card ' + getClasseSolo(metodo);
+          card.innerHTML = 
+            '<i data-feather="' + getIconeSolo(metodo) + '" class="icon icon-md" aria-hidden="true"></i>' +
+            '<div class="info">' +
+              '<span class="nome">' + formatarNomeSolo(metodo) + '</span>' +
+              '<span class="stats">' + dados.count + ' comorbidades</span>' +
+            '</div>' +
+            '<span class="percentual">' + dados.percentual + '%</span>';
+          
+          grid.appendChild(card);
+        });
+        
+        if (window.refreshFeatherIcons) window.refreshFeatherIcons();
+      }
+      
+      function renderizarGrafico(distribuicao) {
+        const ctx = document.getElementById('cultivoChart').getContext('2d');
+        
+        const labels = [];
+        const valores = [];
+        const cores = [];
+        
+        // Ordenar por count (decrescente)
+        const metodos = Object.keys(distribuicao).sort(function(a, b) {
+          return distribuicao[b].count - distribuicao[a].count;
+        });
+        
+        metodos.forEach(function(metodo) {
+          labels.push(formatarNomeSolo(metodo));
+          valores.push(distribuicao[metodo].count);
+          cores.push(getCorSolo(metodo));
+        });
+        
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Número de Comorbidades',
+              data: valores,
+              backgroundColor: cores,
+              borderColor: cores.map(c => c.replace('0.8', '1')),
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const count = context.parsed.y;
+                    const percentual = distribuicao[metodos[context.dataIndex]].percentual;
+                    return count + ' comorbidades (' + percentual + '%)';
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { 
+                  stepSize: 1,
+                  precision: 0
+                },
+                title: {
+                  display: true,
+                  text: 'Quantidade'
+                }
+              }
+            }
+          }
+        });
+      }
+      
+      function renderizarTabela(detalhamento) {
+        const tbody = document.getElementById('detalhamentoTableBody');
+        tbody.innerHTML = '';
+        
+        detalhamento.forEach(function(item, index) {
+          const row = document.createElement('tr');
+          
+          const mecanismoId = 'mecanismo-' + index;
+          
+          row.innerHTML = 
+            '<td><span class="priority" title="Prioridade ' + item.prioridade + '">' + 
+              item.prioridade + 
+            '</span></td>' +
+            '<td><strong>' + item.nome + '</strong></td>' +
+            '<td><span class="badge quimiotipo">' + item.quimiotipo + '</span></td>' +
+            '<td><i data-feather="' + getIconeSolo(item.cultivo_ideal) + '" class="icon icon-sm" aria-hidden="true"></i> ' + 
+              formatarNomeSolo(item.cultivo_ideal) + '</td>' +
+            '<td><span class="badge ' + getClasseGrau(item.grau_coa) + '">' + 
+              item.grau_coa.replace(/_/g, ' ') + '</span></td>' +
+            '<td>' +
+              '<span class="mecanismo-toggle" onclick="toggleMecanismo(\'' + mecanismoId + '\')" ' +
+                'role="button" tabindex="0" ' +
+                'onkeypress="if(event.key===\'Enter\')toggleMecanismo(\'' + mecanismoId + '\')">' +
+                'Ver mecanismo ▼' +
+              '</span>' +
+              '<div class="mecanismo-text" id="' + mecanismoId + '">' +
+                item.mecanismo +
+              '</div>' +
+            '</td>';
+          
+          tbody.appendChild(row);
+        });
+        
+        if (window.refreshFeatherIcons) window.refreshFeatherIcons();
+      }
+      
+      // ========================================================================
+      // ERROR HANDLING
+      // ========================================================================
+      
+      function mostrarErro(mensagem) {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('errorState').style.display = 'block';
+        document.getElementById('errorMessage').textContent = mensagem;
+      }
+      
+      // ========================================================================
+      // GLOBAL FUNCTIONS
+      // ========================================================================
+      
+      window.toggleMecanismo = function(id) {
+        const element = document.getElementById(id);
+        if (element) {
+          element.classList.toggle('visible');
+          const toggle = element.previousElementSibling;
+          if (toggle) {
+            toggle.textContent = element.classList.contains('visible') ?
+              'Ocultar mecanismo ▲' : 'Ver mecanismo ▼';
+          }
+        }
+      };
+      
+      // ========================================================================
+      // INIT
+      // ========================================================================
+      
+      document.addEventListener('DOMContentLoaded', function() {
+        carregarAnalise();
+      });
+      
+    })();
+  </script>
+</body>
+</html>

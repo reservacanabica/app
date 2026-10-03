@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrar Leitura Ambiental - Reserva Canábica</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  
+  <!-- Incluir CSS customizado do sistema -->
+  <?!= include('quality-components-css') ?>
+  
+  <style>
+    .form-input:focus {
+      outline: none;
+      border-color: #10b981;
+      ring: 2px;
+      ring-color: #10b98133;
+    }
+    .vpd-display {
+      transition: all 0.3s ease;
+    }
+    .vpd-ideal {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+    }
+    .vpd-warning {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+    }
+    .vpd-danger {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+    }
+  </style>
+</head>
+<body class="bg-gray-50" x-data="cultivoLogForm()">
+  
+  <!-- Header -->
+  <header class="bg-green-600 text-white shadow-lg">
+    <div class="container mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <button @click="voltarDashboard()" class="p-2 hover:bg-green-700 rounded-lg transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+          </button>
+          <div>
+            <h1 class="text-2xl font-bold">Registrar Leitura Ambiental</h1>
+            <p class="text-green-100 text-sm">Monitore temperatura, umidade e VPD</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 py-8 max-w-4xl">
+    
+    <!-- Success Message -->
+    <div x-show="successMessage" x-transition class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+      <div class="flex items-center">
+        <svg class="w-6 h-6 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <p class="text-green-800 font-medium" x-text="successMessage"></p>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div x-show="errorMessage" x-transition class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+      <div class="flex items-center">
+        <svg class="w-6 h-6 text-red-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+        <p class="text-red-800 font-medium" x-text="errorMessage"></p>
+      </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+      
+      <!-- VPD Display Header -->
+      <div id="displayVpd" class="vpd-display p-8 text-center" :class="vpdClass">
+        <div class="mb-2">
+          <p class="text-sm font-medium opacity-90 uppercase tracking-wider">Déficit de Pressão de Vapor (VPD)</p>
+        </div>
+        <div class="flex items-center justify-center space-x-4">
+          <div>
+            <p class="text-6xl font-bold" x-text="vpd.toFixed(2)"></p>
+            <p class="text-xl font-medium mt-1">kPa</p>
+          </div>
+          <div class="text-left">
+            <p class="text-sm font-medium" x-text="vpdStatus"></p>
+            <p class="text-xs opacity-90 mt-1" x-text="vpdRecomendacao"></p>
+          </div>
+        </div>
+        
+        <!-- VPD Scale -->
+        <div class="mt-6 max-w-md mx-auto">
+          <div class="flex justify-between text-xs mb-2">
+            <span>Baixo</span>
+            <span>Ideal</span>
+            <span>Alto</span>
+          </div>
+          <div class="h-2 bg-white bg-opacity-30 rounded-full relative">
+            <div class="absolute top-0 left-0 h-2 bg-white rounded-full transition-all duration-300" 
+              :style="'width: ' + Math.min((vpd / 2.0) * 100, 100) + '%'">
+            </div>
+          </div>
+          <div class="flex justify-between text-xs mt-1">
+            <span>0.0</span>
+            <span>1.0</span>
+            <span>2.0+ kPa</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <form @submit.prevent="salvarLog()" class="p-8">
+        
+        <!-- Seleção de Planta -->
+        <div class="mb-6">
+          <label for="selectPlanta" class="block text-sm font-medium text-gray-700 mb-2">
+            Selecionar Planta *
+          </label>
+          <select 
+            id="selectPlanta"
+            x-model="formData.planta_id"
+            required
+            class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            <option value="">-- Escolha uma planta --</option>
+            <template x-for="planta in plantas" :key="planta.id">
+              <option :value="planta.id" x-text="planta.identificador + ' (' + planta.fase_fenologica + ')'"></option>
+            </template>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          
+          <!-- Input Temperatura -->
+          <div>
+            <label for="inputTemp" class="block text-sm font-medium text-gray-700 mb-2">
+              <span class="flex items-center">
+                <svg class="w-5 h-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z" clip-rule="evenodd"/>
+                </svg>
+                Temperatura (°C) *
+              </span>
+            </label>
+            <input 
+              type="number" 
+              id="inputTemp"
+              x-model.number="formData.temp_c"
+              @input="calcularVpd()"
+              step="0.1"
+              min="-10"
+              max="50"
+              required
+              placeholder="Ex: 25.5"
+              class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            <p class="mt-1 text-xs text-gray-500">Faixa ideal: 20-28°C</p>
+          </div>
+
+          <!-- Input Umidade -->
+          <div>
+            <label for="inputUmidade" class="block text-sm font-medium text-gray-700 mb-2">
+              <span class="flex items-center">
+                <svg class="w-5 h-5 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M5.5 3A2.5 2.5 0 003 5.5v9A2.5 2.5 0 005.5 17h9a2.5 2.5 0 002.5-2.5v-9A2.5 2.5 0 0014.5 3h-9zm0 2h9a.5.5 0 01.5.5v9a.5.5 0 01-.5.5h-9a.5.5 0 01-.5-.5v-9a.5.5 0 01.5-.5z" clip-rule="evenodd"/>
+                </svg>
+                Umidade Relativa (%) *
+              </span>
+            </label>
+            <input 
+              type="number" 
+              id="inputUmidade"
+              x-model.number="formData.umidade_pct"
+              @input="calcularVpd()"
+              step="0.1"
+              min="0"
+              max="100"
+              required
+              placeholder="Ex: 60.0"
+              class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            <p class="mt-1 text-xs text-gray-500">Faixa ideal: 50-70%</p>
+          </div>
+
+        </div>
+
+        <!-- Parâmetros da Solução Nutritiva -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <svg class="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+            </svg>
+            Solução de Rega (Opcional)
+          </h3>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <!-- Input pH -->
+            <div>
+              <label for="inputPh" class="block text-sm font-medium text-gray-700 mb-2">
+                pH da Solução
+              </label>
+              <input 
+                type="number" 
+                id="inputPh"
+                x-model.number="formData.ph"
+                step="0.1"
+                min="0"
+                max="14"
+                placeholder="Ex: 6.5"
+                class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <p class="mt-1 text-xs text-gray-500">Faixa ideal: 5.5-6.5</p>
+            </div>
+
+            <!-- Input EC -->
+            <div>
+              <label for="inputEc" class="block text-sm font-medium text-gray-700 mb-2">
+                EC (Condutividade Elétrica) - ppm
+              </label>
+              <input 
+                type="number" 
+                id="inputEc"
+                x-model.number="formData.ec_ppm"
+                step="1"
+                min="0"
+                max="5000"
+                placeholder="Ex: 1200"
+                class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <p class="mt-1 text-xs text-gray-500">Vegetativo: 800-1300, Floração: 1200-1800 ppm</p>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Observações -->
+        <div class="mb-6">
+          <label for="inputObservacoes" class="block text-sm font-medium text-gray-700 mb-2">
+            Observações
+          </label>
+          <textarea 
+            id="inputObservacoes"
+            x-model="formData.observacoes"
+            rows="4"
+            placeholder="Registre qualquer observação relevante sobre as plantas, ambiente ou procedimentos..."
+            class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none"></textarea>
+          <p class="mt-1 text-xs text-gray-500" x-text="formData.observacoes.length + ' caracteres'"></p>
+        </div>
+
+        <!-- VPD Info Box -->
+        <div class="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4 mb-6">
+          <h4 class="font-semibold text-gray-800 mb-2 flex items-center">
+            <svg class="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+            </svg>
+            Sobre o VPD
+          </h4>
+          <p class="text-sm text-gray-700 leading-relaxed">
+            O <strong>Déficit de Pressão de Vapor (VPD)</strong> é calculado pela fórmula científica: 
+            <code class="bg-white px-2 py-1 rounded text-xs">VPD = es × (1 - RH/100)</code>, onde 
+            <code class="bg-white px-2 py-1 rounded text-xs">es = 0.61078 × exp((17.27 × T) / (T + 237.3))</code>.
+          </p>
+          <div class="mt-3 grid grid-cols-3 gap-2 text-xs">
+            <div class="bg-green-100 p-2 rounded">
+              <p class="font-semibold text-green-800">Vegetativo</p>
+              <p class="text-green-700">0.8 - 1.2 kPa</p>
+            </div>
+            <div class="bg-purple-100 p-2 rounded">
+              <p class="font-semibold text-purple-800">Floração</p>
+              <p class="text-purple-700">1.0 - 1.5 kPa</p>
+            </div>
+            <div class="bg-orange-100 p-2 rounded">
+              <p class="font-semibold text-orange-800">Secagem</p>
+              <p class="text-orange-700">1.5 - 2.0 kPa</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+          <button 
+            type="button"
+            @click="voltarDashboard()"
+            class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition">
+            Cancelar
+          </button>
+          
+          <button 
+            id="btnSalvarLog"
+            type="submit"
+            :disabled="salvando || !formValid"
+            :class="salvando || !formValid ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-700 transform hover:scale-105'"
+            class="flex items-center space-x-2 px-8 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-lg transition">
+            <svg x-show="salvando" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <svg x-show="!salvando" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z"/>
+            </svg>
+            <span x-text="salvando ? 'Salvando...' : 'Salvar Leitura'"></span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+  </main>
+
+  <!-- Incluir API Client -->
+  <?!= include('api-client') ?>
+
+  <script>
+    function cultivoLogForm() {
+      return {
+        plantas: [],
+        salvando: false,
+        successMessage: '',
+        errorMessage: '',
+        
+        formData: {
+          planta_id: '',
+          temp_c: null,
+          umidade_pct: null,
+          ph: null,
+          ec_ppm: null,
+          observacoes: ''
+        },
+        
+        vpd: 0,
+        vpdStatus: 'Aguardando dados',
+        vpdRecomendacao: 'Insira temperatura e umidade',
+        vpdClass: 'vpd-warning',
+
+        async init() {
+          await this.carregarPlantas();
+          
+          // Verificar se há planta_id na URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const plantaId = urlParams.get('planta_id');
+          if (plantaId) {
+            this.formData.planta_id = plantaId;
+          }
+        },
+
+        async carregarPlantas() {
+          try {
+            const response = await this.apiRequest('cultivo.plantas.list', {});
+            if (response.success) {
+              this.plantas = response.data.plantas || [];
+            }
+          } catch (err) {
+            console.error('Erro ao carregar plantas:', err);
+          }
+        },
+
+        calcularVpd() {
+          const t = parseFloat(this.formData.temp_c);
+          const rh = parseFloat(this.formData.umidade_pct);
+          
+          if (isNaN(t) || isNaN(rh) || rh < 0 || rh > 100) {
+            this.vpd = 0;
+            this.vpdStatus = 'Dados inválidos';
+            this.vpdRecomendacao = 'Verifique os valores inseridos';
+            this.vpdClass = 'vpd-warning';
+            return;
+          }
+          
+          // Fórmula científica de VPD
+          // es = pressão de vapor de saturação (kPa)
+          const es = 0.61078 * Math.exp((17.27 * t) / (t + 237.3));
+          
+          // VPD = es × (1 - RH/100)
+          this.vpd = es * (1 - (rh / 100));
+          
+          // Classificar VPD
+          if (this.vpd >= 0.8 && this.vpd <= 1.2) {
+            this.vpdStatus = 'IDEAL para Vegetativo';
+            this.vpdRecomendacao = 'Condições ótimas para crescimento vegetativo';
+            this.vpdClass = 'vpd-ideal';
+          } else if (this.vpd >= 1.0 && this.vpd <= 1.5) {
+            this.vpdStatus = 'IDEAL para Floração';
+            this.vpdRecomendacao = 'Condições ótimas para fase de floração';
+            this.vpdClass = 'vpd-ideal';
+          } else if (this.vpd < 0.4) {
+            this.vpdStatus = 'MUITO BAIXO';
+            this.vpdRecomendacao = 'Aumente temperatura ou reduza umidade';
+            this.vpdClass = 'vpd-danger';
+          } else if (this.vpd < 0.8) {
+            this.vpdStatus = 'BAIXO';
+            this.vpdRecomendacao = 'Considere aumentar temperatura levemente';
+            this.vpdClass = 'vpd-warning';
+          } else if (this.vpd > 1.5 && this.vpd <= 2.0) {
+            this.vpdStatus = 'ALTO';
+            this.vpdRecomendacao = 'Considere aumentar umidade ou reduzir temperatura';
+            this.vpdClass = 'vpd-warning';
+          } else {
+            this.vpdStatus = 'MUITO ALTO';
+            this.vpdRecomendacao = 'Aumente umidade urgentemente';
+            this.vpdClass = 'vpd-danger';
+          }
+        },
+
+        get formValid() {
+          return this.formData.planta_id && 
+                 this.formData.temp_c !== null && 
+                 this.formData.umidade_pct !== null;
+        },
+
+        async salvarLog() {
+          if (!this.formValid) {
+            this.errorMessage = 'Preencha todos os campos obrigatórios';
+            return;
+          }
+          
+          this.salvando = true;
+          this.errorMessage = '';
+          this.successMessage = '';
+          
+          try {
+            const payload = {
+              ...this.formData,
+              vpd_calculado: this.vpd
+            };
+            
+            const response = await this.apiRequest('cultivo.log.create', payload);
+            
+            if (response.success) {
+              this.successMessage = 'Leitura ambiental registrada com sucesso!';
+              
+              // Limpar formulário
+              setTimeout(() => {
+                this.voltarDashboard();
+              }, 1500);
+            } else {
+              throw new Error(response.error?.message || 'Erro ao salvar leitura');
+            }
+          } catch (err) {
+            this.errorMessage = err.message || 'Erro ao conectar com servidor';
+            console.error('Erro ao salvar log:', err);
+          } finally {
+            this.salvando = false;
+          }
+        },
+
+        async apiRequest(action, data) {
+          return new Promise((resolve, reject) => {
+            const token = sessionStorage.getItem('token') || '';
+            
+            google.script.run
+              .withSuccessHandler(resolve)
+              .withFailureHandler(reject)
+              .routeRequest({
+                action: action,
+                token: token,
+                data: data,
+                correlationId: 'cultivo-log-' + Date.now()
+              });
+          });
+        },
+
+        voltarDashboard() {
+          window.location.href = '?page=grower-dashboard';
+        }
+      }
+    }
+  </script>
+
+</body>
+</html>

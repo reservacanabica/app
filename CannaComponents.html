@@ -1,0 +1,626 @@
+<!--
+  CannaComponents.html
+  Componentes UI reutilizáveis para Reserva Canabica
+  Versão: 1.0.0
+-->
+
+<style id="canna-advanced-components">
+/**
+ * ========================================================================
+ * CANNA ADVANCED COMPONENTS
+ * ========================================================================
+ */
+
+/* === Modal === */
+.canna-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--canna-z-modal-backdrop);
+  background-color: var(--canna-overlay);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity var(--canna-transition-base);
+  pointer-events: none;
+}
+
+.canna-modal-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.canna-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: var(--canna-z-modal);
+  width: min(90vw, 600px);
+  max-height: 90vh;
+  background-color: var(--canna-surface);
+  border: 1px solid var(--canna-border);
+  border-radius: var(--canna-radius-xl);
+  box-shadow: var(--canna-shadow-2xl);
+  transform: translate(-50%, calc(-50% + 1rem));
+  opacity: 0;
+  transition: all var(--canna-transition-base);
+  pointer-events: none;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.canna-modal.is-open {
+  transform: translate(-50%, -50%);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.canna-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--canna-space-6);
+  border-bottom: 1px solid var(--canna-divider);
+}
+
+.canna-modal-title {
+  margin: 0;
+  font-size: var(--canna-text-xl);
+  font-weight: var(--canna-font-semibold);
+}
+
+.canna-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--canna-radius-base);
+  color: var(--canna-text-secondary);
+  cursor: pointer;
+  transition: all var(--canna-transition-fast);
+}
+
+.canna-modal-close:hover {
+  background-color: var(--canna-surface-variant);
+  color: var(--canna-text-primary);
+}
+
+.canna-modal-body {
+  flex: 1;
+  padding: var(--canna-space-6);
+  overflow-y: auto;
+}
+
+.canna-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--canna-space-3);
+  padding: var(--canna-space-6);
+  border-top: 1px solid var(--canna-divider);
+}
+
+/* === Dropdown === */
+.canna-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.canna-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: var(--canna-z-dropdown);
+  min-width: 12rem;
+  padding: var(--canna-space-2);
+  background-color: var(--canna-surface);
+  border: 1px solid var(--canna-border);
+  border-radius: var(--canna-radius-lg);
+  box-shadow: var(--canna-shadow-lg);
+  opacity: 0;
+  transform: translateY(-0.5rem);
+  transition: all var(--canna-transition-fast);
+  pointer-events: none;
+}
+
+.canna-dropdown.is-open .canna-dropdown-menu {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.canna-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--canna-space-3);
+  width: 100%;
+  padding: var(--canna-space-3);
+  color: var(--canna-text-primary);
+  background: transparent;
+  border: none;
+  border-radius: var(--canna-radius-base);
+  text-align: left;
+  font-size: var(--canna-text-sm);
+  cursor: pointer;
+  transition: background-color var(--canna-transition-fast);
+}
+
+.canna-dropdown-item:hover {
+  background-color: var(--canna-surface-variant);
+}
+
+.canna-dropdown-divider {
+  height: 1px;
+  margin: var(--canna-space-2) 0;
+  background-color: var(--canna-divider);
+}
+
+/* === Tabs === */
+.canna-tabs {
+  display: flex;
+  flex-direction: column;
+}
+
+.canna-tab-list {
+  display: flex;
+  gap: var(--canna-space-2);
+  border-bottom: 1px solid var(--canna-divider);
+}
+
+.canna-tab {
+  position: relative;
+  padding: var(--canna-space-3) var(--canna-space-4);
+  color: var(--canna-text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--canna-radius-base) var(--canna-radius-base) 0 0;
+  font-size: var(--canna-text-sm);
+  font-weight: var(--canna-font-medium);
+  cursor: pointer;
+  transition: all var(--canna-transition-fast);
+}
+
+.canna-tab:hover {
+  color: var(--canna-text-primary);
+  background-color: var(--canna-surface-variant);
+}
+
+.canna-tab.is-active {
+  color: var(--canna-accent-primary);
+}
+
+.canna-tab.is-active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--canna-accent-primary);
+}
+
+.canna-tab-panel {
+  padding: var(--canna-space-6) 0;
+  display: none;
+}
+
+.canna-tab-panel.is-active {
+  display: block;
+}
+
+/* === Accordion === */
+.canna-accordion-item {
+  border: 1px solid var(--canna-border);
+  border-radius: var(--canna-radius-md);
+  margin-bottom: var(--canna-space-2);
+}
+
+.canna-accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--canna-space-4);
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-size: var(--canna-text-base);
+  font-weight: var(--canna-font-medium);
+  cursor: pointer;
+  transition: background-color var(--canna-transition-fast);
+}
+
+.canna-accordion-header:hover {
+  background-color: var(--canna-surface-variant);
+}
+
+.canna-accordion-icon {
+  transition: transform var(--canna-transition-fast);
+}
+
+.canna-accordion-item.is-open .canna-accordion-icon {
+  transform: rotate(180deg);
+}
+
+.canna-accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height var(--canna-transition-base);
+}
+
+.canna-accordion-item.is-open .canna-accordion-content {
+  max-height: 1000px;
+}
+
+.canna-accordion-body {
+  padding: 0 var(--canna-space-4) var(--canna-space-4);
+  color: var(--canna-text-secondary);
+}
+
+/* === Progress Bar === */
+.canna-progress {
+  width: 100%;
+  height: 0.5rem;
+  background-color: var(--canna-surface-variant);
+  border-radius: var(--canna-radius-full);
+  overflow: hidden;
+}
+
+.canna-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--canna-accent-primary), var(--canna-accent-secondary));
+  border-radius: var(--canna-radius-full);
+  transition: width var(--canna-transition-slow);
+}
+
+/* === Avatar === */
+.canna-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: linear-gradient(135deg, var(--canna-accent-primary), var(--canna-accent-secondary));
+  border-radius: var(--canna-radius-full);
+  color: white;
+  font-weight: var(--canna-font-semibold);
+  font-size: var(--canna-text-sm);
+  overflow: hidden;
+}
+
+.canna-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.canna-avatar-sm {
+  width: 2rem;
+  height: 2rem;
+  font-size: var(--canna-text-xs);
+}
+
+.canna-avatar-lg {
+  width: 3.5rem;
+  height: 3.5rem;
+  font-size: var(--canna-text-lg);
+}
+
+/* === Empty State === */
+.canna-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--canna-space-12) var(--canna-space-6);
+  text-align: center;
+}
+
+.canna-empty-icon {
+  font-size: 4rem;
+  color: var(--canna-text-tertiary);
+  margin-bottom: var(--canna-space-4);
+}
+
+.canna-empty-title {
+  font-size: var(--canna-text-xl);
+  font-weight: var(--canna-font-semibold);
+  margin-bottom: var(--canna-space-2);
+}
+
+.canna-empty-description {
+  max-width: 28rem;
+  color: var(--canna-text-secondary);
+  margin-bottom: var(--canna-space-6);
+}
+
+/* === Data Table === */
+.canna-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--canna-border);
+  border-radius: var(--canna-radius-lg);
+}
+
+.canna-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.canna-table thead {
+  background-color: var(--canna-surface-variant);
+}
+
+.canna-table th {
+  padding: var(--canna-space-4);
+  text-align: left;
+  font-size: var(--canna-text-sm);
+  font-weight: var(--canna-font-semibold);
+  color: var(--canna-text-primary);
+  border-bottom: 2px solid var(--canna-border);
+}
+
+.canna-table td {
+  padding: var(--canna-space-4);
+  font-size: var(--canna-text-sm);
+  border-bottom: 1px solid var(--canna-border);
+}
+
+.canna-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.canna-table tbody tr:hover {
+  background-color: var(--canna-surface-variant);
+}
+
+/* === Breadcrumb === */
+.canna-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--canna-space-2);
+  padding: var(--canna-space-3) 0;
+  font-size: var(--canna-text-sm);
+}
+
+.canna-breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: var(--canna-space-2);
+  color: var(--canna-text-secondary);
+}
+
+.canna-breadcrumb-item.is-active {
+  color: var(--canna-text-primary);
+  font-weight: var(--canna-font-medium);
+}
+
+.canna-breadcrumb-separator {
+  color: var(--canna-text-tertiary);
+}
+
+/* === Pagination === */
+.canna-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--canna-space-2);
+  margin-top: var(--canna-space-6);
+}
+
+.canna-pagination-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0 var(--canna-space-3);
+  background: transparent;
+  border: 1px solid var(--canna-border);
+  border-radius: var(--canna-radius-base);
+  color: var(--canna-text-primary);
+  font-size: var(--canna-text-sm);
+  cursor: pointer;
+  transition: all var(--canna-transition-fast);
+}
+
+.canna-pagination-item:hover:not(.is-active):not(:disabled) {
+  background-color: var(--canna-surface-variant);
+  border-color: var(--canna-accent-primary);
+}
+
+.canna-pagination-item.is-active {
+  background-color: var(--canna-accent-primary);
+  border-color: var(--canna-accent-primary);
+  color: white;
+  font-weight: var(--canna-font-semibold);
+  pointer-events: none;
+}
+
+.canna-pagination-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* === Status Indicator === */
+.canna-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--canna-space-2);
+  font-size: var(--canna-text-sm);
+}
+
+.canna-status-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--canna-radius-full);
+  background-color: var(--canna-text-tertiary);
+}
+
+.canna-status-success .canna-status-dot {
+  background-color: var(--canna-success);
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
+}
+
+.canna-status-warning .canna-status-dot {
+  background-color: var(--canna-warning);
+  box-shadow: 0 0 8px rgba(255, 167, 38, 0.4);
+}
+
+.canna-status-error .canna-status-dot {
+  background-color: var(--canna-error);
+  box-shadow: 0 0 8px rgba(239, 83, 80, 0.4);
+}
+</style>
+
+<script id="canna-component-controllers">
+/**
+ * ========================================================================
+ * CANNA COMPONENT CONTROLLERS
+ * ========================================================================
+ * Controllers para componentes interativos
+ */
+(function() {
+  'use strict';
+  
+  // Modal Controller
+  class CannaModal {
+    constructor(element) {
+      this.modal = element;
+      this.backdrop = null;
+      this.isOpen = false;
+      this.init();
+    }
+    
+    init() {
+      // Criar backdrop
+      this.backdrop = document.createElement('div');
+      this.backdrop.className = 'canna-modal-backdrop';
+      document.body.appendChild(this.backdrop);
+      
+      // Event listeners
+      const closeBtn = this.modal.querySelector('.canna-modal-close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => this.close());
+      }
+      
+      this.backdrop.addEventListener('click', () => this.close());
+      
+      // ESC key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && this.isOpen) {
+          this.close();
+        }
+      });
+    }
+    
+    open() {
+      this.backdrop.classList.add('is-open');
+      this.modal.classList.add('is-open');
+      this.isOpen = true;
+      document.body.style.overflow = 'hidden';
+    }
+    
+    close() {
+      this.backdrop.classList.remove('is-open');
+      this.modal.classList.remove('is-open');
+      this.isOpen = false;
+      document.body.style.overflow = '';
+    }
+  }
+  
+  // Tabs Controller
+  function initTabs() {
+    document.querySelectorAll('.canna-tabs').forEach(tabsContainer => {
+      const tabs = tabsContainer.querySelectorAll('.canna-tab');
+      const panels = tabsContainer.querySelectorAll('.canna-tab-panel');
+      
+      tabs.forEach((tab, index) => {
+        tab.addEventListener('click', () => {
+          // Remove active de todos
+          tabs.forEach(t => t.classList.remove('is-active'));
+          panels.forEach(p => p.classList.remove('is-active'));
+          
+          // Ativa o clicado
+          tab.classList.add('is-active');
+          panels[index]?.classList.add('is-active');
+        });
+      });
+    });
+  }
+  
+  // Accordion Controller
+  function initAccordion() {
+    document.querySelectorAll('.canna-accordion-item').forEach(item => {
+      const header = item.querySelector('.canna-accordion-header');
+      
+      header?.addEventListener('click', () => {
+        const isOpen = item.classList.contains('is-open');
+        
+        // Fechar outros (apenas um aberto por vez)
+        const accordion = item.closest('.canna-accordion');
+        if (accordion) {
+          accordion.querySelectorAll('.canna-accordion-item').forEach(i => {
+            if (i !== item) i.classList.remove('is-open');
+          });
+        }
+        
+        // Toggle atual
+        item.classList.toggle('is-open', !isOpen);
+      });
+    });
+  }
+  
+  // Dropdown Controller
+  function initDropdowns() {
+    document.querySelectorAll('.canna-dropdown').forEach(dropdown => {
+      const trigger = dropdown.querySelector('.canna-dropdown-trigger, [data-dropdown-trigger]');
+      
+      trigger?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        
+        // Fechar outros dropdowns
+        document.querySelectorAll('.canna-dropdown.is-open').forEach(d => {
+          if (d !== dropdown) d.classList.remove('is-open');
+        });
+        
+        dropdown.classList.toggle('is-open');
+      });
+      
+      // Fechar ao clicar fora
+      document.addEventListener('click', () => {
+        dropdown.classList.remove('is-open');
+      });
+    });
+  }
+  
+  // Auto-init
+  document.addEventListener('DOMContentLoaded', () => {
+    // Modals
+    document.querySelectorAll('.canna-modal').forEach(modal => {
+      modal._controller = new CannaModal(modal);
+    });
+    
+    // Outros componentes
+    initTabs();
+    initAccordion();
+    initDropdowns();
+  });
+  
+  // API pública
+  window.CannaComponents = {
+    Modal: CannaModal,
+    initTabs,
+    initAccordion,
+    initDropdowns
+  };
+  
+  console.info('[Canna] Components initialized');
+})();
+</script>

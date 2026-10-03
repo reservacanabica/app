@@ -1,0 +1,1147 @@
+<!-- 
+  dashboard-medico-cards.html
+  MC-4: Painel Dashboard "Solo-Planta-CoA-Evidência-Saúde"
+  
+  3 Cards principais:
+  1. Minhas Condições & Evidências Indexadas
+  2. Radar de Segurança Toxicológica (4 Níveis de CoA)
+  3. Telemetria de Cultivo (Grower)
+  
+  REFATORADO: Alinhado ao design system (components-library.html)
+  - Headers padronizados com card-title + emoji
+  - Botões migrados para .btn .btn-primary / .btn-secondary
+  - Variáveis --spacing-* bridgeadas para --space-*
+  - Skeleton loaders no estado de carregamento inicial
+  - .alert-error no lugar de alert() inline
+  - Animações e microinterações mantidas
+-->
+
+<style>
+/* ──────────────────────────────────────────────
+   BRIDGE: aliases legado → design system tokens
+   ────────────────────────────────────────────── */
+:root {
+  --spacing-xs: var(--canna-space-1,  4px);
+  --spacing-sm: var(--canna-space-2,  8px);
+  --spacing-md: var(--canna-space-4,  16px);
+  --spacing-lg: var(--canna-space-6,  24px);
+  --spacing-xl: var(--canna-space-8,  32px);
+
+  --primary:        var(--color-primary,        #4CAF50);
+  --primary-dark:   var(--color-primary-dark,   #1b5e20);
+  --text-primary:   var(--color-text-primary,   #212121);
+  --text-secondary: var(--color-text-secondary, #757575);
+  --bg-secondary:   var(--color-bg-hover,       #f5f5f5);
+  --border-radius:  var(--radius-md,  8px);
+  --shadow-sm:      var(--shadow-sm,  0 1px 2px rgba(0,0,0,.05));
+  --shadow-md:      var(--shadow-md,  0 4px 6px rgba(0,0,0,.1));
+  --shadow-lg:      var(--shadow-lg,  0 10px 15px rgba(0,0,0,.1));
+  --transition:     var(--transition-base, 200ms cubic-bezier(.4,0,.2,1));
+}
+
+/* ──────────────────────────────────────────────
+   LAYOUT EXTERNO
+   ────────────────────────────────────────────── */
+.dashboard-medico-container {
+  width: 100%;
+  padding: var(--canna-space-lg, 24px);
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  margin-bottom: var(--canna-space-8, 32px);
+}
+
+.dashboard-medico-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: var(--canna-space-lg, 24px);
+  margin-bottom: var(--canna-space-6, 24px);
+}
+
+/* ──────────────────────────────────────────────
+   CARD BASE — usa .card do design system como
+   âncora; apenas sobrescreve onde necessário
+   ────────────────────────────────────────────── */
+.medico-card {
+  background: white;
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  transition: all var(--transition-base, 200ms);
+}
+
+.medico-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* Header: usa card-title padronizado com emoji à esquerda */
+.medico-card-header {
+  padding: var(--canna-space-md, 16px) var(--canna-space-6, 24px);
+  background: linear-gradient(135deg, var(--color-primary, #4CAF50) 0%, #229954 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: var(--canna-space-sm, 8px);
+}
+
+.medico-card-header .card-title {
+  /* sobrescreve cor herdada do design system para branco no gradiente */
+  color: white;
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-semibold, 600);
+  margin: 0;
+}
+
+.medico-card-icon {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+}
+
+.medico-card-body {
+  padding: var(--canna-space-lg, 24px);
+}
+
+/* Footer usa card-footer do design system */
+.medico-card-footer {
+  padding: var(--canna-space-md, 16px) var(--canna-space-6, 24px);
+  background-color: var(--color-bg-page, #fafafa);
+  border-top: 1px solid var(--color-border, #e0e0e0);
+}
+
+/* ──────────────────────────────────────────────
+   SKELETON LOADERS (estado de carregamento)
+   ────────────────────────────────────────────── */
+.medico-card-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--canna-space-md, 16px);
+  padding: var(--canna-space-lg, 24px);
+}
+
+.skeleton-comorbidade {
+  padding: var(--canna-space-md, 16px);
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--color-border, #e0e0e0);
+}
+
+/* ──────────────────────────────────────────────
+   CARD 1 — CONDIÇÕES & EVIDÊNCIAS
+   ────────────────────────────────────────────── */
+.comorbidade-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--canna-space-md, 16px);
+  margin-bottom: var(--canna-space-6, 24px);
+}
+
+.comorbidade-item {
+  padding: var(--canna-space-md, 16px);
+  background: var(--color-bg-hover, #f5f5f5);
+  border-radius: var(--radius-md, 8px);
+  border-left: 4px solid var(--color-primary, #4CAF50);
+  transition: all var(--transition-base, 200ms);
+}
+
+.comorbidade-item:hover {
+  background: #e8f5e9;
+  border-left-color: #229954;
+}
+
+.comorbidade-item.prioridade-1 {
+  border-left-color: var(--color-error, #f44336);
+  background: #ffebee;
+}
+
+.comorbidade-item.prioridade-2 {
+  border-left-color: var(--color-warning, #ff9800);
+  background: #fff3e0;
+}
+
+.comorbidade-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--canna-space-2, 8px);
+}
+
+.comorbidade-nome {
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary, #212121);
+  font-size: var(--font-size-base, 1rem);
+}
+
+/* badges de prioridade — usam .badge do design system como base */
+.badge-prioridade {
+  display: inline-block;
+  padding: 4px var(--canna-space-2, 10px);
+  border-radius: var(--radius-full, 9999px);
+  font-size: var(--font-size-xs, .75rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: white;
+  background: var(--color-primary, #4CAF50);
+}
+
+.badge-prioridade.p1 { background: #c0392b; }
+.badge-prioridade.p2 { background: #e67e22; }
+.badge-prioridade.p3 { background: #f39c12; }
+.badge-prioridade.p4 { background: var(--color-info, #2196f3); }
+.badge-prioridade.p5 { background: #95a5a6; }
+
+.comorbidade-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--canna-space-sm, 8px);
+  margin-bottom: var(--canna-space-2, 8px);
+  font-size: var(--font-size-sm, .875rem);
+  color: var(--color-text-secondary, #757575);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px; /* Intentional: icon-text micro-spacing */
+}
+
+.comorbidade-perfil {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--canna-space-sm, 8px);
+  margin-bottom: var(--canna-space-2, 8px);
+}
+
+/* perfil-tag usa .tag do design system como base */
+.perfil-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px var(--canna-space-2, 10px); /* 6px vertical intentional */
+  background: white;
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: var(--radius-md, 8px);
+  font-size: var(--font-size-xs, .8rem);
+  color: var(--color-text-secondary, #757575);
+  gap: 4px; /* Intentional: icon-text micro-spacing */
+}
+
+.perfil-tag strong {
+  color: var(--color-text-primary, #212121);
+}
+
+.comorbidade-actions {
+  display: flex;
+  gap: var(--canna-space-sm, 8px);
+  margin-top: var(--canna-space-2, 8px);
+  flex-wrap: wrap;
+}
+
+/* btn-estudos migrado para .btn .btn-secondary com cor info */
+.btn-estudos {
+  flex: 1;
+  padding: var(--canna-space-sm, 8px) var(--canna-space-4, 12px);
+  background: linear-gradient(135deg, var(--color-info, #2196f3) 0%, #1976d2 100%);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  font-size: var(--font-size-sm, .875rem);
+  font-weight: var(--font-weight-semibold, 600);
+  cursor: pointer;
+  transition: all var(--transition-base, 200ms);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px; /* Intentional: icon-text micro-spacing */
+}
+
+.btn-estudos:hover {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* badges de grau CoA — mantidas animações de alerta */
+.badge-grau-coa {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px; /* Intentional: icon-text micro-spacing */
+  padding: 6px var(--canna-space-4, 12px);
+  background: #c0392b;
+  color: white;
+  border-radius: var(--radius-md, 8px);
+  font-size: var(--font-size-xs, .8rem);
+  font-weight: var(--font-weight-bold, 700);
+  box-shadow: 0 2px 4px rgba(192,57,43,.3);
+  animation: pulse-grau 2s infinite;
+}
+
+@keyframes pulse-grau {
+  0%, 100% { box-shadow: 0 2px 4px rgba(192,57,43,.3); }
+  50%       { box-shadow: 0 4px 12px rgba(192,57,43,.6); }
+}
+
+.badge-grau-coa.grau-2 { background: #f39c12; animation: none; box-shadow: 0 2px 4px rgba(243,156,18,.3); }
+.badge-grau-coa.grau-3 { background: #9b59b6; animation: none; box-shadow: 0 2px 4px rgba(155,89,182,.3); }
+.badge-grau-coa.grau-4 { background: var(--color-success, #4caf50); animation: none; box-shadow: 0 2px 4px rgba(76,175,80,.3); }
+
+/* empty state — usa .empty-state do design system */
+.empty-comorbidades {
+  text-align: center;
+  padding: var(--canna-space-xl, 32px);
+  color: var(--color-text-secondary, #757575);
+}
+
+.empty-comorbidades-icon {
+  font-size: 3rem;
+  margin-bottom: var(--canna-space-4, 16px);
+  opacity: 0.5;
+}
+
+/* ──────────────────────────────────────────────
+   CARD 2 — RADAR CoA
+   ────────────────────────────────────────────── */
+.coa-niveis-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--canna-space-md, 16px);
+  margin-bottom: var(--canna-space-6, 24px);
+}
+
+.coa-nivel {
+  padding: var(--canna-space-md, 16px);
+  background: var(--color-bg-hover, #f5f5f5);
+  border-radius: var(--radius-md, 8px);
+  border-left: 4px solid #95a5a6;
+  transition: all var(--transition-base, 200ms);
+}
+
+.coa-nivel.conforme { border-left-color: var(--color-success, #4caf50); background: #e8f5e9; }
+.coa-nivel.alerta   { border-left-color: var(--color-warning, #ff9800); background: #fff3e0; }
+
+.coa-nivel.bloqueio {
+  border-left-color: var(--color-error, #f44336);
+  background: #ffebee;
+  animation: pulse-bloqueio 2s infinite;
+}
+
+@keyframes pulse-bloqueio {
+  0%, 100% { background: #ffebee; }
+  50%       { background: #ffcdd2; }
+}
+
+.coa-nivel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--canna-space-2, 8px);
+}
+
+.coa-nivel-titulo {
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary, #212121);
+  font-size: var(--font-size-sm, .9rem);
+}
+
+.coa-status-icon { font-size: var(--font-size-lg, 1.2rem); }
+
+.coa-nivel-detalhes {
+  font-size: var(--font-size-xs, .8rem);
+  color: var(--color-text-secondary, #757575);
+  line-height: var(--line-height-relaxed, 1.75);
+}
+
+/* conformidade geral */
+.coa-conformidade-geral {
+  padding: var(--canna-space-lg, 24px);
+  background: linear-gradient(135deg, var(--color-success, #4caf50) 0%, #229954 100%);
+  color: white;
+  border-radius: var(--radius-md, 8px);
+  text-align: center;
+  font-weight: var(--font-weight-bold, 700);
+  font-size: var(--font-size-lg, 1.1rem);
+  box-shadow: 0 4px 12px rgba(39,174,96,.3);
+}
+
+.coa-conformidade-geral.quarentena {
+  background: linear-gradient(135deg, var(--color-error, #f44336) 0%, #c62828 100%);
+  box-shadow: 0 4px 12px rgba(244,67,54,.4);
+  animation: pulse-quarentena 2s infinite;
+}
+
+@keyframes pulse-quarentena {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.02); }
+}
+
+.coa-conformidade-icone {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: var(--canna-space-2, 8px);
+}
+
+/* ──────────────────────────────────────────────
+   CARD 3 — TELEMETRIA
+   ────────────────────────────────────────────── */
+.telemetria-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--canna-space-lg, 24px);
+}
+
+.telemetria-metric {
+  padding: var(--canna-space-md, 16px);
+  background: var(--color-bg-hover, #f5f5f5);
+  border-radius: var(--radius-md, 8px);
+  border-left: 4px solid var(--color-primary, #4CAF50);
+}
+
+.telemetria-metric.ideal  { border-left-color: var(--color-success, #4caf50); background: #e8f5e9; }
+.telemetria-metric.atencao{ border-left-color: var(--color-warning, #ff9800); background: #fff3e0; }
+
+.telemetria-label {
+  font-size: var(--font-size-sm, .875rem);
+  color: var(--color-text-secondary, #757575);
+  margin-bottom: var(--canna-space-1, 4px);
+  text-transform: uppercase;
+  font-weight: var(--font-weight-semibold, 600);
+  letter-spacing: 0.05em;
+}
+
+.telemetria-valor {
+  font-size: 2rem;
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-primary, #4CAF50);
+  margin-bottom: var(--canna-space-2, 8px);
+}
+
+.telemetria-metric.ideal   .telemetria-valor { color: var(--color-success, #4caf50); }
+.telemetria-metric.atencao .telemetria-valor { color: var(--color-warning, #ff9800); }
+
+.telemetria-interpretacao {
+  font-size: var(--font-size-sm, .9rem);
+  color: var(--color-text-secondary, #757575);
+  line-height: var(--line-height-relaxed, 1.75);
+  padding: var(--canna-space-sm, 8px);
+  background: white;
+  border-radius: var(--radius-md, 8px);
+  border-left: 2px solid var(--color-primary, #4CAF50);
+}
+
+.telemetria-metric.ideal   .telemetria-interpretacao { border-left-color: var(--color-success, #4caf50); }
+
+.telemetria-indisponivel {
+  text-align: center;
+  padding: var(--canna-space-xl, 32px);
+  color: var(--color-text-secondary, #757575);
+}
+
+/* ──────────────────────────────────────────────
+   BOTÃO DE AÇÃO DO CARD — migrado para .btn
+   ────────────────────────────────────────────── */
+.btn-card-action {
+  width: 100%;
+  padding: var(--canna-space-md, 12px);
+  background: linear-gradient(135deg, var(--color-primary, #4CAF50) 0%, #229954 100%);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  font-weight: var(--font-weight-semibold, 600);
+  font-size: var(--font-size-base, 1rem);
+  cursor: pointer;
+  transition: all var(--transition-base, 200ms);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--canna-space-sm, 8px);
+}
+
+.btn-card-action:hover {
+  background: linear-gradient(135deg, #229954 0%, #1d8348 100%);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ──────────────────────────────────────────────
+   GAVETA LATERAL — EVIDÊNCIAS
+   ────────────────────────────────────────────── */
+.evidencias-drawer {
+  position: fixed;
+  top: 0;
+  right: -600px;
+  width: 600px;
+  height: 100vh;
+  background: white;
+  box-shadow: -4px 0 24px rgba(0,0,0,.2);
+  z-index: var(--z-modal, 1000);
+  transition: right var(--transition-slow, 300ms);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.evidencias-drawer.open { right: 0; }
+
+.evidencias-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: var(--z-modal-backdrop, 900);
+  display: none;
+  opacity: 0;
+  transition: opacity var(--transition-slow, 300ms);
+}
+
+.evidencias-drawer-overlay.open {
+  display: block;
+  opacity: 1;
+}
+
+.evidencias-drawer-header {
+  padding: var(--canna-space-lg, 24px);
+  background: linear-gradient(135deg, var(--color-info, #2196f3) 0%, #1976d2 100%);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-shrink: 0;
+}
+
+.evidencias-drawer-title { flex: 1; }
+
+.evidencias-drawer-title h3 {
+  margin: 0 0 var(--canna-space-1, 4px) 0;
+  font-size: var(--font-size-xl, 1.3rem);
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.evidencias-drawer-subtitle {
+  font-size: var(--font-size-sm, .9rem);
+  opacity: 0.95;
+  margin: 0;
+}
+
+/* btn-fechar usa .btn-icon do design system */
+.btn-fechar-drawer {
+  background: rgba(255,255,255,.2);
+  border: none;
+  color: white;
+  font-size: var(--font-size-2xl, 1.5rem);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full, 50%);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-base, 200ms);
+  flex-shrink: 0;
+}
+
+.btn-fechar-drawer:hover {
+  background: rgba(255,255,255,.3);
+  transform: rotate(90deg);
+}
+
+.evidencias-drawer-body {
+  padding: var(--canna-space-lg, 24px);
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* skeleton no carregamento da gaveta */
+.drawer-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--canna-space-md, 16px);
+}
+
+.evidencia-item {
+  padding: var(--canna-space-lg, 24px);
+  margin-bottom: var(--canna-space-4, 16px);
+  background: white;
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-left: 4px solid var(--color-info, #2196f3);
+  border-radius: var(--radius-md, 8px);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base, 200ms);
+}
+
+.evidencia-item:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateX(4px);
+}
+
+.evidencia-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--canna-space-2, 8px);
+}
+
+.evidencia-autores {
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary, #212121);
+  font-size: var(--font-size-base, .95rem);
+  flex: 1;
+}
+
+.evidencia-ano {
+  color: var(--color-text-secondary, #757575);
+  font-weight: var(--font-weight-bold, 700);
+  font-size: var(--font-size-sm, .9rem);
+}
+
+.evidencia-titulo {
+  color: var(--color-text-primary, #212121);
+  font-size: var(--font-size-sm, .9rem);
+  line-height: var(--line-height-relaxed, 1.75);
+  margin-bottom: var(--canna-space-2, 8px);
+}
+
+.evidencia-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--canna-space-sm, 8px);
+  margin-bottom: var(--canna-space-2, 8px);
+}
+
+/* badges de evidência — usam .badge do design system */
+.badge-desenho {
+  padding: 4px var(--canna-space-2, 8px);
+  background: #e8f5e9;
+  color: var(--color-success, #4caf50);
+  border-radius: var(--radius-sm, 4px);
+  font-size: var(--font-size-xs, .75rem);
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.badge-nivel {
+  padding: 4px var(--canna-space-2, 8px);
+  background: #e3f2fd;
+  color: var(--color-info, #2196f3);
+  border-radius: var(--radius-sm, 4px);
+  font-size: var(--font-size-xs, .75rem);
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.evidencia-links {
+  display: flex;
+  gap: var(--canna-space-sm, 8px);
+  flex-wrap: wrap;
+}
+
+/* btn-link-estudo alinhado ao .btn .btn-sm do design system */
+.btn-link-estudo {
+  padding: 6px var(--canna-space-4, 12px);
+  background: var(--color-info, #2196f3);
+  color: white;
+  text-decoration: none;
+  border-radius: var(--radius-md, 8px);
+  font-size: var(--font-size-sm, .8rem);
+  font-weight: var(--font-weight-semibold, 600);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px; /* Intentional: icon-text micro-spacing */
+  transition: all var(--transition-base, 200ms);
+}
+
+.btn-link-estudo:hover {
+  background: #1976d2;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ──────────────────────────────────────────────
+   RESPONSIVO
+   ────────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .dashboard-medico-grid { grid-template-columns: 1fr; }
+  .evidencias-drawer { width: 100%; right: -100%; }
+}
+
+@media (max-width: 768px) {
+  .comorbidade-perfil { grid-template-columns: 1fr; }
+  .coa-niveis-grid    { grid-template-columns: 1fr; }
+  .comorbidade-actions { flex-direction: column; }
+}
+</style>
+
+<!-- ─────────────────────────────────────────────── -->
+<!--  MARKUP                                         -->
+<!-- ─────────────────────────────────────────────── -->
+
+<div class="dashboard-medico-container">
+  <div class="dashboard-medico-grid">
+
+    <!-- ════════════════════════════════════════
+         CARD 1: MINHAS CONDIÇÕES & EVIDÊNCIAS
+         ════════════════════════════════════════ -->
+    <div class="medico-card" id="card-condicoes">
+
+      <div class="medico-card-header">
+        <span class="medico-card-icon">🩺</span>
+        <span class="card-title">Minhas Condições &amp; Evidências Indexadas</span>
+      </div>
+
+      <!-- Skeleton mostrado até os dados chegarem -->
+      <div id="skeleton-condicoes" class="medico-card-skeleton">
+        <div class="skeleton-comorbidade">
+          <div class="skeleton skeleton-title"></div>
+          <div class="skeleton skeleton-text"></div>
+          <div class="skeleton skeleton-text" style="width:70%"></div>
+        </div>
+        <div class="skeleton-comorbidade">
+          <div class="skeleton skeleton-title"></div>
+          <div class="skeleton skeleton-text"></div>
+          <div class="skeleton skeleton-text" style="width:50%"></div>
+        </div>
+      </div>
+
+      <div class="medico-card-body" id="body-condicoes" style="display:none;">
+        <div id="comorbidades-lista" class="comorbidade-list"></div>
+      </div>
+
+      <div class="medico-card-footer">
+        <button class="btn-card-action" onclick="navegarParaComorbidades()">
+          <span>✏️</span>
+          <span>Alterar Minhas Condições</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ════════════════════════════════════════
+         CARD 2: RADAR DE SEGURANÇA TOXICOLÓGICA
+         ════════════════════════════════════════ -->
+    <div class="medico-card" id="card-coa">
+
+      <div class="medico-card-header">
+        <span class="medico-card-icon">🛡️</span>
+        <span class="card-title">Radar de Segurança Toxicológica (4 Níveis de CoA)</span>
+      </div>
+
+      <!-- Skeleton -->
+      <div id="skeleton-coa" class="medico-card-skeleton">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap: var(--canna-space-md,16px)">
+          <div class="skeleton" style="height:80px;border-radius:var(--radius-md,8px)"></div>
+          <div class="skeleton" style="height:80px;border-radius:var(--radius-md,8px)"></div>
+          <div class="skeleton" style="height:80px;border-radius:var(--radius-md,8px)"></div>
+          <div class="skeleton" style="height:80px;border-radius:var(--radius-md,8px)"></div>
+        </div>
+        <div class="skeleton" style="height:64px;border-radius:var(--radius-md,8px);margin-top:var(--canna-space-4,16px)"></div>
+      </div>
+
+      <div class="medico-card-body" id="body-coa" style="display:none;">
+        <div class="coa-niveis-grid" id="coa-niveis-grid"></div>
+        <div id="coa-conformidade-geral" class="coa-conformidade-geral"></div>
+      </div>
+
+    </div>
+
+    <!-- ════════════════════════════════════════
+         CARD 3: TELEMETRIA DE CULTIVO (GROWER)
+         ════════════════════════════════════════ -->
+    <div class="medico-card" id="card-telemetria" style="display:none;">
+
+      <div class="medico-card-header">
+        <span class="medico-card-icon">🌱</span>
+        <span class="card-title">Telemetria de Cultivo (Grower)</span>
+      </div>
+
+      <!-- Skeleton -->
+      <div id="skeleton-telemetria" class="medico-card-skeleton">
+        <div class="skeleton" style="height:120px;border-radius:var(--radius-md,8px)"></div>
+      </div>
+
+      <div class="medico-card-body" id="body-telemetria" style="display:none;">
+        <div id="telemetria-container" class="telemetria-container"></div>
+      </div>
+
+    </div>
+
+  </div><!-- /dashboard-medico-grid -->
+</div><!-- /dashboard-medico-container -->
+
+<!-- ─────────────────────────────────────────────── -->
+<!--  GAVETA LATERAL                                 -->
+<!-- ─────────────────────────────────────────────── -->
+<div class="evidencias-drawer-overlay" id="evidencias-overlay"
+     onclick="fecharDrawerEvidencias()"></div>
+
+<div class="evidencias-drawer" id="evidencias-drawer" role="dialog"
+     aria-modal="true" aria-labelledby="drawer-titulo">
+  <div class="evidencias-drawer-header">
+    <div class="evidencias-drawer-title">
+      <h3 id="drawer-titulo">Estudos Prioritários</h3>
+      <p class="evidencias-drawer-subtitle" id="drawer-subtitulo"></p>
+    </div>
+    <button class="btn-fechar-drawer" onclick="fecharDrawerEvidencias()"
+            aria-label="Fechar gaveta de evidências">✕</button>
+  </div>
+  <div class="evidencias-drawer-body" id="drawer-estudos-lista"></div>
+</div>
+
+<!-- ─────────────────────────────────────────────── -->
+<!--  JAVASCRIPT                                     -->
+<!-- ─────────────────────────────────────────────── -->
+<script>
+class DashboardMedicoCards {
+  constructor() {
+    this.comorbidadesUsuario = [];
+    this.coaStatus           = null;
+    this.telemetriaData      = null;
+    this.userRole            = null;
+
+    this.initialize();
+  }
+
+  // ── utilitário: escapa HTML para evitar XSS ──────
+  _esc(str) {
+    const d = document.createElement('div');
+    d.textContent = String(str ?? '');
+    return d.innerHTML;
+  }
+
+  // ── helpers de skeleton ──────────────────────────
+  _showSkeleton(id)  { const el = document.getElementById(id); if (el) el.style.display = 'flex'; }
+  _hideSkeleton(id)  { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+  _showBody(id)      { const el = document.getElementById(id); if (el) el.style.display = 'block'; }
+
+  async initialize() {
+    try {
+      const user = await this.getUserInfo();
+      this.userRole = user?.role;
+
+      await Promise.all([
+        this.carregarComorbidades(),
+        this.carregarStatusCoA(),
+        this.carregarTelemetria()
+      ]);
+
+      this.renderizarComorbidades();
+      this.renderizarRadarCoA();
+      this.renderizarTelemetria();
+
+    } catch (error) {
+      console.error('[DashboardMedico] Erro na inicialização:', error);
+      this._mostrarErroGeral(error.message);
+    }
+  }
+
+  async getUserInfo() {
+    return new Promise((resolve) => {
+      const token = sessionStorage.getItem('authToken') || '';
+      google.script.run
+        .withSuccessHandler((r) => resolve(r?.ok ? r.data?.user : null))
+        .withFailureHandler(() => resolve(null))
+        .apiCall({ action: 'auth.validate', token });
+    });
+  }
+
+  async carregarComorbidades() {
+    return new Promise((resolve) => {
+      const token = sessionStorage.getItem('authToken') || '';
+      google.script.run
+        .withSuccessHandler((r) => {
+          this.comorbidadesUsuario = r?.ok ? (r.data?.comorbidades || []) : [];
+          resolve();
+        })
+        .withFailureHandler((error) => {
+          console.error('[DashboardMedico] Erro ao carregar comorbidades:', error);
+          this.comorbidadesUsuario = [];
+          resolve();
+        })
+        .apiCall({ action: 'comorbidade.listar', token });
+    });
+  }
+
+  async carregarStatusCoA() {
+    try {
+      this.coaStatus = {
+        nivel1: { status: 'conforme',  detalhes: 'Metais Pesados: Pb &lt; 0.2 ppm | Cd &lt; 0.1 ppm ✅ CONFORME' },
+        nivel2: { status: 'conforme',  detalhes: 'Livre de Aflatoxinas e Fungos ✅' },
+        nivel3: { status: 'conforme',  detalhes: 'Pureza CO₂/Etanol ✅' },
+        nivel4: { status: 'pendente',  detalhes: 'Aguardando laudo de concentração nominal' },
+        geral:  { conforme: false,     texto: '⚠️ LAUDO PENDENTE (Nível 4)' }
+      };
+    } catch (error) {
+      console.error('[DashboardMedico] Erro ao carregar CoA:', error);
+      this.coaStatus = null;
+    }
+  }
+
+  async carregarTelemetria() {
+    try {
+      if (this.userRole !== 'grower' && this.userRole !== 'tecnico_agricola') return;
+      this.telemetriaData = {
+        vpd: { valor: 1.1, unidade: 'kPa', status: 'ideal' },
+        interpretacao: 'Seu VPD atual (1.1 kPa) está na faixa ideal (0.8–1.2 kPa) para sintetizar o beta-cariofileno necessário para suas queixas inflamatórias.'
+      };
+    } catch (error) {
+      console.error('[DashboardMedico] Erro ao carregar telemetria:', error);
+    }
+  }
+
+  // ── CARD 1 ──────────────────────────────────────
+  renderizarComorbidades() {
+    this._hideSkeleton('skeleton-condicoes');
+    this._showBody('body-condicoes');
+
+    const container = document.getElementById('comorbidades-lista');
+
+    if (!this.comorbidadesUsuario.length) {
+      container.innerHTML = `
+        <div class="empty-comorbidades">
+          <div class="empty-comorbidades-icon">📋</div>
+          <p>Você ainda não selecionou suas condições clínicas.</p>
+          <p style="font-size:var(--font-size-sm,.875rem);color:var(--color-text-secondary);">
+            Clique em "Alterar Minhas Condições" para começar.
+          </p>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = this.comorbidadesUsuario.map((c, idx) => {
+      const prioridade = c.prioridade || (idx + 1);
+      const grauCoA    = c.grau_coa_obrigatorio || 'GRAU_2_PADRAO';
+      const grauClass  = grauCoA.includes('GRAU_1') ? 'grau-1'
+                       : grauCoA.includes('GRAU_3') ? 'grau-3'
+                       : grauCoA.includes('GRAU_4') ? 'grau-4' : 'grau-2';
+      const grauLabel  = grauCoA.includes('GRAU_1') ? 'Grau 1 Estrito'
+                       : grauCoA.includes('GRAU_3') ? 'Grau 3 Neuropsiq.'
+                       : grauCoA.includes('GRAU_4') ? 'Grau 4 Tópico' : 'Grau 2 Padrão';
+
+      return `
+        <div class="comorbidade-item prioridade-${prioridade}">
+          <div class="comorbidade-header">
+            <div class="comorbidade-nome">${this._esc(c.nome_terapeutica || 'Condição')}</div>
+            <span class="badge-prioridade p${prioridade}">${prioridade}º</span>
+          </div>
+
+          <div class="comorbidade-meta">
+            <div class="meta-item">📊 <strong>${this._esc(c.triagem || 'B')}</strong></div>
+            <div class="meta-item">📚 <strong>${this._esc(c.total_evidencias || 0)}</strong> estudos</div>
+            <div class="meta-item">🧬 CID-10: <strong>${this._esc(c.cid10_sugerido || 'N/A')}</strong></div>
+          </div>
+
+          <div class="comorbidade-perfil">
+            <div class="perfil-tag">🧪 <strong>${this._esc(c.quimiotipo_sugerido || 'Tipo II')}</strong></div>
+            <div class="perfil-tag">🌿 <strong>${this._esc(c.terpenos_focalizados || 'Mirceno, Cariofileno')}</strong></div>
+            <div class="perfil-tag">🌱 <strong>${this._esc(c.solo_recomendado || 'Solo Vivo')}</strong></div>
+          </div>
+
+          <div class="comorbidade-actions">
+            <button class="btn-estudos"
+                    onclick="dashboardMedico.abrirDrawerEvidencias(${Number(c.comorbidade_id)})">
+              📖 Ver ${Math.min(3, c.total_evidencias || 0)} Estudos Prioritários
+            </button>
+            ${grauCoA.includes('GRAU_1') ? `
+              <span class="badge-grau-coa ${grauClass}">🛡️ ${grauLabel}</span>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── CARD 2 ──────────────────────────────────────
+  renderizarRadarCoA() {
+    this._hideSkeleton('skeleton-coa');
+    this._showBody('body-coa');
+
+    const grid    = document.getElementById('coa-niveis-grid');
+    const geralEl = document.getElementById('coa-conformidade-geral');
+
+    if (!this.coaStatus) {
+      grid.innerHTML = '<p style="text-align:center;color:var(--color-text-secondary);">Dados de CoA indisponíveis</p>';
+      geralEl.innerHTML = '<span class="coa-conformidade-icone">⚠️</span>DADOS INDISPONÍVEIS';
+      geralEl.className = 'coa-conformidade-geral quarentena';
+      return;
+    }
+
+    const niveis = [
+      { label: 'Nível 1: Insumos/Solo',    key: 'nivel1' },
+      { label: 'Nível 2: Biomassa/Flor',   key: 'nivel2' },
+      { label: 'Nível 3: Extrato',          key: 'nivel3' },
+      { label: 'Nível 4: Fitofármaco',      key: 'nivel4' }
+    ];
+
+    grid.innerHTML = niveis.map(n => {
+      const nivel      = this.coaStatus[n.key] || { status: 'pendente', detalhes: 'Aguardando laudo' };
+      const statusClass= nivel.status === 'conforme' ? 'conforme'
+                       : nivel.status === 'alerta'   ? 'alerta'
+                       : nivel.status === 'bloqueio' ? 'bloqueio' : '';
+      const icon       = nivel.status === 'conforme' ? '✅'
+                       : nivel.status === 'alerta'   ? '⚠️'
+                       : nivel.status === 'bloqueio' ? '🚫' : '⏳';
+      return `
+        <div class="coa-nivel ${statusClass}">
+          <div class="coa-nivel-header">
+            <span class="coa-nivel-titulo">${this._esc(n.label)}</span>
+            <span class="coa-status-icon">${icon}</span>
+          </div>
+          <div class="coa-nivel-detalhes">${nivel.detalhes}</div>
+        </div>`;
+    }).join('');
+
+    if (this.coaStatus.geral.conforme) {
+      geralEl.innerHTML = '<span class="coa-conformidade-icone">✅</span>100% AUDITADO E SEGURO';
+      geralEl.className = 'coa-conformidade-geral';
+    } else {
+      geralEl.innerHTML = `<span class="coa-conformidade-icone">⚠️</span>${this._esc(this.coaStatus.geral.texto)}`;
+      geralEl.className = 'coa-conformidade-geral quarentena';
+    }
+  }
+
+  // ── CARD 3 ──────────────────────────────────────
+  renderizarTelemetria() {
+    const card      = document.getElementById('card-telemetria');
+    const container = document.getElementById('telemetria-container');
+
+    if (this.userRole !== 'grower' && this.userRole !== 'tecnico_agricola') {
+      card.style.display = 'none';
+      return;
+    }
+
+    card.style.display = 'block';
+    this._hideSkeleton('skeleton-telemetria');
+    this._showBody('body-telemetria');
+
+    if (!this.telemetriaData) {
+      container.innerHTML = '<div class="telemetria-indisponivel"><p>📊 Dados de telemetria indisponíveis</p></div>';
+      return;
+    }
+
+    const vpd = this.telemetriaData.vpd;
+    container.innerHTML = `
+      <div class="telemetria-metric ${vpd.status === 'ideal' ? 'ideal' : 'atencao'}">
+        <div class="telemetria-label">VPD Médio (24h)</div>
+        <div class="telemetria-valor">${this._esc(vpd.valor)} ${this._esc(vpd.unidade)}</div>
+        <div class="telemetria-interpretacao">${this._esc(this.telemetriaData.interpretacao)}</div>
+      </div>`;
+  }
+
+  // ── GAVETA DE EVIDÊNCIAS ─────────────────────────
+  async abrirDrawerEvidencias(comorbidadeId) {
+    const listaEl = document.getElementById('drawer-estudos-lista');
+
+    // Mostra skeleton no drawer enquanto carrega
+    listaEl.innerHTML = `
+      <div class="drawer-skeleton">
+        ${Array(3).fill(`
+          <div style="padding: var(--canna-space-lg,24px);border:1px solid var(--color-border,#e0e0e0);border-radius:var(--radius-md,8px);margin-bottom:var(--canna-space-4,16px);">
+            <div class="skeleton skeleton-title"></div>
+            <div class="skeleton skeleton-text"></div>
+            <div class="skeleton skeleton-text" style="width:60%"></div>
+          </div>`).join('')}
+      </div>`;
+
+    // Abre imediatamente (com skeleton visível)
+    document.getElementById('evidencias-overlay').classList.add('open');
+    document.getElementById('evidencias-drawer').classList.add('open');
+
+    try {
+      const token = sessionStorage.getItem('authToken') || '';
+      const response = await new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          .apiCall({ action: 'comorbidade.estudos', token, comorbidade_id: comorbidadeId });
+      });
+      const estudos  = response?.ok ? (response.data?.estudos || []) : [];
+      const comorb   = this.comorbidadesUsuario.find(c => c.comorbidade_id === comorbidadeId);
+
+      document.getElementById('drawer-titulo').textContent    = 'Estudos Prioritários';
+      document.getElementById('drawer-subtitulo').textContent = comorb?.nome_terapeutica || '';
+
+      if (!estudos.length) {
+        listaEl.innerHTML = `
+          <p style="text-align:center;color:var(--color-text-secondary);padding: var(--canna-space-2xl,48px);">
+            Nenhum estudo disponível no momento.
+          </p>`;
+        return;
+      }
+
+      listaEl.innerHTML = estudos.slice(0, 5).map(e => `
+        <div class="evidencia-item">
+          <div class="evidencia-header">
+            <div class="evidencia-autores">${this._esc(e.autores || 'Autores diversos')}</div>
+            <div class="evidencia-ano">${this._esc(e.ano || '2024')}</div>
+          </div>
+          <div class="evidencia-titulo">${this._esc(e.titulo || 'Estudo científico sobre cannabis medicinal')}</div>
+          <div class="evidencia-meta">
+            <span class="badge-desenho">${this._esc(e.desenho_estudo || 'Ensaio Clínico')}</span>
+            <span class="badge-nivel">${this._esc(e.nivel_evidencia || 'Nível 2A')}</span>
+          </div>
+          <div class="evidencia-links">
+            ${e.doi    ? `<a href="https://doi.org/${encodeURIComponent(e.doi)}" target="_blank" rel="noopener" class="btn-link-estudo">🔗 DOI</a>` : ''}
+            ${e.pmid   ? `<a href="https://pubmed.ncbi.nlm.nih.gov/${encodeURIComponent(e.pmid)}/" target="_blank" rel="noopener" class="btn-link-estudo">📄 PubMed</a>` : ''}
+            ${e.url_fulltext ? `<a href="${encodeURI(e.url_fulltext)}" target="_blank" rel="noopener" class="btn-link-estudo">📖 Texto Completo</a>` : ''}
+          </div>
+        </div>`).join('');
+
+    } catch (error) {
+      console.error('[DashboardMedico] Erro ao carregar estudos:', error);
+      listaEl.innerHTML = `
+        <div class="alert alert-error" style="margin:0;">
+          <div class="alert-icon">✕</div>
+          <div class="alert-content">
+            <div class="alert-title">Erro ao carregar estudos</div>
+            <div class="alert-message">${this._esc(error.message)}</div>
+          </div>
+        </div>`;
+    }
+  }
+
+  _mostrarErroGeral(mensagem) {
+    console.error('[DashboardMedico] Erro geral:', mensagem);
+    // Oculta skeletons para não ficarem presos
+    ['skeleton-condicoes','skeleton-coa','skeleton-telemetria'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  FUNÇÕES GLOBAIS CONECTADAS AO SISTEMA DE NAVEGAÇÃO
+// ══════════════════════════════════════════════════════════════
+
+/**
+ * Fecha a gaveta lateral de evidências com animação
+ * @global
+ */
+function fecharDrawerEvidencias() {
+  const overlay = document.getElementById('evidencias-overlay');
+  const drawer  = document.getElementById('evidencias-drawer');
+  
+  if (overlay) overlay.classList.remove('open');
+  if (drawer)  drawer.classList.remove('open');
+  
+  console.log('[DashboardMedico] Drawer de evidências fechado');
+}
+
+/**
+ * Navega para o formulário de comorbidades usando navigateTo()
+ * Conectado ao botão "Alterar Minhas Condições"
+ * @global
+ */
+function navegarParaComorbidades() {
+  console.log('[DashboardMedico] Navegando para comorbidade-form');
+  
+  // Usa a função navigateTo() global do app-enhanced.html
+  if (typeof navigateTo === 'function') {
+    navigateTo('comorbidade-form');
+  } else {
+    console.error('[navegarParaComorbidades] navigateTo() não está disponível');
+    alert('Sistema de navegação não disponível. Recarregue a página.');
+  }
+}
+
+// ── Instância global ───────────────────────────────
+let dashboardMedico;
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => { dashboardMedico = new DashboardMedicoCards(); });
+} else {
+  dashboardMedico = new DashboardMedicoCards();
+}
+
+// Fechar gaveta com Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') fecharDrawerEvidencias();
+});
+</script>

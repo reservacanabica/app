@@ -1,0 +1,317 @@
+<!--
+  css-tokens.html
+  Tokens CSS centralizados para Canabica WebApp
+  Versão: 1.0.0
+  
+  USO: Incluir em TODOS os componentes HTML via <?!= include('css-tokens') ?>
+  PRINCÍPIO: Single Source of Truth para design tokens
+  
+  MATURIDADE: 🟢 PRODUCTION
+-->
+
+<style id="canna-css-tokens">
+/**
+ * ========================================================================
+ * CANABICA - CSS TOKENS (Design Tokens Centralizados)
+ * ========================================================================
+ * Fonte única de verdade para cores, tipografia, espaçamento e outros tokens
+ * Baseado em CannaDesignSystem.html com consolidação de variantes
+ * Compliance: WCAG 2.1 AA
+ */
+
+:root {
+  /* ===== Color Scheme ===== */
+  color-scheme: dark;
+  
+  /* === Primary Colors (Cannabis Green Palette) === */
+  --canna-primary-50: #E8F5E9;
+  --canna-primary-100: #C8E6C9;
+  --canna-primary-200: #A5D6A7;
+  --canna-primary-300: #81C784;
+  --canna-primary-400: #66BB6A;
+  --canna-primary-500: #4CAF50;   /* Primary base */
+  --canna-primary-600: #43A047;
+  --canna-primary-700: #388E3C;
+  --canna-primary-800: #2E7D32;   /* Primary strong */
+  --canna-primary-900: #1B5E20;   /* Primary darkest */
+  
+  /* Aliases para retrocompatibilidade */
+  --primary: var(--canna-primary-500);
+  --primary-hover: #45a049;
+  --primary-active: #3d8b40;
+  --primary-light: rgba(76, 175, 80, 0.1);
+  --primary-strong: var(--canna-primary-900);
+  --primary-soft: var(--canna-primary-700);
+  --accent: var(--canna-primary-400);
+  
+  /* === Surface Colors === */
+  --canna-bg-primary: #0D0D0D;           /* Background base (mais escuro) */
+  --canna-bg-secondary: #121212;         /* Background elevated */
+  --canna-bg-tertiary: #15171C;          /* Background variant */
+  --canna-surface-primary: #1A1A1A;      /* Cards, panels */
+  --canna-surface-secondary: #1E1E1E;    /* Surface variant */
+  --canna-surface-tertiary: #20242B;     /* Surface elevated */
+  --canna-overlay: rgba(0, 0, 0, 0.7);   /* Modal/drawer overlays */
+  
+  /* Aliases para retrocompatibilidade */
+  --background: var(--canna-bg-tertiary);
+  --surface: var(--canna-surface-tertiary);
+  
+  /* === Text Colors === */
+  --canna-text-primary: #E8E8E8;      /* Texto principal (alto contraste) */
+  --canna-text-secondary: #B8B8B8;    /* Texto secundário */
+  --canna-text-tertiary: #8F8F8F;     /* Texto terciário/hint */
+  --canna-text-disabled: #5F5F5F;     /* Texto desabilitado */
+  --canna-text-on-primary: #FFFFFF;   /* Texto sobre cor primária */
+  --canna-text-on-dark: #FFFFFF;      /* Texto sobre fundos escuros */
+  --canna-text-on-light: #0D0D0D;     /* Texto sobre fundos claros */
+  
+  /* Aliases para retrocompatibilidade */
+  --text: var(--canna-text-primary);
+  --muted: var(--canna-text-secondary);
+  
+  /* === Border & Divider === */
+  --canna-border-primary: #2C2C2C;    /* Borda padrão */
+  --canna-border-strong: #3A3A3A;     /* Borda enfatizada */
+  --canna-border-subtle: #232323;     /* Borda sutil */
+  --canna-divider: #262626;           /* Linha divisória */
+  
+  /* Aliases para retrocompatibilidade */
+  --border: var(--canna-border-primary);
+  
+  /* === Semantic Colors === */
+  /* Success (Verde) */
+  --canna-success: #4CAF50;
+  --canna-success-bg: rgba(76, 175, 80, 0.1);
+  --canna-success-border: rgba(76, 175, 80, 0.3);
+  --canna-success-text: #81C784;
+  
+  /* Warning (Laranja/Âmbar) */
+  --canna-warning: #FFA726;
+  --canna-warning-bg: rgba(255, 167, 38, 0.1);
+  --canna-warning-border: rgba(255, 167, 38, 0.3);
+  --canna-warning-text: #FFB74D;
+  
+  /* Error (Vermelho) */
+  --canna-error: #EF5350;
+  --canna-error-bg: rgba(239, 83, 80, 0.1);
+  --canna-error-border: rgba(239, 83, 80, 0.3);
+  --canna-error-text: #E57373;
+  
+  /* Aliases para retrocompatibilidade */
+  --danger: var(--canna-error);
+  
+  /* Info (Azul) */
+  --canna-info: #42A5F5;
+  --canna-info-bg: rgba(66, 165, 245, 0.1);
+  --canna-info-border: rgba(66, 165, 245, 0.3);
+  --canna-info-text: #64B5F6;
+  
+  /* ===== Typography ===== */
+  --canna-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", sans-serif;
+  --canna-font-mono: "SF Mono", "Monaco", "Cascadia Code", "Roboto Mono", "Consolas", monospace;
+  
+  /* Font Sizes (Fluid Typography com clamp) */
+  --canna-text-xs: clamp(0.7rem, 0.65rem + 0.25vw, 0.75rem);      /* 11-12px */
+  --canna-text-sm: clamp(0.82rem, 0.78rem + 0.2vw, 0.88rem);      /* 13-14px */
+  --canna-text-base: clamp(0.95rem, 0.9rem + 0.25vw, 1rem);       /* 15-16px */
+  --canna-text-lg: clamp(1.1rem, 1rem + 0.5vw, 1.25rem);          /* 18-20px */
+  --canna-text-xl: clamp(1.3rem, 1.2rem + 0.5vw, 1.5rem);         /* 21-24px */
+  --canna-text-2xl: clamp(1.6rem, 1.4rem + 1vw, 2rem);            /* 26-32px */
+  --canna-text-3xl: clamp(2rem, 1.8rem + 1vw, 2.5rem);            /* 32-40px */
+  --canna-text-4xl: clamp(2.5rem, 2rem + 2.5vw, 3.5rem);          /* 40-56px */
+  
+  /* Font Weights */
+  --canna-font-light: 300;
+  --canna-font-normal: 400;
+  --canna-font-medium: 500;
+  --canna-font-semibold: 600;
+  --canna-font-bold: 700;
+  --canna-font-extrabold: 800;
+  
+  /* Line Heights */
+  --canna-leading-tight: 1.25;
+  --canna-leading-snug: 1.375;
+  --canna-leading-normal: 1.5;
+  --canna-leading-relaxed: 1.625;
+  --canna-leading-loose: 2;
+  
+  /* ===== Spacing System (4px base) ===== */
+  /**
+   * SPACING TOKEN HIERARCHY
+   * ========================
+   * Primary: --canna-space-{0,1,2,3,4,5,6,8,10,12,16,20,24} (rem-based, 4px scale)
+   *   ↓
+   * Aliases:
+   *   • T-shirt: --spacing-{xs,sm,md,lg,xl,2xl} → used in styles.html
+   *   • Numeric: --space-{1,2,3,4,5,6,8,10,12,16} → used in design-system.html
+   * 
+   * All files (CannaDesignSystem.html, design-system.html, styles.html) 
+   * reference --canna-space-* as the canonical source.
+   * 
+   * Usage: Always prefer --canna-space-* in new code. Aliases exist for
+   * backward compatibility only.
+   */
+  
+  /* PRIMARY TOKENS - Single Source of Truth */
+  --canna-space-0: 0;
+  --canna-space-1: 0.25rem;   /* 4px */
+  --canna-space-2: 0.5rem;    /* 8px */
+  --canna-space-3: 0.75rem;   /* 12px */
+  --canna-space-4: 1rem;      /* 16px */
+  --canna-space-5: 1.25rem;   /* 20px */
+  --canna-space-6: 1.5rem;    /* 24px */
+  --canna-space-8: 2rem;      /* 32px */
+  --canna-space-10: 2.5rem;   /* 40px */
+  --canna-space-12: 3rem;     /* 48px */
+  --canna-space-16: 4rem;     /* 64px */
+  --canna-space-20: 5rem;     /* 80px */
+  --canna-space-24: 6rem;     /* 96px */
+  
+  /* BACKWARD COMPATIBILITY ALIASES */
+  /* T-shirt size naming (used in styles.html) */
+  /* Deprecated: prefer --canna-space-* for new code */
+  --spacing-xs: var(--canna-space-1);    /* 4px */
+  --spacing-sm: var(--canna-space-2);    /* 8px */
+  --spacing-md: var(--canna-space-4);    /* 16px */
+  --spacing-lg: var(--canna-space-6);    /* 24px */
+  --spacing-xl: var(--canna-space-8);    /* 32px */
+  --spacing-2xl: var(--canna-space-12);  /* 48px */
+  
+  /* Numeric naming (used in design-system.html) */
+  /* Deprecated: prefer --canna-space-* for new code */
+  --space-1: var(--canna-space-1);
+  --space-2: var(--canna-space-2);
+  --space-3: var(--canna-space-3);
+  --space-4: var(--canna-space-4);
+  --space-5: var(--canna-space-5);
+  --space-6: var(--canna-space-6);
+  --space-8: var(--canna-space-8);
+  --space-10: var(--canna-space-10);
+  --space-12: var(--canna-space-12);
+  --space-16: var(--canna-space-16);
+  
+  /* ===== Border Radius ===== */
+  --canna-radius-none: 0;
+  --canna-radius-sm: 6px;
+  --canna-radius-base: 6px;
+  --canna-radius-md: 12px;
+  --canna-radius-lg: 16px;
+  --canna-radius-xl: 1rem;       /* 16px */
+  --canna-radius-2xl: 1.5rem;    /* 24px */
+  --canna-radius-full: 9999px;   /* Círculo/pill */
+  
+  /* ===== Shadows ===== */
+  --canna-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --canna-shadow-base: 0 2px 4px 0 rgba(0, 0, 0, 0.5);
+  --canna-shadow-md: 0 4px 8px 0 rgba(0, 0, 0, 0.6);
+  --canna-shadow-lg: 0 8px 16px 0 rgba(0, 0, 0, 0.7);
+  --canna-shadow-xl: 0 12px 24px 0 rgba(0, 0, 0, 0.8);
+  --canna-shadow-2xl: 0 20px 40px 0 rgba(0, 0, 0, 0.85);
+  --canna-shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.4);
+  
+  /* ===== Z-Index Scale ===== */
+  --canna-z-base: 0;
+  --canna-z-dropdown: 1000;
+  --canna-z-sticky: 1020;
+  --canna-z-fixed: 1030;
+  --canna-z-modal-backdrop: 1040;
+  --canna-z-modal: 1050;
+  --canna-z-popover: 1060;
+  --canna-z-tooltip: 1070;
+  --canna-z-toast: 1080;
+  --canna-z-max: 9999;
+  
+  /* ===== Transitions ===== */
+  --canna-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --canna-transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --canna-transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  --canna-transition-slowest: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* ===== Focus Styles ===== */
+  --canna-focus-ring: 0 0 0 3px rgba(76, 175, 80, 0.4);
+  --canna-focus-ring-error: 0 0 0 3px rgba(239, 83, 80, 0.4);
+  --canna-focus-ring-warning: 0 0 0 3px rgba(255, 167, 38, 0.4);
+  --canna-focus-ring-info: 0 0 0 3px rgba(66, 165, 245, 0.4);
+}
+
+/**
+ * ========================================================================
+ * APLICAÇÃO GLOBAL DE TOKENS
+ * ========================================================================
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--canna-font-sans);
+  font-size: var(--canna-text-base);
+  line-height: var(--canna-leading-normal);
+  color: var(--canna-text-primary);
+  background-color: var(--canna-bg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Focus visível para acessibilidade */
+:focus-visible {
+  outline: 2px solid var(--canna-primary-500);
+  outline-offset: 2px;
+}
+
+/* Remove outline padrão quando focus-visible está ativo */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Links */
+a {
+  color: var(--canna-primary-400);
+  text-decoration: none;
+  transition: color var(--canna-transition-fast);
+}
+
+a:hover {
+  color: var(--canna-primary-300);
+  text-decoration: underline;
+}
+
+/* Código */
+code, pre {
+  font-family: var(--canna-font-mono);
+  font-size: 0.9em;
+}
+
+/* Seleção de texto */
+::selection {
+  background-color: var(--canna-primary-500);
+  color: var(--canna-text-on-primary);
+}
+
+::-moz-selection {
+  background-color: var(--canna-primary-500);
+  color: var(--canna-text-on-primary);
+}
+
+/* Scrollbar personalizada (Webkit) */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--canna-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--canna-border-strong);
+  border-radius: var(--canna-radius-base);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--canna-primary-700);
+}
+</style>

@@ -1,0 +1,792 @@
+<!--
+⚠️ ARQUIVO LEGADO — NÃO PRODUTIVO
+Este arquivo não é mais servido por rotas ativas.
+A versão produtiva está em: dashboard.html (incluído via layout.html)
+Manter apenas como referência histórica ou remover em limpeza futura.
+Data de descontinuação: 2026-01-20
+Motivo: Padronização visual — casca única (index.html → layout.html → dashboard.html)
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Reserva Canabica</title>
+  <?!= include('CannaDesignSystem') ?>
+  <?!= include('BrandLogoCanabicaBase64') ?>
+</head>
+<body>
+  <!-- Dashboard Reserva Canabica - Cannabis Medicinal Research Platform -->
+  <style id="dashboard-cannabica-layout">
+    .dashboard-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: var(--canna-safe-area-top) var(--canna-safe-area-right) var(--canna-safe-area-bottom) var(--canna-safe-area-left);
+    }
+
+    .dashboard-header {
+      margin-bottom: var(--canna-space-8);
+      padding-bottom: var(--canna-space-5);
+      border-bottom: 1px solid var(--canna-border);
+    }
+
+    .dashboard-header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: var(--canna-space-4);
+    }
+
+    .dashboard-title-section {
+      flex: 1 1 300px;
+    }
+
+    .dashboard-title {
+      font-size: clamp(1.75rem, 2vw + 1rem, 2.5rem);
+      font-weight: 700;
+      color: var(--canna-text);
+      margin: 0 0 var(--canna-space-2) 0;
+      line-height: 1.2;
+    }
+
+    .dashboard-subtitle {
+      color: var(--canna-text-muted);
+      font-size: 1rem;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .dashboard-actions {
+      display: flex;
+      gap: var(--canna-space-3);
+      flex-wrap: wrap;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: var(--canna-space-5);
+      margin-bottom: var(--canna-space-8);
+    }
+
+    .stat-card {
+      background: var(--canna-surface);
+      border: 1px solid var(--canna-border);
+      border-radius: var(--canna-radius);
+      padding: var(--canna-space-6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 140px;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--canna-primary), var(--canna-primary-accent));
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .stat-card:hover::before {
+      opacity: 1;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--canna-shadow-lg);
+      border-color: var(--canna-primary-soft);
+    }
+
+    .stat-icon {
+      font-size: 2rem;
+      margin-bottom: var(--canna-space-3);
+      filter: grayscale(0.2);
+    }
+
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--canna-primary);
+      margin: 0 0 var(--canna-space-2) 0;
+      line-height: 1;
+    }
+
+    .stat-label {
+      color: var(--canna-text-muted);
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Content Grid */
+    .content-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: var(--canna-space-6);
+      margin-bottom: var(--canna-space-8);
+    }
+
+    .content-card {
+      background: var(--canna-surface);
+      border: 1px solid var(--canna-border);
+      border-radius: var(--canna-radius);
+      padding: 0;
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .content-card-header {
+      padding: var(--canna-space-5) var(--canna-space-6);
+      border-bottom: 1px solid var(--canna-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .content-card-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--canna-text);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: var(--canna-space-2);
+    }
+
+    .content-card-action {
+      color: var(--canna-primary);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: color 0.2s ease;
+    }
+
+    .content-card-action:hover {
+      color: var(--canna-primary-strong);
+    }
+
+    .content-card-body {
+      padding: var(--canna-space-6);
+      flex: 1 1 auto;
+      overflow-y: auto;
+    }
+
+    .item-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .item-list-entry {
+      padding: var(--canna-space-3) 0;
+      border-bottom: 1px solid var(--canna-border-soft);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: var(--canna-space-3);
+    }
+
+    .item-list-entry:last-child {
+      border-bottom: none;
+    }
+
+    .item-list-title {
+      font-weight: 500;
+      color: var(--canna-text);
+      margin: 0 0 4px 0;
+      font-size: 0.9375rem;
+    }
+
+    .item-list-meta {
+      color: var(--canna-text-muted);
+      font-size: 0.8125rem;
+      margin: 0;
+    }
+
+    .item-list-badge {
+      background: var(--canna-primary-soft);
+      color: var(--canna-primary);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--canna-text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      opacity: 0.3;
+      margin-bottom: 12px;
+    }
+
+    .empty-state-text {
+      margin: 0;
+      font-size: 0.9375rem;
+    }
+
+    /* Alerts Section */
+    .alerts-section {
+      margin-bottom: var(--canna-space-8);
+    }
+
+    .alert {
+      background: var(--canna-warning-soft);
+      border-left: 4px solid var(--canna-warning);
+      padding: var(--canna-space-4) var(--canna-space-5);
+      border-radius: var(--canna-radius);
+      margin-bottom: var(--canna-space-3);
+      display: flex;
+      align-items: flex-start;
+      gap: var(--canna-space-3);
+    }
+
+    .alert-icon {
+      flex-shrink: 0;
+      font-size: 1.25rem;
+    }
+
+    .alert-content {
+      flex: 1;
+    }
+
+    .alert-title {
+      font-weight: 600;
+      margin: 0 0 4px 0;
+      color: var(--canna-text);
+    }
+
+    .alert-message {
+      margin: 0;
+      color: var(--canna-text-muted);
+      font-size: 0.875rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: var(--canna-space-3);
+      }
+
+      .stat-card {
+        padding: var(--canna-space-4);
+        min-height: 120px;
+      }
+
+      .stat-value {
+        font-size: 2rem;
+      }
+
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .dashboard-header-content {
+        flex-direction: column;
+      }
+
+      .dashboard-actions {
+        width: 100%;
+      }
+
+      .dashboard-actions button {
+        flex: 1;
+      }
+    }
+
+    /* Loading State */
+    [aria-busy="true"] {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .skeleton {
+      background: linear-gradient(
+        90deg,
+        var(--canna-surface) 25%,
+        var(--canna-surface-soft) 50%,
+        var(--canna-surface) 75%
+      );
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s ease-in-out infinite;
+      border-radius: 6px;
+    }
+
+    @keyframes skeleton-loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+  </style>
+
+  <div class="dashboard-container" role="main" aria-labelledby="dashboard-title">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <div class="dashboard-header-content">
+        <div class="dashboard-title-section">
+          <h1 id="dashboard-title" class="dashboard-title"><i data-feather="leaf" class="icon icon-lg" aria-hidden="true"></i> Painel Geral</h1>
+          <p class="dashboard-subtitle">
+            Visão geral da pesquisa em cannabis medicinal
+          </p>
+        </div>
+        <div class="dashboard-actions">
+          <button type="button" class="btn btn-primary" onclick="window.location.href='#novo-estudo'">
+            <i data-feather="plus-circle" class="icon icon-sm" aria-hidden="true"></i> Novo Estudo
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="window.location.href='#relatorios'">
+            <i data-feather="bar-chart-2" class="icon icon-sm" aria-hidden="true"></i> Relatórios
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Loading/Error States -->
+    <div id="dashboard-loading" role="status" aria-live="polite" hidden>
+      <p style="text-align: center; color: var(--canna-text-muted); padding: 40px;">
+        Carregando dados do painel...
+      </p>
+    </div>
+
+    <div id="dashboard-error" role="alert" aria-live="assertive" hidden>
+      <div class="alert" style="background: var(--canna-danger-soft); border-left-color: var(--canna-danger);">
+        <span class="alert-icon"><i data-feather="alert-triangle" class="icon icon-md icon-danger" aria-hidden="true"></i></span>
+        <div class="alert-content">
+          <p class="alert-title">Erro ao Carregar Dashboard</p>
+          <p class="alert-message">Não foi possível carregar os dados. Tente novamente.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid" id="stats-grid" aria-label="Indicadores principais">
+      <article class="stat-card" role="group" aria-labelledby="stat-studies-label">
+        <div class="stat-icon"><i data-feather="book-open" class="icon icon-xl icon-primary" aria-hidden="true"></i></div>
+        <div class="stat-value" id="stat-studies" aria-live="polite">--</div>
+        <div class="stat-label" id="stat-studies-label">Estudos Ativos</div>
+      </article>
+
+      <article class="stat-card" role="group" aria-labelledby="stat-experiments-label">
+        <div class="stat-icon"><i data-feather="flask" class="icon icon-xl icon-primary" aria-hidden="true"></i></div>
+        <div class="stat-value" id="stat-experiments" aria-live="polite">--</div>
+        <div class="stat-label" id="stat-experiments-label">Experimentos</div>
+      </article>
+
+      <article class="stat-card" role="group" aria-labelledby="stat-observations-label">
+        <div class="stat-icon"><i data-feather="file-text" class="icon icon-xl icon-primary" aria-hidden="true"></i></div>
+        <div class="stat-value" id="stat-observations" aria-live="polite">--</div>
+        <div class="stat-label" id="stat-observations-label">Observações</div>
+      </article>
+
+      <article class="stat-card" role="group" aria-labelledby="stat-evidence-label">
+        <div class="stat-icon"><i data-feather="microscope" class="icon icon-xl icon-primary" aria-hidden="true"></i></div>
+        <div class="stat-value" id="stat-evidence" aria-live="polite">--</div>
+        <div class="stat-label" id="stat-evidence-label">Evidências</div>
+      </article>
+
+      <article class="stat-card" role="group" aria-labelledby="stat-validations-label">
+        <div class="stat-icon"><i data-feather="check-circle" class="icon icon-xl icon-success" aria-hidden="true"></i></div>
+        <div class="stat-value" id="stat-validations" aria-live="polite">--</div>
+        <div class="stat-label" id="stat-validations-label">Validações</div>
+      </article>
+
+      <article class="stat-card" role="group" aria-labelledby="stat-references-label">
+        <div class="stat-icon"><i data-feather="book" class="icon icon-xl icon-primary" aria-hidden="true"></i></div>
+        <div class="stat-value" id="stat-references" aria-live="polite">--</div>
+        <div class="stat-label" id="stat-references-label">Referências</div>
+      </article>
+    </div>
+
+    <!-- Alerts Section -->
+    <div id="alerts-section" class="alerts-section" aria-live="polite" hidden>
+      <!-- Alerts injected dynamically -->
+    </div>
+
+    <!-- Content Grid -->
+    <div class="content-grid">
+      <!-- Recent Studies -->
+      <article class="content-card">
+        <div class="content-card-header">
+          <h2 class="content-card-title">
+            <i data-feather="book-open" class="icon icon-md" aria-hidden="true"></i> Estudos Recentes
+          </h2>
+          <a href="#studies" class="content-card-action">Ver todos →</a>
+        </div>
+        <div class="content-card-body">
+          <ul id="recent-studies" class="item-list" aria-live="polite">
+            <li class="empty-state">
+              <div class="empty-state-icon"><i data-feather="book-open" class="icon icon-xl icon-muted" aria-hidden="true"></i></div>
+              <p class="empty-state-text">Nenhum estudo recente</p>
+            </li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- Recent Experiments -->
+      <article class="content-card">
+        <div class="content-card-header">
+          <h2 class="content-card-title">
+            <i data-feather="flask" class="icon icon-md" aria-hidden="true"></i> Experimentos Ativos
+          </h2>
+          <a href="#experiments" class="content-card-action">Ver todos →</a>
+        </div>
+        <div class="content-card-body">
+          <ul id="active-experiments" class="item-list" aria-live="polite">
+            <li class="empty-state">
+              <div class="empty-state-icon"><i data-feather="flask" class="icon icon-xl icon-muted" aria-hidden="true"></i></div>
+              <p class="empty-state-text">Nenhum experimento ativo</p>
+            </li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- Recent Observations -->
+      <article class="content-card">
+        <div class="content-card-header">
+          <h2 class="content-card-title">
+            <i data-feather="file-text" class="icon icon-md" aria-hidden="true"></i> Últimas Observações
+          </h2>
+          <a href="#observations" class="content-card-action">Ver todas →</a>
+        </div>
+        <div class="content-card-body">
+          <ul id="recent-observations" class="item-list" aria-live="polite">
+            <li class="empty-state">
+              <div class="empty-state-icon"><i data-feather="file-text" class="icon icon-xl icon-muted" aria-hidden="true"></i></div>
+              <p class="empty-state-text">Nenhuma observação recente</p>
+            </li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- System Health -->
+      <article class="content-card">
+        <div class="content-card-header">
+          <h2 class="content-card-title">
+            <i data-feather="heart" class="icon icon-md icon-success" aria-hidden="true"></i> Status do Sistema
+          </h2>
+          <a href="#health" class="content-card-action">Detalhes →</a>
+        </div>
+        <div class="content-card-body">
+          <ul id="system-health" class="item-list" aria-live="polite">
+            <li class="item-list-entry">
+              <div>
+                <p class="item-list-title">Banco de Dados</p>
+                <p class="item-list-meta">Verificando...</p>
+              </div>
+              <span class="item-list-badge">--</span>
+            </li>
+            <li class="item-list-entry">
+              <div>
+                <p class="item-list-title">API</p>
+                <p class="item-list-meta">Verificando...</p>
+              </div>
+              <span class="item-list-badge">--</span>
+            </li>
+            <li class="item-list-entry">
+              <div>
+                <p class="item-list-title">Autenticação</p>
+                <p class="item-list-meta">Verificando...</p>
+              </div>
+              <span class="item-list-badge">--</span>
+            </li>
+          </ul>
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <?!= include('CannaJavaScript') ?>
+
+  <script>
+    /**
+     * Dashboard Canabica - Main Logic
+     */
+    (function initDashboard() {
+      'use strict';
+
+      const elements = {
+        container: document.querySelector('[role="main"]'),
+        loading: document.getElementById('dashboard-loading'),
+        error: document.getElementById('dashboard-error'),
+        statsGrid: document.getElementById('stats-grid'),
+        alertsSection: document.getElementById('alerts-section'),
+        recentStudies: document.getElementById('recent-studies'),
+        activeExperiments: document.getElementById('active-experiments'),
+        recentObservations: document.getElementById('recent-observations'),
+        systemHealth: document.getElementById('system-health')
+      };
+
+      // Check if Google Apps Script API is available
+      function hasGoogleScriptAPI() {
+        return !!(window.google && window.google.script && window.google.script.run);
+      }
+
+      // Show loading state
+      function showLoading() {
+        elements.loading.hidden = false;
+        elements.error.hidden = true;
+        elements.container.setAttribute('aria-busy', 'true');
+      }
+
+      // Hide loading state
+      function hideLoading() {
+        elements.loading.hidden = true;
+        elements.container.removeAttribute('aria-busy');
+      }
+
+      // Show error
+      function showError(message) {
+        elements.error.hidden = false;
+        if (message) {
+          const alertMessage = elements.error.querySelector('.alert-message');
+          if (alertMessage) alertMessage.textContent = message;
+        }
+        hideLoading();
+      }
+
+      // Update stat value
+      function updateStat(id, value) {
+        const el = document.getElementById(id);
+        if (el) {
+          el.textContent = value;
+          el.classList.add('updated');
+        }
+      }
+
+      // Render list items
+      function renderListItems(container, items, renderFn) {
+        if (!items || items.length === 0) return;
+
+        container.innerHTML = '';
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.className = 'item-list-entry';
+          li.innerHTML = renderFn(item);
+          container.appendChild(li);
+        });
+      }
+
+      // Load dashboard data
+      function loadDashboardData() {
+        showLoading();
+
+        if (!hasGoogleScriptAPI()) {
+          // Development mode - show mock data
+          setTimeout(() => {
+            loadMockData();
+            hideLoading();
+          }, 800);
+          return;
+        }
+
+        // Production mode - call server
+        google.script.run
+          .withSuccessHandler(onDataLoaded)
+          .withFailureHandler(onDataError)
+          .getDashboardData();
+      }
+
+      // Handle data loaded
+      function onDataLoaded(data) {
+        hideLoading();
+
+        if (!data) {
+          showError('Dados inválidos recebidos');
+          return;
+        }
+
+        // Update stats
+        if (data.stats) {
+          updateStat('stat-studies', data.stats.studies || 0);
+          updateStat('stat-experiments', data.stats.experiments || 0);
+          updateStat('stat-observations', data.stats.observations || 0);
+          updateStat('stat-evidence', data.stats.evidence || 0);
+          updateStat('stat-validations', data.stats.validations || 0);
+          updateStat('stat-references', data.stats.references || 0);
+        }
+
+        // Show alerts if any
+        if (data.alerts && data.alerts.length > 0) {
+          renderAlerts(data.alerts);
+        }
+
+        // Render recent studies
+        if (data.recentStudies) {
+          renderListItems(elements.recentStudies, data.recentStudies, study => `
+            <div>
+              <p class="item-list-title">${escapeHtml(study.title)}</p>
+              <p class="item-list-meta">${escapeHtml(study.date)}</p>
+            </div>
+            <span class="item-list-badge">${escapeHtml(study.status)}</span>
+          `);
+        }
+
+        // Render active experiments
+        if (data.activeExperiments) {
+          renderListItems(elements.activeExperiments, data.activeExperiments, exp => `
+            <div>
+              <p class="item-list-title">${escapeHtml(exp.title)}</p>
+              <p class="item-list-meta">${escapeHtml(exp.date)}</p>
+            </div>
+            <span class="item-list-badge">${escapeHtml(exp.phase)}</span>
+          `);
+        }
+
+        // Render recent observations
+        if (data.recentObservations) {
+          renderListItems(elements.recentObservations, data.recentObservations, obs => `
+            <div>
+              <p class="item-list-title">${escapeHtml(obs.title)}</p>
+              <p class="item-list-meta">${escapeHtml(obs.date)}</p>
+            </div>
+            <span class="item-list-badge">${escapeHtml(obs.type)}</span>
+          `);
+        }
+
+        // Update system health
+        if (data.health) {
+          updateSystemHealth(data.health);
+        }
+
+        // Toast notification
+        if (window.Canna && window.Canna.toast) {
+          window.Canna.toast.success('Dashboard atualizado');
+        }
+      }
+
+      // Handle data error
+      function onDataError(error) {
+        showError(error.message || 'Erro ao carregar dados');
+        console.error('Dashboard error:', error);
+      }
+
+      // Load mock data for development
+      function loadMockData() {
+        onDataLoaded({
+          stats: {
+            studies: 12,
+            experiments: 34,
+            observations: 156,
+            evidence: 89,
+            validations: 45,
+            references: 234
+          },
+          alerts: [
+            {
+              type: 'warning',
+              title: 'Validação Pendente',
+              message: 'Estudo "CBD para Ansiedade" aguarda revisão'
+            }
+          ],
+          recentStudies: [
+            { title: 'CBD para Ansiedade Generalizada', date: '2024-01-15', status: 'Ativo' },
+            { title: 'THC:CBD em Dor Crônica', date: '2024-01-14', status: 'Análise' },
+            { title: 'Terpenos em Inflamação', date: '2024-01-12', status: 'Concluído' }
+          ],
+          activeExperiments: [
+            { title: 'Fase II - CBD 300mg', date: '2024-01-10', phase: 'Fase II' },
+            { title: 'Titulação THC:CBD 1:1', date: '2024-01-08', phase: 'Fase I' }
+          ],
+          recentObservations: [
+            { title: 'Redução de ansiedade após 30 dias', date: '2024-01-15', type: 'Positiva' },
+            { title: 'Efeitos adversos mínimos', date: '2024-01-14', type: 'Segurança' }
+          ],
+          health: {
+            database: 'OK',
+            api: 'OK',
+            auth: 'OK'
+          }
+        });
+      }
+
+      // Render alerts
+      function renderAlerts(alerts) {
+        elements.alertsSection.hidden = false;
+        elements.alertsSection.innerHTML = '';
+
+        alerts.forEach(alert => {
+          const div = document.createElement('div');
+          div.className = 'alert';
+          div.innerHTML = `
+            <span class="alert-icon"><i data-feather="alert-triangle" class="icon icon-md icon-warning" aria-hidden="true"></i></span>
+            <div class="alert-content">
+              <p class="alert-title">${escapeHtml(alert.title)}</p>
+              <p class="alert-message">${escapeHtml(alert.message)}</p>
+            </div>
+          `;
+          elements.alertsSection.appendChild(div);
+        });
+      }
+
+      // Update system health
+      function updateSystemHealth(health) {
+        const healthMap = {
+          database: { label: 'Banco de Dados', status: health.database },
+          api: { label: 'API', status: health.api },
+          auth: { label: 'Autenticação', status: health.auth }
+        };
+
+        Object.keys(healthMap).forEach(key => {
+          const item = healthMap[key];
+          const badge = elements.systemHealth.querySelector(`[data-health="${key}"]`);
+          if (!badge) return;
+
+          badge.textContent = item.status;
+          badge.style.background = item.status === 'OK' 
+            ? 'var(--canna-success-soft)' 
+            : 'var(--canna-danger-soft)';
+          badge.style.color = item.status === 'OK'
+            ? 'var(--canna-success)'
+            : 'var(--canna-danger)';
+        });
+      }
+
+      // Escape HTML
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Auto-refresh every 5 minutes
+      function startAutoRefresh() {
+        setInterval(loadDashboardData, 5 * 60 * 1000);
+      }
+
+      // Initialize
+      function init() {
+        loadDashboardData();
+        startAutoRefresh();
+      }
+
+      // Start on DOM ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+
+      // Expose refresh method
+      window.refreshDashboard = loadDashboardData;
+    })();
+  </script>
+</body>
+</html>

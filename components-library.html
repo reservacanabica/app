@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UI Components Library</title>
+
+  <!-- Microinterações centralizadas -->
+  <?!= include('microinteractions.html'); ?>
+
+  <!-- Design Tokens CSS -->
+  <style>
+    :root {
+      /* Colors - Primary Palette */
+      --color-primary: #4CAF50;
+      --color-primary-light: #4caf50;
+      --color-primary-dark: #1b5e20;
+      --color-primary-bg: #e8f5e9;
+      
+      /* Colors - Semantic */
+      --color-success: #4caf50;
+      --color-warning: #ff9800;
+      --color-error: #f44336;
+      --color-info: #2196f3;
+      
+      /* Colors - Neutral */
+      --color-text-primary: #212121;
+      --color-text-secondary: #757575;
+      --color-text-disabled: #bdbdbd;
+      --color-border: #e0e0e0;
+      --color-bg-page: #fafafa;
+      --color-bg-card: #ffffff;
+      --color-bg-hover: #f5f5f5;
+      
+      /* Spacing Scale */
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      --space-2xl: 48px;
+      
+      /* Typography */
+      --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      --font-size-xs: 0.75rem;
+      --font-size-sm: 0.875rem;
+      --font-size-base: 1rem;
+      --font-size-lg: 1.125rem;
+      --font-size-xl: 1.25rem;
+      --font-size-2xl: 1.5rem;
+      --font-size-3xl: 2rem;
+      
+      --font-weight-normal: 400;
+      --font-weight-medium: 500;
+      --font-weight-semibold: 600;
+      --font-weight-bold: 700;
+      
+      --line-height-tight: 1.25;
+      --line-height-base: 1.5;
+      --line-height-relaxed: 1.75;
+      
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      
+      /* Border Radius */
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-full: 9999px;
+      
+      /* Transitions */
+      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+      
+      /* Z-index Scale */
+      --z-base: 1;
+      --z-dropdown: 100;
+      --z-sticky: 200;
+      --z-modal-backdrop: 900;
+      --z-modal: 1000;
+      --z-toast: 1100;
+      --z-tooltip: 1200;
+    }
+    
+    /* Reset & Base */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: var(--font-family);
+      font-size: var(--font-size-base);
+      line-height: var(--line-height-base);
+      color: var(--color-text-primary);
+      background-color: var(--color-bg-page);
+    }
+    
+    /* ========================================
+       BUTTON SYSTEM
+       ======================================== */
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+      font-size: var(--font-size-base);
+      font-weight: var(--font-weight-medium);
+      line-height: var(--line-height-tight);
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-base);
+      text-decoration: none;
+      white-space: nowrap;
+      user-select: none;
+    }
+    
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    /* Primary Button */
+    .btn-primary {
+      background-color: var(--color-primary);
+      color: white;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--color-primary-dark);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+    
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    /* Secondary Button */
+    .btn-secondary {
+      background-color: white;
+      color: var(--color-primary);
+      border-color: var(--color-primary);
+    }
+    
+    .btn-secondary:hover:not(:disabled) {
+      background-color: var(--color-primary-bg);
+    }
+    
+    /* Ghost Button */
+    .btn-ghost {
+      background-color: transparent;
+      color: var(--color-text-primary);
+    }
+    
+    .btn-ghost:hover:not(:disabled) {
+      background-color: var(--color-bg-hover);
+    }
+    
+    /* Danger Button */
+    .btn-danger {
+      background-color: var(--color-error);
+      color: white;
+    }
+    
+    .btn-danger:hover:not(:disabled) {
+      background-color: #d32f2f;
+    }
+    
+    /* Button Sizes */
+    .btn-sm {
+      padding: var(--space-xs) var(--space-sm);
+      font-size: var(--font-size-sm);
+    }
+    
+    .btn-lg {
+      padding: var(--space-md) var(--space-lg);
+      font-size: var(--font-size-lg);
+    }
+    
+    /* Icon Button */
+    .btn-icon {
+      padding: var(--space-sm);
+      aspect-ratio: 1;
+    }
+    
+    /* Button Group */
+    .btn-group {
+      display: inline-flex;
+      gap: var(--space-sm);
+    }
+    
+    /* ========================================
+       CARD SYSTEM
+       ======================================== */
+    
+    .card {
+      background-color: var(--color-bg-card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+    
+    .card-header {
+      padding: var(--space-md) var(--space-lg);
+      border-bottom: 1px solid var(--color-border);
+    }
+    
+    .card-title {
+      font-size: var(--font-size-xl);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-text-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+    
+    .card-subtitle {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+      margin-top: var(--space-xs);
+    }
+    
+    .card-body {
+      padding: var(--space-lg);
+    }
+    
+    .card-footer {
+      padding: var(--space-md) var(--space-lg);
+      border-top: 1px solid var(--color-border);
+      background-color: var(--color-bg-page);
+    }
+    
+    /* Card Variants */
+    .card-interactive {
+      cursor: pointer;
+      transition: all var(--transition-base);
+    }
+    
+    .card-interactive:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+    }
+    
+    .card-flat {
+      box-shadow: none;
+      border: 1px solid var(--color-border);
+    }
+    
+    /* ========================================
+       BADGE & TAG SYSTEM
+       ======================================== */
+    
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: 2px var(--space-sm);
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-medium);
+      line-height: var(--line-height-tight);
+      border-radius: var(--radius-full);
+      white-space: nowrap;
+    }
+    
+    .badge-success {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+    }
+    
+    .badge-warning {
+      background-color: #fff3e0;
+      color: #e65100;
+    }
+    
+    .badge-error {
+      background-color: #ffebee;
+      color: #c62828;
+    }
+    
+    .badge-info {
+      background-color: #e3f2fd;
+      color: #1565c0;
+    }
+    
+    .badge-neutral {
+      background-color: var(--color-bg-hover);
+      color: var(--color-text-secondary);
+    }
+    
+    /* Tag (larger, removable badge) */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-xs) var(--space-md);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-border);
+      background-color: white;
+    }
+    
+    .tag-remove {
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity var(--transition-fast);
+    }
+    
+    .tag-remove:hover {
+      opacity: 1;
+    }
+    
+    /* ========================================
+       FORM SYSTEM
+       ======================================== */
+    
+    .form-group {
+      margin-bottom: var(--space-lg);
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: var(--space-sm);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+      color: var(--color-text-primary);
+    }
+    
+    .form-label-required::after {
+      content: " *";
+      color: var(--color-error);
+    }
+    
+    .form-hint {
+      display: block;
+      margin-top: var(--space-xs);
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: var(--space-sm) var(--space-md);
+      font-size: var(--font-size-base);
+      line-height: var(--line-height-base);
+      color: var(--color-text-primary);
+      background-color: white;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      transition: all var(--transition-fast);
+    }
+    
+    .form-control:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-bg);
+    }
+    
+    .form-control:disabled {
+      background-color: var(--color-bg-hover);
+      cursor: not-allowed;
+    }
+    
+    .form-control-error {
+      border-color: var(--color-error);
+    }
+    
+    .form-control-error:focus {
+      box-shadow: 0 0 0 3px #ffebee;
+    }
+    
+    .form-error {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      margin-top: var(--space-xs);
+      font-size: var(--font-size-xs);
+      color: var(--color-error);
+    }
+    
+    .form-success {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      margin-top: var(--space-xs);
+      font-size: var(--font-size-xs);
+      color: var(--color-success);
+    }
+    
+    /* Select Dropdown */
+    select.form-control {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23757575' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right var(--space-md) center;
+      padding-right: var(--space-xl);
+    }
+    
+    /* Checkbox & Radio */
+    .form-check {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-sm);
+    }
+    
+    .form-check-input {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+    
+    .form-check-label {
+      font-size: var(--font-size-base);
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    /* ========================================
+       ALERT SYSTEM
+       ======================================== */
+    
+    .alert {
+      display: flex;
+      gap: var(--space-md);
+      padding: var(--space-md) var(--space-lg);
+      border-radius: var(--radius-md);
+      border-left: 4px solid;
+    }
+    
+    .alert-icon {
+      flex-shrink: 0;
+      font-size: var(--font-size-xl);
+    }
+    
+    .alert-content {
+      flex: 1;
+    }
+    
+    .alert-title {
+      font-weight: var(--font-weight-semibold);
+      margin-bottom: var(--space-xs);
+    }
+    
+    .alert-message {
+      font-size: var(--font-size-sm);
+    }
+    
+    .alert-success {
+      background-color: #e8f5e9;
+      border-left-color: var(--color-success);
+      color: #1b5e20;
+    }
+    
+    .alert-warning {
+      background-color: #fff3e0;
+      border-left-color: var(--color-warning);
+      color: #e65100;
+    }
+    
+    .alert-error {
+      background-color: #ffebee;
+      border-left-color: var(--color-error);
+      color: #c62828;
+    }
+    
+    .alert-info {
+      background-color: #e3f2fd;
+      border-left-color: var(--color-info);
+      color: #1565c0;
+    }
+    
+    /* ========================================
+       LOADING STATES
+       ======================================== */
+    
+    /* Spinner */
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--color-border);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    
+    .spinner-lg {
+      width: 40px;
+      height: 40px;
+      border-width: 3px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, 
+        var(--color-bg-hover) 25%, 
+        #e0e0e0 50%, 
+        var(--color-bg-hover) 75%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: var(--radius-sm);
+    }
+    
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    
+    .skeleton-text {
+      height: 1em;
+      margin-bottom: var(--space-sm);
+    }
+    
+    .skeleton-title {
+      height: 1.5em;
+      width: 60%;
+      margin-bottom: var(--space-md);
+    }
+    
+    .skeleton-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+    }
+    
+    /* Loading Overlay */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-md);
+      z-index: var(--z-modal);
+    }
+    
+    .loading-text {
+      font-size: var(--font-size-lg);
+      color: var(--color-text-secondary);
+    }
+    
+    /* ========================================
+       EMPTY STATE
+       ======================================== */
+    
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-2xl);
+      text-align: center;
+    }
+    
+    .empty-state-icon {
+      font-size: 4rem;
+      margin-bottom: var(--space-lg);
+      opacity: 0.5;
+    }
+    
+    .empty-state-title {
+      font-size: var(--font-size-xl);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-text-primary);
+      margin-bottom: var(--space-sm);
+    }
+    
+    .empty-state-message {
+      font-size: var(--font-size-base);
+      color: var(--color-text-secondary);
+      margin-bottom: var(--space-lg);
+      max-width: 400px;
+    }
+    
+    /* ========================================
+       TABLE SYSTEM
+       ======================================== */
+    
+    .table-container {
+      overflow-x: auto;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-border);
+    }
+    
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+    }
+    
+    .table thead {
+      background-color: var(--color-bg-page);
+      border-bottom: 2px solid var(--color-border);
+    }
+    
+    .table th {
+      padding: var(--space-md) var(--space-lg);
+      text-align: left;
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .table td {
+      padding: var(--space-md) var(--space-lg);
+      border-top: 1px solid var(--color-border);
+      font-size: var(--font-size-sm);
+    }
+    
+    .table tbody tr:hover {
+      background-color: var(--color-bg-hover);
+    }
+    
+    /* Table Actions Column */
+    .table-actions {
+      display: flex;
+      gap: var(--space-sm);
+      justify-content: flex-end;
+    }
+    
+    /* ========================================
+       TOAST NOTIFICATION SYSTEM
+       ======================================== */
+    
+    .toast-container {
+      position: fixed;
+      top: var(--space-lg);
+      right: var(--space-lg);
+      z-index: var(--z-toast);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+      max-width: 400px;
+    }
+    
+    .toast {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-md);
+      padding: var(--space-md) var(--space-lg);
+      background-color: white;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-xl);
+      border-left: 4px solid;
+      animation: slideIn var(--transition-base);
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    .toast-icon {
+      flex-shrink: 0;
+      font-size: var(--font-size-xl);
+    }
+    
+    .toast-content {
+      flex: 1;
+    }
+    
+    .toast-title {
+      font-weight: var(--font-weight-semibold);
+      font-size: var(--font-size-sm);
+      margin-bottom: var(--space-xs);
+    }
+    
+    .toast-message {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+    }
+    
+    .toast-close {
+      flex-shrink: 0;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity var(--transition-fast);
+    }
+    
+    .toast-close:hover {
+      opacity: 1;
+    }
+    
+    .toast-success {
+      border-left-color: var(--color-success);
+    }
+    
+    .toast-warning {
+      border-left-color: var(--color-warning);
+    }
+    
+    .toast-error {
+      border-left-color: var(--color-error);
+    }
+    
+    .toast-info {
+      border-left-color: var(--color-info);
+    }
+    
+    /* ========================================
+       UTILITY CLASSES
+       ======================================== */
+    
+    /* Spacing Utilities */
+    .mt-sm { margin-top: var(--space-sm); }
+    .mt-md { margin-top: var(--space-md); }
+    .mt-lg { margin-top: var(--space-lg); }
+    .mb-sm { margin-bottom: var(--space-sm); }
+    .mb-md { margin-bottom: var(--space-md); }
+    .mb-lg { margin-bottom: var(--space-lg); }
+    .ml-sm { margin-left: var(--space-sm); }
+    .ml-md { margin-left: var(--space-md); }
+    .mr-sm { margin-right: var(--space-sm); }
+    .mr-md { margin-right: var(--space-md); }
+    
+    /* Text Utilities */
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .text-sm { font-size: var(--font-size-sm); }
+    .text-lg { font-size: var(--font-size-lg); }
+    .text-bold { font-weight: var(--font-weight-bold); }
+    .text-semibold { font-weight: var(--font-weight-semibold); }
+    .text-muted { color: var(--color-text-secondary); }
+    
+    /* Display Utilities */
+    .d-none { display: none; }
+    .d-block { display: block; }
+    .d-flex { display: flex; }
+    .d-inline-flex { display: inline-flex; }
+    
+    /* Flex Utilities */
+    .flex-column { flex-direction: column; }
+    .flex-wrap { flex-wrap: wrap; }
+    .justify-center { justify-content: center; }
+    .justify-between { justify-content: space-between; }
+    .align-center { align-items: center; }
+    .gap-sm { gap: var(--space-sm); }
+    .gap-md { gap: var(--space-md); }
+    .gap-lg { gap: var(--space-lg); }
+    
+    /* Width Utilities */
+    .w-full { width: 100%; }
+    .w-auto { width: auto; }
+    
+    /* ========================================
+       RESPONSIVE UTILITIES
+       ======================================== */
+    
+    @media (max-width: 768px) {
+      .hide-mobile { display: none !important; }
+      
+      .card-body {
+        padding: var(--space-md);
+      }
+      
+      .toast-container {
+        left: var(--space-md);
+        right: var(--space-md);
+        max-width: none;
+      }
+    }
+    
+    @media (min-width: 769px) {
+      .hide-desktop { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  
+  <!-- Toast Container (injected by JavaScript) -->
+  <div id="toast-container" class="toast-container"></div>
+  
+  <!-- Component Examples (for documentation) -->
+  <div style="padding: var(--space-2xl); max-width: 1200px; margin: 0 auto;">
+    
+    <h1 style="font-size: var(--font-size-3xl); margin-bottom: var(--space-xl);">
+      🎨 Component Library
+    </h1>
+    
+    <!-- Button Examples -->
+    <section style="margin-bottom: var(--space-2xl);">
+      <h2 style="font-size: var(--font-size-2xl); margin-bottom: var(--space-lg);">Buttons</h2>
+      
+      <div class="btn-group" style="margin-bottom: var(--space-md);">
+        <button class="btn btn-primary">Primary Button</button>
+        <button class="btn btn-secondary">Secondary</button>
+        <button class="btn btn-ghost">Ghost</button>
+        <button class="btn btn-danger">Danger</button>
+      </div>
+      
+      <div class="btn-group" style="margin-bottom: var(--space-md);">
+        <button class="btn btn-primary btn-sm">Small</button>
+        <button class="btn btn-primary">Default</button>
+        <button class="btn btn-primary btn-lg">Large</button>
+      </div>
+      
+      <div class="btn-group">
+        <button class="btn btn-primary">
+          <span>✓</span>
+          <span>With Icon</span>
+        </button>
+        <button class="btn btn-primary" disabled>Disabled</button>
+        <button class="btn btn-icon btn-ghost">⚙️</button>
+      </div>
+    </section>
+    
+    <!-- Card Examples -->
+    <section style="margin-bottom: var(--space-2xl);">
+      <h2 style="font-size: var(--font-size-2xl); margin-bottom: var(--space-lg);">Cards</h2>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-lg);">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🩺 Card Title</div>
+            <div class="card-subtitle">Optional subtitle text</div>
+          </div>
+          <div class="card-body">
+            <p>Card content goes here. Can contain any HTML elements.</p>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-primary btn-sm">Action</button>
+          </div>
+        </div>
+        
+        <div class="card card-interactive">
+          <div class="card-body">
+            <div class="card-title">Interactive Card</div>
+            <p style="margin-top: var(--space-sm);">Hover me!</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Badge & Tag Examples -->
+    <section style="margin-bottom: var(--space-2xl);">
+      <h2 style="font-size: var(--font-size-2xl); margin-bottom: var(--space-lg);">Badges & Tags</h2>
+      
+      <div style="display: flex; gap: var(--space-sm); margin-bottom: var(--space-md); flex-wrap: wrap;">
+        <span class="badge badge-success">Success</span>
+        <span class="badge badge-warning">Warning</span>
+        <span class="badge badge-error">Error</span>
+        <span class="badge badge-info">Info</span>
+        <span class="badge badge-neutral">Neutral</span>
+      </div>
+      
+      <div style="display: flex; gap: var(--space-sm); flex-wrap: wrap;">
+        <span class="tag">
+          Tag with remove
+          <span class="tag-remove">✕</span>
+        </span>
+        <span class="tag">Another tag <span class="tag-remove">✕</span></span>
+      </div>
+    </section>
+    
+    <!-- Alert Examples -->
+    <section style="margin-bottom: var(--space-2xl);">
+      <h2 style="font-size: var(--font-size-2xl); margin-bottom: var(--space-lg);">Alerts</h2>
+      
+      <div style="display: flex; flex-direction: column; gap: var(--space-md);">
+        <div class="alert alert-success">
+          <div class="alert-icon">✓</div>
+          <div class="alert-content">
+            <div class="alert-title">Success!</div>
+            <div class="alert-message">Your action was completed successfully.</div>
+          </div>
+        </div>
+        
+        <div class="alert alert-warning">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-content">
+            <div class="alert-title">Warning</div>
+            <div class="alert-message">Please review this information carefully.</div>
+          </div>
+        </div>
+        
+        <div class="alert alert-error">
+          <div class="alert-icon">✕</div>
+          <div class="alert-content">
+            <div class="alert-title">Error</div>
+            <div class="alert-message">Something went wrong. Please try again.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Form Examples -->
+    <section style="margin-bottom: var(--space-2xl);">
+      <h2 style="font-size: var(--font-size-2xl); margin-bottom: var(--space-lg);">Forms</h2>
+      
+      <form style="max-width: 500px;">
+        <div class="form-group">
+          <label class="form-label form-label-required">Name</label>
+          <input type="text" class="form-control" placeholder="Enter your name">
+          <span class="form-hint">This field is required</span>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-control form-control-error" value="invalid-email">
+          <span class="form-error">✕ Please enter a valid email address</span>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Country</label>
+          <select class="form-control">
+            <option>Select a country</option>
+            <option>Brazil</option>
+            <option>United States</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="terms">
+            <label class="form-check-label" for="terms">I agree to the terms</label>
+          </div>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+    </section>
+    
+    <!-- Loading States -->
+    <section style="margin-bottom: var(--space-2xl);">
+      <h2 style="font-size: var(--font-size-2xl); margin-bottom: var(--space-lg);">Loading States</h2>
+      
+      <div style="display: flex; gap: var(--space-lg); align-items: center; margin-bottom: var(--space-lg);">
+        <div class="spinner"></div>
+        <div class="spinner spinner-lg"></div>
+      </div>
+      
+      <div class="card" style="max-width: 400px;">
+        <div class="card-body">
+          <div class="skeleton skeleton-title"></div>
+          <div class="skeleton skeleton-text"></div>
+          <div class="skeleton skeleton-text" style="width: 80%;"></div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Empty State -->
+    <section style="margin-bottom: var(--space-2xl);">
+      <h2 style="font-size: var(--font-size-2xl); margin-bottom: var(--space-lg);">Empty State</h2>
+      
+      <div class="card">
+        <div class="empty-state">
+          <div class="empty-state-icon">📭</div>
+          <div class="empty-state-title">No items found</div>
+          <div class="empty-state-message">
+            There are no items to display yet. Create your first item to get started.
+          </div>
+          <button class="btn btn-primary">Create Item</button>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Table Example -->
+    <section style="margin-bottom: var(--space-2xl);">
+      <h2 style="font-size: var(--font-size-2xl); margin-bottom: var(--space-lg);">Table</h2>
+      
+      <div class="table-container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>John Doe</td>
+              <td><span class="badge badge-success">Active</span></td>
+              <td>2024-01-15</td>
+              <td>
+                <div class="table-actions">
+                  <button class="btn btn-sm btn-ghost">Edit</button>
+                  <button class="btn btn-sm btn-ghost">Delete</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>Jane Smith</td>
+              <td><span class="badge badge-warning">Pending</span></td>
+              <td>2024-01-16</td>
+              <td>
+                <div class="table-actions">
+                  <button class="btn btn-sm btn-ghost">Edit</button>
+                  <button class="btn btn-sm btn-ghost">Delete</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    
+  </div>
+  
+  <script>
+    // Toast Test Buttons
+    document.addEventListener('DOMContentLoaded', () => {
+      const section = document.createElement('section');
+      section.style.cssText = 'margin-bottom: var(--space-2xl); padding: 0 var(--space-2xl);';
+      section.innerHTML = `
+        <h2 style="font-size: var(--font-size-2xl); margin-bottom: var(--space-lg);">Toast Notifications (Click to test)</h2>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="showToast('success')">Success Toast</button>
+          <button class="btn btn-primary" onclick="showToast('warning')">Warning Toast</button>
+          <button class="btn btn-primary" onclick="showToast('error')">Error Toast</button>
+          <button class="btn btn-primary" onclick="showToast('info')">Info Toast</button>
+        </div>
+      `;
+      document.body.querySelector('div[style*="padding"]').appendChild(section);
+    });
+    
+    function showToast(type) {
+      const container = document.getElementById('toast-container');
+      
+      const icons = {
+        success: '✓',
+        warning: '⚠️',
+        error: '✕',
+        info: 'ℹ️'
+      };
+      
+      const titles = {
+        success: 'Success!',
+        warning: 'Warning',
+        error: 'Error',
+        info: 'Information'
+      };
+      
+      const messages = {
+        success: 'Your action was completed successfully.',
+        warning: 'Please review this information.',
+        error: 'Something went wrong.',
+        info: 'Here is some useful information.'
+      };
+      
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = `
+        <div class="toast-icon">${icons[type]}</div>
+        <div class="toast-content">
+          <div class="toast-title">${titles[type]}</div>
+          <div class="toast-message">${messages[type]}</div>
+        </div>
+        <div class="toast-close" onclick="this.parentElement.remove()">✕</div>
+      `;
+      
+      container.appendChild(toast);
+      
+      // Auto-remove after 5 seconds
+      setTimeout(() => toast.remove(), 5000);
+    }
+  </script>
+  
+</body>
+</html>

@@ -1,0 +1,1020 @@
+<!--
+COMPONENTE: analise-substratos.html
+PAPEL: Widget de análise comparativa de substratos para técnicos agrícolas
+
+PRINCIPAIS FUNCIONALIDADES:
+- Comparar performance de diferentes tipos de substrato
+- Visualizar métricas agregadas (altura, vigor, produção)
+- Gráficos comparativos com Chart.js (bar charts, radar charts)
+- Tabela detalhada com estatísticas por substrato
+- Ranking de melhores substratos por métrica
+
+INTEGRAÇÕES:
+- API: observations.aggregate_by_substrate
+- API: experiments.list_by_substrate
+- Chart.js para visualizações
+
+STATUS: v1.0 — Workflow #2
+DATA: 2026-10-01
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Análise de Substratos</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f7fa;
+      padding: var(--canna-space-5);
+      color: #2c3e50;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    header {
+      background: white;
+      padding: var(--canna-space-6);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: var(--canna-space-6);
+    }
+    
+    h1 {
+      font-size: 28px;
+      color: #2c3e50;
+      margin-bottom: var(--canna-space-2);
+      display: flex;
+      align-items: center;
+      gap: var(--canna-space-3);
+    }
+    
+    h1 .icon {
+      font-size: 32px;
+    }
+    
+    .subtitle {
+      color: #7f8c8d;
+      font-size: 16px;
+    }
+    
+    /* Loading & Error States */
+    .loading-state, .error-state, .empty-state {
+      background: white;
+      padding: var(--canna-space-12);
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--canna-space-4);
+    }
+    
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #e0e0e0;
+      border-top-color: #27ae60;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .error-state, .empty-state {
+      display: none;
+    }
+    
+    .error-state {
+      color: #e74c3c;
+    }
+    
+    .empty-state {
+      color: #7f8c8d;
+    }
+    
+    .empty-state .icon {
+      font-size: 64px;
+      margin-bottom: var(--canna-space-4);
+      opacity: 0.3;
+    }
+    
+    /* Content Area */
+    .content {
+      display: none;
+    }
+    
+    .content.visible {
+      display: block;
+    }
+    
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--canna-space-5);
+      margin-bottom: var(--canna-space-6);
+    }
+    
+    .stat-card {
+      background: white;
+      padding: var(--canna-space-6);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: var(--canna-space-4);
+      transition: transform 0.2s;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+    
+    .stat-card .icon-wrapper {
+      width: 64px;
+      height: 64px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+    
+    .stat-card.experimentos .icon-wrapper {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .stat-card.observacoes .icon-wrapper {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    
+    .stat-card.substratos .icon-wrapper {
+      background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    
+    .stat-card .info h3 {
+      font-size: 14px;
+      color: #7f8c8d;
+      font-weight: 500;
+      margin-bottom: var(--canna-space-1);
+    }
+    
+    .stat-card .info .value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #2c3e50;
+      line-height: 1;
+    }
+    
+    /* Ranking Cards */
+    .ranking-section {
+      background: white;
+      padding: var(--canna-space-6);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: var(--canna-space-6);
+    }
+    
+    .ranking-section h2 {
+      font-size: 20px;
+      margin-bottom: var(--canna-space-5);
+      display: flex;
+      align-items: center;
+      gap: 10px /* Intentional: badge/button padding */;
+    }
+    
+    .ranking-section h2 .icon {
+      font-size: 24px;
+    }
+    
+    .ranking-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: var(--canna-space-4);
+    }
+    
+    .ranking-card {
+      padding: var(--canna-space-5);
+      border-radius: 12px;
+      border: 2px solid #ecf0f1;
+      transition: all 0.3s;
+    }
+    
+    .ranking-card:hover {
+      border-color: #27ae60;
+      background: #f0fdf4;
+    }
+    
+    .ranking-card.winner {
+      background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+      border-color: #f39c12;
+    }
+    
+    .ranking-card .metric-name {
+      font-size: 14px;
+      color: #7f8c8d;
+      margin-bottom: var(--canna-space-2);
+      font-weight: 500;
+    }
+    
+    .ranking-card .substrate-name {
+      font-size: 22px;
+      font-weight: 700;
+      color: #2c3e50;
+      display: flex;
+      align-items: center;
+      gap: var(--canna-space-2);
+    }
+    
+    .ranking-card .badge {
+      display: inline-block;
+      padding: var(--canna-space-1) 10px;
+      background: #27ae60;
+      color: white;
+      border-radius: var(--radius-full, 9999px);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    
+    /* Charts Section */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: var(--canna-space-6);
+      margin-bottom: var(--canna-space-6);
+    }
+    
+    .chart-card {
+      background: white;
+      padding: var(--canna-space-6);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .chart-card h3 {
+      font-size: 18px;
+      margin-bottom: var(--canna-space-5);
+      color: #2c3e50;
+      display: flex;
+      align-items: center;
+      gap: 10px /* Intentional: badge/button padding */;
+    }
+    
+    .chart-card h3 .icon {
+      font-size: 20px;
+    }
+    
+    .chart-wrapper {
+      position: relative;
+      height: 400px;
+    }
+    
+    /* Table Section */
+    .table-section {
+      background: white;
+      padding: var(--canna-space-6);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: var(--canna-space-6);
+      overflow-x: auto;
+    }
+    
+    .table-section h2 {
+      font-size: 20px;
+      margin-bottom: var(--canna-space-5);
+      display: flex;
+      align-items: center;
+      gap: 10px /* Intentional: badge/button padding */;
+    }
+    
+    .table-section h2 .icon {
+      font-size: 24px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    thead {
+      background: #f8f9fa;
+    }
+    
+    th {
+      padding: var(--canna-space-3) 16px;
+      text-align: left;
+      font-weight: 600;
+      color: #2c3e50;
+      font-size: 14px;
+      border-bottom: 2px solid #dee2e6;
+    }
+    
+    td {
+      padding: var(--canna-space-3) 16px;
+      border-bottom: 1px solid #ecf0f1;
+      font-size: 14px;
+    }
+    
+    tbody tr:hover {
+      background: #f8f9fa;
+    }
+    
+    .substrate-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--canna-space-2);
+      padding: 6px /* Intentional: micro-spacing */ 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    
+    .substrate-badge.solo {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .substrate-badge.hidroponia {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+    
+    .substrate-badge.trichoderma {
+      background: #fff3cd;
+      color: #856404;
+    }
+    
+    .metric-value {
+      font-weight: 600;
+      color: #27ae60;
+    }
+    
+    .metric-count {
+      color: #7f8c8d;
+      font-size: 12px;
+      font-style: italic;
+    }
+    
+    /* Experiments List */
+    .experiments-section {
+      background: white;
+      padding: var(--canna-space-6);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .experiments-section h2 {
+      font-size: 20px;
+      margin-bottom: var(--canna-space-5);
+      display: flex;
+      align-items: center;
+      gap: 10px /* Intentional: badge/button padding */;
+    }
+    
+    .experiments-section h2 .icon {
+      font-size: 24px;
+    }
+    
+    .experiments-list {
+      display: grid;
+      gap: var(--canna-space-3);
+    }
+    
+    .experiment-item {
+      padding: var(--canna-space-4);
+      border: 1px solid #ecf0f1;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s;
+    }
+    
+    .experiment-item:hover {
+      border-color: #27ae60;
+      background: #f0fdf4;
+    }
+    
+    .experiment-item .info {
+      flex: 1;
+    }
+    
+    .experiment-item .id {
+      font-size: 12px;
+      color: #7f8c8d;
+      font-family: monospace;
+      margin-bottom: var(--canna-space-1);
+    }
+    
+    .experiment-item .design {
+      font-size: 14px;
+      color: #2c3e50;
+      font-weight: 500;
+    }
+    
+    .experiment-item .meta {
+      display: flex;
+      gap: var(--canna-space-4);
+      align-items: center;
+      font-size: 13px;
+      color: #7f8c8d;
+    }
+    
+    .status-badge {
+      padding: var(--canna-space-1) 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    
+    .status-badge.active {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .status-badge.draft {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .status-badge.completed {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .ranking-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      h1 {
+        font-size: 22px;
+      }
+      
+      .stat-card .info .value {
+        font-size: 24px;
+      }
+    }
+    
+    /* Accessibility */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header role="banner">
+      <h1>
+        <i data-feather="leaf" class="icon icon-lg" aria-hidden="true"></i>
+        Análise Comparativa de Substratos
+      </h1>
+      <p class="subtitle">
+        Performance de diferentes tipos de substrato baseada em observações experimentais
+      </p>
+    </header>
+    
+    <!-- Loading State -->
+    <div class="loading-state" id="loadingState" role="status" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <p>Carregando dados de substratos e observações...</p>
+    </div>
+    
+    <!-- Error State -->
+    <div class="error-state" id="errorState" role="alert" aria-live="assertive">
+      <h2><i data-feather="x-circle" class="icon icon-md icon-danger" aria-hidden="true"></i> Erro ao carregar dados</h2>
+      <p id="errorMessage"></p>
+    </div>
+    
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" role="status">
+      <div class="icon"><i data-feather="bar-chart-2" class="icon icon-xl icon-muted" aria-hidden="true"></i></div>
+      <h2>Nenhum dado disponível</h2>
+      <p>Não há experimentos ou observações registradas para análise de substratos.</p>
+    </div>
+    
+    <!-- Content -->
+    <div class="content" id="content" role="main">
+      <!-- Stats Cards -->
+      <div class="stats-grid" role="region" aria-label="Estatísticas gerais">
+        <div class="stat-card experimentos">
+          <div class="icon-wrapper" aria-hidden="true"><i data-feather="flask" class="icon icon-lg icon-primary"></i></div>
+          <div class="info">
+            <h3>Total de Experimentos</h3>
+            <div class="value" id="totalExperimentos">0</div>
+          </div>
+        </div>
+        
+        <div class="stat-card observacoes">
+          <div class="icon-wrapper" aria-hidden="true"><i data-feather="trending-up" class="icon icon-lg icon-primary"></i></div>
+          <div class="info">
+            <h3>Total de Observações</h3>
+            <div class="value" id="totalObservacoes">0</div>
+          </div>
+        </div>
+        
+        <div class="stat-card substratos">
+          <div class="icon-wrapper" aria-hidden="true"><i data-feather="package" class="icon icon-lg icon-primary"></i></div>
+          <div class="info">
+            <h3>Tipos de Substrato</h3>
+            <div class="value" id="totalSubstratos">0</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Ranking Section -->
+      <section class="ranking-section" aria-labelledby="rankingTitle">
+        <h2 id="rankingTitle">
+          <i data-feather="award" class="icon icon-md" aria-hidden="true"></i>
+          Melhores Substratos por Métrica
+        </h2>
+        <div class="ranking-grid" id="rankingGrid">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+      
+      <!-- Charts -->
+      <div class="charts-grid">
+        <div class="chart-card" role="region" aria-labelledby="barChartTitle">
+          <h3 id="barChartTitle">
+            <i data-feather="bar-chart-2" class="icon icon-md" aria-hidden="true"></i>
+            Comparação de Métricas por Substrato
+          </h3>
+          <div class="chart-wrapper">
+            <canvas id="metricsBarChart" aria-label="Gráfico de barras comparando altura média, vigor médio e produção média entre substratos"></canvas>
+          </div>
+        </div>
+        
+        <div class="chart-card" role="region" aria-labelledby="radarChartTitle">
+          <h3 id="radarChartTitle">
+            <i data-feather="target" class="icon icon-md" aria-hidden="true"></i>
+            Performance Multidimensional
+          </h3>
+          <div class="chart-wrapper">
+            <canvas id="performanceRadarChart" aria-label="Gráfico radar mostrando performance multidimensional dos substratos"></canvas>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Detailed Table -->
+      <section class="table-section" aria-labelledby="tableTitle">
+        <h2 id="tableTitle">
+          <i data-feather="clipboard" class="icon icon-md" aria-hidden="true"></i>
+          Métricas Detalhadas por Substrato
+        </h2>
+        <table role="table" aria-label="Tabela de métricas detalhadas">
+          <thead>
+            <tr>
+              <th scope="col">Tipo de Substrato</th>
+              <th scope="col">Altura Média</th>
+              <th scope="col">Vigor Médio</th>
+              <th scope="col">Produção Média</th>
+              <th scope="col">Experimentos</th>
+              <th scope="col">Observações</th>
+            </tr>
+          </thead>
+          <tbody id="metricsTableBody">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </section>
+      
+      <!-- Experiments by Substrate -->
+      <section class="experiments-section" aria-labelledby="experimentsTitle">
+        <h2 id="experimentsTitle">
+          <i data-feather="microscope" class="icon icon-md" aria-hidden="true"></i>
+          Experimentos por Tipo de Substrato
+        </h2>
+        <div id="experimentsList">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+    </div>
+  </div>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  
+  <script>
+    // ========================================================================
+    // STATE
+    // ========================================================================
+    let metricsData = null;
+    let experimentsData = null;
+    let charts = {
+      bar: null,
+      radar: null
+    };
+    
+    // ========================================================================
+    // API CALLS
+    // ========================================================================
+    
+    /**
+     * Carrega métricas agregadas por substrato
+     */
+    function loadMetricsData() {
+      return new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          .apiCall('observations.aggregate_by_substrate', {});
+      });
+    }
+    
+    /**
+     * Carrega lista de experimentos por substrato
+     */
+    function loadExperimentsData() {
+      return new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          .apiCall('experiments.list_by_substrate', {});
+      });
+    }
+    
+    // ========================================================================
+    // INITIALIZATION
+    // ========================================================================
+    
+    async function init() {
+      try {
+        showLoading();
+        
+        // Carregar dados em paralelo
+        const [metricsResponse, experimentsResponse] = await Promise.all([
+          loadMetricsData(),
+          loadExperimentsData()
+        ]);
+        
+        if (!metricsResponse.success) {
+          throw new Error(metricsResponse.message || 'Erro ao carregar métricas');
+        }
+        
+        if (!experimentsResponse.success) {
+          throw new Error(experimentsResponse.message || 'Erro ao carregar experimentos');
+        }
+        
+        metricsData = metricsResponse.data;
+        experimentsData = experimentsResponse.data;
+        
+        // Verificar se há dados
+        if (!metricsData || !metricsData.metricas_por_substrato || metricsData.metricas_por_substrato.length === 0) {
+          showEmpty();
+          return;
+        }
+        
+        // Renderizar interface
+        renderStats();
+        renderRanking();
+        renderCharts();
+        renderTable();
+        renderExperiments();
+        
+        showContent();
+        
+      } catch (error) {
+        console.error('Erro na inicialização:', error);
+        showError(error.message || 'Erro desconhecido ao carregar dados');
+      }
+    }
+    
+    // ========================================================================
+    // RENDERING
+    // ========================================================================
+    
+    function renderStats() {
+      document.getElementById('totalExperimentos').textContent = 
+        experimentsData.total_experimentos || 0;
+      
+      document.getElementById('totalObservacoes').textContent = 
+        metricsData.total_observacoes || 0;
+      
+      document.getElementById('totalSubstratos').textContent = 
+        metricsData.metricas_por_substrato.length || 0;
+    }
+    
+    function renderRanking() {
+      const ranking = metricsData.ranking;
+      const grid = document.getElementById('rankingGrid');
+      
+      const rankings = [
+        {
+          metric: 'Maior Altura Média',
+          icon: 'trending-up',
+          winner: ranking.melhor_altura
+        },
+        {
+          metric: 'Melhor Vigor',
+          icon: 'zap',
+          winner: ranking.melhor_vigor
+        },
+        {
+          metric: 'Maior Produção',
+          icon: 'leaf',
+          winner: ranking.melhor_producao
+        }
+      ];
+      
+      grid.innerHTML = rankings.map(r => `
+        <div class="ranking-card winner">
+          <div class="metric-name"><i data-feather="${r.icon}" class="icon icon-sm" aria-hidden="true"></i> ${r.metric}</div>
+          <div class="substrate-name">
+            ${r.winner}
+            <span class="badge">Campeão</span>
+          </div>
+        </div>
+      `).join('');
+      
+      if (window.refreshFeatherIcons) window.refreshFeatherIcons();
+    }
+    
+    function renderCharts() {
+      const metrics = metricsData.metricas_por_substrato;
+      
+      const labels = metrics.map(m => m.tipo_substrato);
+      const alturas = metrics.map(m => parseFloat(m.metricas.altura_media_cm));
+      const vigores = metrics.map(m => parseFloat(m.metricas.vigor_medio));
+      const producoes = metrics.map(m => parseFloat(m.metricas.producao_media_g));
+      
+      // Bar Chart
+      const barCtx = document.getElementById('metricsBarChart').getContext('2d');
+      if (charts.bar) charts.bar.destroy();
+      
+      charts.bar = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Altura Média (cm)',
+              data: alturas,
+              backgroundColor: 'rgba(46, 204, 113, 0.8)',
+              borderColor: 'rgba(46, 204, 113, 1)',
+              borderWidth: 2
+            },
+            {
+              label: 'Vigor Médio',
+              data: vigores,
+              backgroundColor: 'rgba(52, 152, 219, 0.8)',
+              borderColor: 'rgba(52, 152, 219, 1)',
+              borderWidth: 2
+            },
+            {
+              label: 'Produção Média (g)',
+              data: producoes,
+              backgroundColor: 'rgba(155, 89, 182, 0.8)',
+              borderColor: 'rgba(155, 89, 182, 1)',
+              borderWidth: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  if (label) {
+                    label += ': ';
+                  }
+                  label += context.parsed.y.toFixed(2);
+                  return label;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+      
+      // Radar Chart (normalizado 0-100 para comparação)
+      const normalize = (arr) => {
+        const max = Math.max(...arr);
+        return arr.map(v => max > 0 ? (v / max) * 100 : 0);
+      };
+      
+      const radarCtx = document.getElementById('performanceRadarChart').getContext('2d');
+      if (charts.radar) charts.radar.destroy();
+      
+      charts.radar = new Chart(radarCtx, {
+        type: 'radar',
+        data: {
+          labels: ['Altura', 'Vigor', 'Produção'],
+          datasets: metrics.map((m, idx) => {
+            const colors = [
+              'rgba(46, 204, 113, 0.6)',
+              'rgba(52, 152, 219, 0.6)',
+              'rgba(155, 89, 182, 0.6)'
+            ];
+            return {
+              label: m.tipo_substrato,
+              data: [
+                parseFloat(m.metricas.altura_media_cm),
+                parseFloat(m.metricas.vigor_medio),
+                parseFloat(m.metricas.producao_media_g)
+              ],
+              backgroundColor: colors[idx % colors.length],
+              borderColor: colors[idx % colors.length].replace('0.6', '1'),
+              borderWidth: 2,
+              pointBackgroundColor: colors[idx % colors.length].replace('0.6', '1')
+            };
+          })
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top'
+            }
+          },
+          scales: {
+            r: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 20
+              }
+            }
+          }
+        }
+      });
+      
+      if (window.refreshFeatherIcons) window.refreshFeatherIcons();
+    }
+    
+    function renderTable() {
+      const tbody = document.getElementById('metricsTableBody');
+      const metrics = metricsData.metricas_por_substrato;
+      
+      tbody.innerHTML = metrics.map(m => {
+        const badgeClass = m.tipo_key.toLowerCase();
+        return `
+          <tr>
+            <td>
+              <span class="substrate-badge ${badgeClass}">
+                <i data-feather="${getSubstrateIcon(m.tipo_key)}" class="icon icon-sm" aria-hidden="true"></i> ${m.tipo_substrato}
+              </span>
+            </td>
+            <td>
+              <span class="metric-value">${m.metricas.altura_media_cm} ${m.unidades.altura}</span>
+              <br>
+              <span class="metric-count">(${m.metricas.total_obs_altura} obs.)</span>
+            </td>
+            <td>
+              <span class="metric-value">${m.metricas.vigor_medio}</span>
+              <br>
+              <span class="metric-count">(${m.metricas.total_obs_vigor} obs.)</span>
+            </td>
+            <td>
+              <span class="metric-value">${m.metricas.producao_media_g} ${m.unidades.producao}</span>
+              <br>
+              <span class="metric-count">(${m.metricas.total_obs_producao} obs.)</span>
+            </td>
+            <td>${m.total_experimentos}</td>
+            <td>${m.total_observacoes}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+    
+    function renderExperiments() {
+      const container = document.getElementById('experimentsList');
+      const substratos = experimentsData.substratos;
+      
+      container.innerHTML = substratos.map(s => `
+        <div style="margin-bottom: var(--canna-space-6);">
+          <h3 style="font-size: 16px; margin-bottom: var(--canna-space-3); color: #2c3e50;">
+            <i data-feather="${getSubstrateIcon(s.tipo_key)}" class="icon icon-sm" aria-hidden="true"></i> ${s.tipo} 
+            <span style="color: #7f8c8d; font-weight: normal;">(${s.total_experimentos} experimentos)</span>
+          </h3>
+          <div class="experiments-list">
+            ${s.experimentos.length > 0 
+              ? s.experimentos.map(exp => `
+                  <div class="experiment-item">
+                    <div class="info">
+                      <div class="id">ID: ${exp.id}</div>
+                      <div class="design">${exp.design || 'Sem design definido'}</div>
+                    </div>
+                    <div class="meta">
+                      <span><i data-feather="bar-chart-2" class="icon icon-sm" aria-hidden="true"></i> ${exp.replicates} réplicas</span>
+                      <span class="status-badge ${exp.status.toLowerCase()}">${exp.status}</span>
+                    </div>
+                  </div>
+                `).join('')
+              : '<p style="color: #7f8c8d; padding: var(--canna-space-4);">Nenhum experimento registrado para este substrato.</p>'
+            }
+          </div>
+        </div>
+      `).join('');
+      
+      if (window.refreshFeatherIcons) window.refreshFeatherIcons();
+    }
+    }
+    
+    // ========================================================================
+    // UTILITIES
+    // ========================================================================
+    
+    function getSubstrateIcon(key) {
+      const icons = {
+        'SOLO_ORGANICO': 'package',
+        'HIDROPONIA': 'droplet',
+        'TRICHODERMA': 'flask'
+      };
+      return icons[key] || 'package';
+    }
+    
+    function showLoading() {
+      document.getElementById('loadingState').style.display = 'flex';
+      document.getElementById('errorState').style.display = 'none';
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('content').classList.remove('visible');
+    }
+    
+    function showError(message) {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorState').style.display = 'block';
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('content').classList.remove('visible');
+      document.getElementById('errorMessage').textContent = message;
+    }
+    
+    function showEmpty() {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorState').style.display = 'none';
+      document.getElementById('emptyState').style.display = 'block';
+      document.getElementById('content').classList.remove('visible');
+    }
+    
+    function showContent() {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorState').style.display = 'none';
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('content').classList.add('visible');
+    }
+    
+    // ========================================================================
+    // ENTRY POINT
+    // ========================================================================
+    
+    // Inicializar quando documento estiver pronto
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>

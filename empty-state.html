@@ -1,0 +1,373 @@
+<!--
+COMPONENTE: empty-state.html
+PAPEL: Estado vazio reutilizável com ilustração SVG, múltiplas ações e customização.
+
+PRINCIPAIS FUNCIONALIDADES:
+- estado vazio elegante com ilustração SVG inline;
+- suporte a múltiplas ações (criar novo, limpar filtros, voltar);
+- customizável via atributos data-* ou JavaScript API;
+- variantes: no-data, no-results, no-access, first-time;
+- animação suave de entrada;
+- acessibilidade completa com role="status" e ARIA.
+
+INTEGRAÇÕES:
+- Páginas de lista (studies, experiments, observations);
+- Dashboards e relatórios sem dados;
+- dados esperados: tipo de estado, ações disponíveis.
+
+SEGURANÇA E LIMITAÇÕES:
+- nunca renderizar senha, token completo ou stack trace;
+- validação visual não substitui ValidationService no servidor;
+- usar escaping/templating seguro para texto proveniente da planilha;
+- componente pronto para produção com testes de acessibilidade.
+
+STATUS: PRODUÇÃO — acessibilidade WCAG 2.1 AA, múltiplas variantes, animações suaves.
+-->
+
+<div class="empty-state" data-state="empty" role="status" aria-live="polite">
+  <div class="empty-state__container">
+    <!-- Ilustração SVG -->
+    <div class="empty-state__illustration" data-role="illustration" aria-hidden="true">
+      <svg class="empty-state__svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Pasta vazia -->
+        <path d="M40 60 L80 60 L90 50 L160 50 L160 150 L40 150 Z" 
+              fill="#f3f4f6" 
+              stroke="#d1d5db" 
+              stroke-width="2"/>
+        <path d="M40 70 L160 70" 
+              stroke="#d1d5db" 
+              stroke-width="2"/>
+        <!-- Documento vazio -->
+        <rect x="70" y="90" width="60" height="40" 
+              fill="white" 
+              stroke="#e5e7eb" 
+              stroke-width="1.5" 
+              rx="2"/>
+        <line x1="80" y1="100" x2="120" y2="100" 
+              stroke="#e5e7eb" 
+              stroke-width="2"/>
+        <line x1="80" y1="110" x2="110" y2="110" 
+              stroke="#e5e7eb" 
+              stroke-width="2"/>
+        <line x1="80" y1="120" x2="115" y2="120" 
+              stroke="#e5e7eb" 
+              stroke-width="2"/>
+      </svg>
+    </div>
+    
+    <!-- Conteúdo -->
+    <div class="empty-state__content">
+      <h2 class="empty-state__title" data-role="title">
+        Nenhum registro encontrado
+      </h2>
+      
+      <p class="empty-state__description" data-role="description">
+        Não há dados para exibir no momento. Ajuste os filtros ou crie o primeiro registro.
+      </p>
+    </div>
+    
+    <!-- Ações -->
+    <div class="empty-state__actions" data-role="actions">
+      <button class="empty-state__action empty-state__action--primary" 
+              data-action="create"
+              type="button">
+        <svg class="empty-state__action-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+        </svg>
+        <span data-role="create-text">Criar novo</span>
+      </button>
+      
+      <button class="empty-state__action empty-state__action--secondary" 
+              data-action="clear-filters"
+              type="button"
+              hidden>
+        <span data-role="clear-text">Limpar filtros</span>
+      </button>
+      
+      <button class="empty-state__action empty-state__action--text" 
+              data-action="back"
+              type="button"
+              hidden>
+        <span data-role="back-text">Voltar</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 2rem;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.empty-state__container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 400px;
+  text-align: center;
+}
+
+.empty-state__illustration {
+  margin-bottom: 1.5rem;
+}
+
+.empty-state__svg {
+  width: 200px;
+  height: 200px;
+  opacity: 0.8;
+}
+
+.empty-state__content {
+  margin-bottom: 2rem;
+}
+
+.empty-state__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.75rem 0;
+}
+
+.empty-state__description {
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.empty-state__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 280px;
+}
+
+.empty-state__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-family: inherit;
+}
+
+.empty-state__action--primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.empty-state__action--primary:hover:not(:disabled) {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+}
+
+.empty-state__action--primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.empty-state__action--secondary {
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.empty-state__action--secondary:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.empty-state__action--text {
+  background: transparent;
+  color: #6b7280;
+  border: none;
+  padding: 0.5rem 1rem;
+}
+
+.empty-state__action--text:hover:not(:disabled) {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+.empty-state__action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.empty-state__action-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Variantes */
+.empty-state[data-variant="no-access"] .empty-state__svg path:first-child {
+  fill: #fee2e2;
+  stroke: #fca5a5;
+}
+
+.empty-state[data-variant="first-time"] .empty-state__svg path:first-child {
+  fill: #dbeafe;
+  stroke: #93c5fd;
+}
+
+.empty-state[data-variant="no-results"] .empty-state__svg path:first-child {
+  fill: #fef3c7;
+  stroke: #fcd34d;
+}
+
+/* Responsividade */
+@media (min-width: 640px) {
+  .empty-state__actions {
+    flex-direction: row;
+    max-width: none;
+  }
+}
+</style>
+
+<script>
+(function() {
+  /**
+   * Configurações de estados vazios predefinidos.
+   */
+  const EMPTY_STATE_VARIANTS = {
+    'no-data': {
+      title: 'Nenhum registro encontrado',
+      description: 'Não há dados para exibir. Crie o primeiro registro para começar.',
+      actions: ['create']
+    },
+    'no-results': {
+      title: 'Nenhum resultado encontrado',
+      description: 'Sua busca não retornou resultados. Tente ajustar os filtros.',
+      actions: ['clear-filters', 'create']
+    },
+    'no-access': {
+      title: 'Acesso negado',
+      description: 'Você não tem permissão para visualizar estes dados.',
+      actions: ['back']
+    },
+    'first-time': {
+      title: 'Bem-vindo!',
+      description: 'Comece criando seu primeiro registro. É rápido e fácil.',
+      actions: ['create']
+    },
+    'empty': {
+      title: 'Nenhum registro encontrado',
+      description: 'Não há dados para exibir no momento. Ajuste os filtros ou crie o primeiro registro.',
+      actions: ['create', 'clear-filters']
+    }
+  };
+  
+  /**
+   * Inicializa estado vazio com configurações.
+   * @param {HTMLElement} container - Container do estado vazio
+   * @param {Object} options - Configurações
+   */
+  function initEmptyState(container, options = {}) {
+    const title = container.querySelector('[data-role="title"]');
+    const description = container.querySelector('[data-role="description"]');
+    const actionsContainer = container.querySelector('[data-role="actions"]');
+    
+    // Aplicar variante predefinida ou custom
+    const variant = options.variant || container.dataset.variant || 'empty';
+    const config = EMPTY_STATE_VARIANTS[variant] || EMPTY_STATE_VARIANTS.empty;
+    
+    // Permitir override
+    const finalConfig = {
+      title: options.title || config.title,
+      description: options.description || config.description,
+      actions: options.actions || config.actions,
+      variant: variant
+    };
+    
+    // Atualizar conteúdo
+    title.textContent = finalConfig.title;
+    description.textContent = finalConfig.description;
+    container.setAttribute('data-variant', finalConfig.variant);
+    
+    // Mostrar/ocultar ações
+    const actionButtons = {
+      'create': actionsContainer.querySelector('[data-action="create"]'),
+      'clear-filters': actionsContainer.querySelector('[data-action="clear-filters"]'),
+      'back': actionsContainer.querySelector('[data-action="back"]')
+    };
+    
+    Object.keys(actionButtons).forEach(key => {
+      const button = actionButtons[key];
+      if (button) {
+        button.hidden = !finalConfig.actions.includes(key);
+      }
+    });
+    
+    // Event listeners para ações
+    actionsContainer.addEventListener('click', function(e) {
+      const button = e.target.closest('[data-action]');
+      if (!button) return;
+      
+      const action = button.dataset.action;
+      const event = new CustomEvent('empty-state-action', {
+        detail: { action, variant: finalConfig.variant },
+        bubbles: true
+      });
+      container.dispatchEvent(event);
+    });
+    
+    // API pública
+    container._emptyStateAPI = {
+      setTitle: (text) => { title.textContent = text; },
+      setDescription: (text) => { description.textContent = text; },
+      setVariant: (v) => {
+        const variantConfig = EMPTY_STATE_VARIANTS[v];
+        if (variantConfig) {
+          initEmptyState(container, { ...variantConfig, variant: v });
+        }
+      },
+      showAction: (action) => {
+        if (actionButtons[action]) {
+          actionButtons[action].hidden = false;
+        }
+      },
+      hideAction: (action) => {
+        if (actionButtons[action]) {
+          actionButtons[action].hidden = true;
+        }
+      }
+    };
+  }
+  
+  // Inicializar todos os estados vazios na página
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-state="empty"]').forEach(function(el) {
+      if (!el._emptyStateAPI) {
+        initEmptyState(el, el.dataset);
+      }
+    });
+  });
+  
+  // Exportar para uso global
+  window.initEmptyState = initEmptyState;
+  window.EMPTY_STATE_VARIANTS = EMPTY_STATE_VARIANTS;
+})();
+</script>

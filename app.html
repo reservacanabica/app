@@ -1,0 +1,116 @@
+<!--
+COMPONENTE: app.html
+PAPEL: Shell principal do Web App.
+
+PRINCIPAIS FUNCIONALIDADES:
+- monta layout, estilos, navegação, estado inicial e parciais;
+- mantém o estado de UI separado do processamento no Apps Script;
+- não acessa diretamente a planilha: usa client.html e os contratos do Web App.
+
+INTEGRAÇÕES:
+- HtmlService include, client.html, index.html;
+- dados esperados: Nenhum dado persistido diretamente.
+
+SEGURANÇA E LIMITAÇÕES:
+- nunca renderizar senha, token completo ou stack trace;
+- validação visual não substitui ValidationService no servidor;
+- usar escaping/templating seguro para texto proveniente da planilha;
+- esqueleto preparado para HtmlService e componentes parciais.
+
+STATUS: ESQUELETO DE INTERFACE — completar acessibilidade, testes e estados de erro.
+-->
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Canabica WebApp</title>
+  <?!= include('styles') ?>
+</head>
+<body>
+  <div id="app-shell">
+    <?!= include('nav') ?>
+    <div class="app-body">
+      <?!= include('sidebar') ?>
+      <main id="app-content">
+        <?!= include('index') ?>
+      </main>
+    </div>
+    <?!= include('footer') ?>
+  </div>
+  
+  <!-- Configuration -->
+  <?!= include('frontend-config') ?>
+  
+  <!-- Core scripts -->
+  <?!= include('loading') ?>
+  <?!= include('toast') ?>
+  <?!= include('modal') ?>
+  
+  <!-- Integration layer -->
+  <?!= include('component-base') ?>
+  <?!= include('api-client') ?>
+  
+  <!-- Components -->
+  <?!= include('study-list.component') ?>
+  
+  <!-- App initialization -->
+  <script>
+    // Initialize app when DOM is ready
+    document.addEventListener('DOMContentLoaded', async function() {
+      console.log('🚀 Canabica WebApp v' + window.AppConfig.app.version);
+      
+      // Verifica health da integração
+      try {
+        const health = await window.api.call('system.health', { skipAuth: true });
+        console.log('✅ Backend health:', health.status);
+      } catch (e) {
+        console.warn('⚠️ Backend health check failed:', e.message);
+      }
+      
+      // Verifica autenticação
+      if (window.api.isAuthenticated()) {
+        const user = window.api.getUser();
+        console.log('✅ User authenticated:', user.email);
+        
+        // Valida sessão
+        const isValid = await window.api.validateSession();
+        if (!isValid) {
+          console.warn('⚠️ Session invalid, redirecting to login...');
+          window.location.href = window.AppConfig.routes.login;
+        }
+      } else {
+        console.log('⚠️ User not authenticated');
+        
+        // Redireciona para login se não estiver na página de login
+        if (!window.location.hash.includes('login')) {
+          console.log('Redirecting to login...');
+          window.location.href = window.AppConfig.routes.login;
+        }
+      }
+      
+      // Setup global error handler
+      window.addEventListener('error', function(e) {
+        console.error('Global error:', e.error);
+        const message = window.AppConfig.getMessage('error');
+        window.showToast(message, 'error');
+      });
+      
+      // Setup unhandled promise rejection handler
+      window.addEventListener('unhandledrejection', function(e) {
+        console.error('Unhandled promise rejection:', e.reason);
+        const message = e.reason?.message || window.AppConfig.getMessage('error');
+        window.showToast(message, 'error');
+      });
+      
+      // Emite evento de app pronto
+      window.dispatchEvent(new CustomEvent('app-ready', {
+        detail: {
+          version: window.AppConfig.app.version,
+          authenticated: window.api.isAuthenticated()
+        }
+      }));
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Component Base</title>
+</head>
+<body>
+<script>
+/**
+ * COMPONENT BASE CLASS
+ * Web Components reativos com lifecycle, state, props
+ */
+
+class Component extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+    this._state = {};
+    this._props = {};
+    this._watchers = [];
+    this._mounted = false;
+  }
+
+  connectedCallback() {
+    this._extractProps();
+    this._render();
+    this.onMount?.();
+    this._mounted = true;
+  }
+
+  disconnectedCallback() {
+    this._watchers.forEach(w => w.cleanup?.());
+    this.onUnmount?.();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue !== newValue) {
+      this._props[name] = newValue;
+      this.onPropsChange?.({ [name]: newValue }, { [name]: oldValue });
+      this._render();
+    }
+  }
+
+  /**
+   * Extrai props dos attributes
+   */
+  _extractProps() {
+    this.constructor.observedAttributes?.forEach(attr => {
+      this._props[attr] = this.getAttribute(attr);
+    });
+  }
+
+  /**
+   * Define estado (causa re-render)
+   */
+  setState(newState) {
+    const oldState = { ...this._state };
+    this._state = { ...this._state, ...newState };
+    this.onStateChange?.(this._state, oldState);
+    this._render();
+  }
+
+  /**
+   * Obtém estado
+   */
+  getState() {
+    return { ...this._state };
+  }
+
+  /**
+   * Obtém props
+   */
+  getProps() {
+    return { ...this._props };
+  }
+
+  /**
+   * Renderiza componente
+   */
+  _render() {
+    if (!this._mounted) return;
+
+    const template = this.template?.();
+    const styles = this.styles?.();
+
+    const container = document.createElement('div');
+
+    // Adicionar styles
+    if (styles) {
+      const styleEl = document.createElement('style');
+      styleEl.textContent = styles;
+      container.appendChild(styleEl);
+    }
+
+    // Adicionar template
+    if (template) {
+      container.innerHTML += template;
+    }
+
+    this.shadowRoot.replaceChildren(container);
+    this._attachEventListeners();
+  }
+
+  /**
+   * Attach listeners de eventos
+   */
+  _attachEventListeners() {
+    this.shadowRoot.querySelectorAll('[data-click]').forEach(el => {
+      const method = el.getAttribute('data-click');
+      el.addEventListener('click', () => this[method]?.());
+    });
+
+    this.shadowRoot.querySelectorAll('[data-input]').forEach(el => {
+      const method = el.getAttribute('data-input');
+      el.addEventListener('input', (e) => this[method]?.(e));
+    });
+
+    this.shadowRoot.querySelectorAll('[data-change]').forEach(el => {
+      const method = el.getAttribute('data-change');
+      el.addEventListener('change', (e) => this[method]?.(e));
+    });
+
+    this.shadowRoot.querySelectorAll('[data-submit]').forEach(el => {
+      const method = el.getAttribute('data-submit');
+      el.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this[method]?.();
+      });
+    });
+  }
+
+  /**
+   * Query helpers
+   */
+  $(selector) {
+    return this.shadowRoot?.querySelector(selector);
+  }
+
+  $$(selector) {
+    return Array.from(this.shadowRoot?.querySelectorAll(selector) || []);
+  }
+
+  /**
+   * Emit custom event
+   */
+  emit(eventName, detail) {
+    this.dispatchEvent(new CustomEvent(eventName, {
+      detail,
+      bubbles: true,
+      composed: true
+    }));
+  }
+
+  /**
+   * Lifecycle hooks (override em subclass)
+   */
+  onMount() {}
+  onUnmount() {}
+  onPropsChange(newProps, oldProps) {}
+  onStateChange(newState, oldState) {}
+
+  /**
+   * Template (override em subclass)
+   */
+  template() {
+    return '<div>Component</div>';
+  }
+
+  /**
+   * Styles (override em subclass)
+   */
+  styles() {
+    return '';
+  }
+}
+
+/**
+ * Registra componente customizado
+ */
+function defineComponent(name, ComponentClass) {
+  if (!customElements.get(name)) {
+    customElements.define(name, ComponentClass);
+  }
+}
+
+/**
+ * Exemplo: Componente com estado
+ */
+class CounterComponent extends Component {
+  static get observedAttributes() {
+    return ['initial'];
+  }
+
+  constructor() {
+    super();
+    this.setState({ count: 0 });
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    const initial = parseInt(this._props.initial) || 0;
+    this.setState({ count: initial });
+  }
+
+  increment() {
+    const { count } = this.getState();
+    this.setState({ count: count + 1 });
+    this.emit('count-changed', { count: count + 1 });
+  }
+
+  decrement() {
+    const { count } = this.getState();
+    this.setState({ count: count - 1 });
+    this.emit('count-changed', { count: count - 1 });
+  }
+
+  template() {
+    const { count } = this.getState();
+    return `
+      <div class="counter">
+        <p>Count: <strong>${count}</strong></p>
+        <button data-click="decrement">-</button>
+        <button data-click="increment">+</button>
+      </div>
+    `;
+  }
+
+  styles() {
+    return `
+      .counter {
+        text-align: center;
+        padding: var(--canna-space-5); /* 20px */
+      }
+      button {
+        margin: 0 var(--canna-space-3); /* 10px → 12px rounded */
+        padding: var(--canna-space-2) var(--canna-space-4); /* 8px 16px */
+        background-color: #2ecc71;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #27ae60;
+      }
+    `;
+  }
+}
+
+defineComponent('canna-counter', CounterComponent);
+
+/**
+ * Exemplo: Componente com lista
+ */
+class ListComponent extends Component {
+  constructor() {
+    super();
+    this.setState({ items: [] });
+  }
+
+  addItem(text) {
+    const { items } = this.getState();
+    this.setState({
+      items: [...items, { id: Date.now(), text }]
+    });
+  }
+
+  removeItem(id) {
+    const { items } = this.getState();
+    this.setState({
+      items: items.filter(i => i.id !== id)
+    });
+  }
+
+  template() {
+    const { items } = this.getState();
+    return `
+      <div class="list">
+        <ul>
+          ${items.map(item => `
+            <li>
+              ${item.text}
+              <button data-id="${item.id}" onclick="this.closest('canna-list').removeItem(${item.id})">×</button>
+            </li>
+          `).join('')}
+        </ul>
+      </div>
+    `;
+  }
+
+  styles() {
+    return `
+      .list ul {
+        list-style: none;
+        padding: 0;
+      }
+      .list li {
+        padding: var(--canna-space-3); /* 10px → 12px rounded */
+        border-bottom: 1px solid #ecf0f1;
+        display: flex;
+        justify-content: space-between;
+      }
+    `;
+  }
+}
+
+defineComponent('canna-list', ListComponent);
+
+/**
+ * Exemplo: Modal Component
+ */
+class ModalComponent extends Component {
+  static get observedAttributes() {
+    return ['title', 'open'];
+  }
+
+  constructor() {
+    super();
+    this.setState({ isOpen: false });
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    const open = this.getAttribute('open') === 'true';
+    this.setState({ isOpen: open });
+  }
+
+  open() {
+    this.setState({ isOpen: true });
+  }
+
+  close() {
+    this.setState({ isOpen: false });
+  }
+
+  template() {
+    const { isOpen } = this.getState();
+    const title = this._props.title || 'Modal';
+
+    if (!isOpen) return '<div></div>';
+
+    return `
+      <div class="modal-overlay" data-click="close">
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="modal-header">
+            <h2>${title}</h2>
+            <button data-click="close">×</button>
+          </div>
+          <div class="modal-body">
+            <slot></slot>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  styles() {
+    return `
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+      .modal {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        max-width: 500px;
+        width: 90%;
+      }
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--canna-space-5); /* 20px */
+        border-bottom: 1px solid #ecf0f1;
+      }
+      .modal-body {
+        padding: var(--canna-space-5); /* 20px */
+      }
+    `;
+  }
+}
+
+defineComponent('canna-modal', ModalComponent);
+
+</script>
+</body>
+</html>

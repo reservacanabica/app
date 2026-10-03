@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>CRUD Service</title>
+</head>
+<body>
+<script>
+/**
+ * CRUD SERVICE
+ * Wrapper reutilizável para operações CRUD
+ */
+
+class CRUDService {
+  constructor(entityType, baseEndpoint) {
+    this.entityType = entityType;
+    this.baseEndpoint = baseEndpoint; // ex: '/studies', '/experiments'
+    this.cache = new Map();
+    this.cacheExpiry = 5 * 60 * 1000; // 5 min
+  }
+
+  /**
+   * List entities com filtro opcional
+   */
+  async list(filters = {}) {
+    const cacheKey = `list_${JSON.stringify(filters)}`;
+    
+    // Verificar cache
+    const cached = this.cache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < this.cacheExpiry) {
+      return cached.data;
+    }
+
+    try {
+      const query = new URLSearchParams(filters).toString();
+      const url = query ? `${this.baseEndpoint}?${query}` : this.baseEndpoint;
+      
+      const response = await api.get(url);
+
+      // Armazenar em cache
+      this.cache.set(cacheKey, {
+        data: response,
+        timestamp: Date.now()
+      });
+
+      return response;
+    } catch (error) {
+      console.error(`Error listing ${this.entityType}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get single entity by ID
+   */
+  async get(id) {
+    const cacheKey = `get_${id}`;
+    
+    const cached = this.cache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < this.cacheExpiry) {
+      return cached.data;
+    }
+
+    try {
+      const response = await api.get(`${this.baseEndpoint}/${id}`);
+
+      this.cache.set(cacheKey, {
+        data: response,
+        timestamp: Date.now()
+      });
+
+      return response;
+    } catch (error) {
+      console.error(`Error getting ${this.entityType} ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create new entity
+   */
+  async create(data) {
+    try {
+      const response = await api.post(this.baseEndpoint, data);
+      
+      // Invalidar cache
+      this.invalidateCache();
+
+      return response;
+    } catch (error) {
+      console.error(`Error creating ${this.entityType}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update entity
+   */
+  async update(id, data) {
+    try {
+      const response = await api.put(`${this.baseEndpoint}/${id}`, data);
+
+      // Invalidar cache
+      this.invalidateCache();
+
+      return response;
+    } catch (error) {
+      console.error(`Error updating ${this.entityType} ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete entity
+   */
+  async delete(id) {
+    try {
+      const response = await api.delete(`${this.baseEndpoint}/${id}`);
+
+      // Invalidar cache
+      this.invalidateCache();
+
+      return response;
+    } catch (error) {
+      console.error(`Error deleting ${this.entityType} ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Search entities
+   */
+  async search(query, field = 'name') {
+    try {
+      return await this.list({
+        search: query,
+        searchField: field
+      });
+    } catch (error) {
+      console.error(`Error searching ${this.entityType}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Batch delete
+   */
+  async batchDelete(ids) {
+    try {
+      const response = await api.post(`${this.baseEndpoint}/batch/delete`, { ids });
+      this.invalidateCache();
+      return response;
+    } catch (error) {
+      console.error(`Error batch deleting ${this.entityType}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Export entities
+   */
+  async export(format = 'json', filters = {}) {
+    try {
+      const query = new URLSearchParams({ ...filters, format }).toString();
+      const url = `${this.baseEndpoint}/export?${query}`;
+      return await api.get(url);
+    } catch (error) {
+      console.error(`Error exporting ${this.entityType}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Invalida cache
+   */
+  invalidateCache() {
+    this.cache.clear();
+  }
+
+  /**
+   * Get cache stats
+   */
+  getCacheStats() {
+    return {
+      size: this.cache.size,
+      keys: Array.from(this.cache.keys())
+    };
+  }
+}
+
+/**
+ * Factory para criar CRUD services por tipo
+ */
+const CRUDFactory = {
+  studies: () => new CRUDService('Study', '/studies'),
+  experiments: () => new CRUDService('Experiment', '/experiments'),
+  observations: () => new CRUDService('Observation', '/observations'),
+  references: () => new CRUDService('Reference', '/references'),
+  evidence: () => new CRUDService('Evidence', '/evidence'),
+  users: () => new CRUDService('User', '/users'),
+  validationRuns: () => new CRUDService('ValidationRun', '/validations/runs'),
+
+  create: (entityType, endpoint) => new CRUDService(entityType, endpoint)
+};
+
+</script>
+</body>
+</html>

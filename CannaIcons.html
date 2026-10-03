@@ -1,0 +1,375 @@
+<!--
+  CannaIcons.html
+  Icon System for Reserva Canabica - Feather Icons
+  Version: 1.0.0
+  Library: Feather Icons (MIT License)
+  CDN: https://unpkg.com/feather-icons
+-->
+
+<!-- Feather Icons CDN -->
+<script src="https://unpkg.com/feather-icons"></script>
+
+<style id="canna-icon-utilities">
+/**
+ * ========================================================================
+ * CANNA ICON SYSTEM - Utility Classes
+ * ========================================================================
+ * Feather Icons integration with Canna Design System
+ */
+
+/* Base Icon Container */
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* SVG Styling */
+.icon svg,
+svg.icon {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Icon Sizes */
+.icon-sm {
+  width: 16px;
+  height: 16px;
+}
+
+.icon-sm svg {
+  width: 16px;
+  height: 16px;
+}
+
+.icon-md {
+  width: 20px;
+  height: 20px;
+}
+
+.icon-md svg {
+  width: 20px;
+  height: 20px;
+}
+
+.icon-lg {
+  width: 24px;
+  height: 24px;
+}
+
+.icon-lg svg {
+  width: 24px;
+  height: 24px;
+}
+
+.icon-xl {
+  width: 32px;
+  height: 32px;
+}
+
+.icon-xl svg {
+  width: 32px;
+  height: 32px;
+}
+
+/* Icon Colors */
+.icon-primary {
+  color: var(--canna-green-500, #4CAF50);
+}
+
+.icon-muted {
+  color: var(--canna-text-muted, #888888);
+}
+
+.icon-success {
+  color: var(--canna-success, #10b981);
+}
+
+.icon-warning {
+  color: var(--canna-warning, #f59e0b);
+}
+
+.icon-danger {
+  color: var(--canna-error, #ef4444);
+}
+
+.icon-info {
+  color: var(--canna-info, #3b82f6);
+}
+
+/* Icon Button Styling */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--canna-space-2, 8px);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: var(--canna-radius-sm, 4px);
+  transition: background-color 0.2s ease;
+}
+
+.icon-button:hover {
+  background-color: var(--canna-surface-variant, rgba(255, 255, 255, 0.05));
+}
+
+.icon-button:focus {
+  outline: 2px solid var(--canna-accent-primary, #4CAF50);
+  outline-offset: 2px;
+}
+
+/* Stat Icon Container (for dashboard cards) */
+.stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--canna-space-3, 12px);
+}
+
+/* Navigation Icon Spacing */
+.nav-link .icon,
+.sidebar-link .icon {
+  margin-right: var(--canna-space-2, 8px);
+}
+</style>
+
+<script>
+/**
+ * ========================================================================
+ * FEATHER ICONS INITIALIZATION
+ * ========================================================================
+ * Auto-initializes Feather Icons on page load and provides refresh utility
+ */
+
+(function() {
+  'use strict';
+  
+  /**
+   * Initialize Feather Icons
+   * Converts all data-feather attributes to inline SVG
+   */
+  function initFeatherIcons() {
+    if (typeof feather !== 'undefined') {
+      feather.replace({
+        width: 20,
+        height: 20,
+        'stroke-width': 2,
+        'aria-hidden': 'true'
+      });
+      console.log('✓ Feather Icons initialized');
+    } else {
+      console.error('✗ Feather Icons library not loaded from CDN');
+    }
+  }
+  
+  /**
+   * Initialize on DOM ready
+   */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFeatherIcons);
+  } else {
+    initFeatherIcons();
+  }
+  
+  /**
+   * Re-initialize for dynamic content
+   * Call window.refreshFeatherIcons() after adding icons dynamically
+   */
+  window.refreshFeatherIcons = initFeatherIcons;
+  
+})();
+</script>
+
+<!--
+  ========================================================================
+  USAGE EXAMPLES & PATTERNS
+  ========================================================================
+  
+  BASIC ICON:
+  <i data-feather="heart" class="icon icon-md"></i>
+  
+  SIZED ICONS:
+  <i data-feather="check" class="icon icon-sm"></i>  <!-- 16px -->
+  <i data-feather="check" class="icon icon-md"></i>  <!-- 20px, default -->
+  <i data-feather="check" class="icon icon-lg"></i>  <!-- 24px -->
+  <i data-feather="check" class="icon icon-xl"></i>  <!-- 32px -->
+  
+  COLORED ICONS:
+  <i data-feather="plus-circle" class="icon icon-primary"></i>   <!-- Green -->
+  <i data-feather="trash-2" class="icon icon-danger"></i>        <!-- Red -->
+  <i data-feather="alert-triangle" class="icon icon-warning"></i><!-- Orange -->
+  <i data-feather="info" class="icon icon-info"></i>             <!-- Blue -->
+  <i data-feather="check-circle" class="icon icon-success"></i>  <!-- Green -->
+  
+  DECORATIVE ICON (in button with text):
+  <button type="button">
+    <i data-feather="save" class="icon icon-sm" aria-hidden="true"></i>
+    Save
+  </button>
+  
+  SEMANTIC ICON (icon-only button):
+  <button type="button" aria-label="Delete item" class="icon-button">
+    <i data-feather="trash-2" class="icon icon-sm" aria-hidden="true"></i>
+  </button>
+  
+  NAVIGATION LINK:
+  <a href="#dashboard" aria-label="Go to dashboard">
+    <i data-feather="home" class="icon icon-md" aria-hidden="true"></i>
+    Dashboard
+  </a>
+  
+  STAT CARD ICON:
+  <div class="stat-card">
+    <div class="stat-icon">
+      <i data-feather="bar-chart-2" class="icon icon-xl icon-primary" aria-hidden="true"></i>
+    </div>
+    <div class="stat-value">42</div>
+    <div class="stat-label">Estudos</div>
+  </div>
+  
+  ========================================================================
+  ACCESSIBILITY PATTERNS
+  ========================================================================
+  
+  RULE 1: Decorative icons MUST have aria-hidden="true"
+  Icons that are purely visual (in buttons/links with text labels):
+  
+  <button aria-label="Save changes">
+    <i data-feather="save" class="icon" aria-hidden="true"></i>
+    Save
+  </button>
+  
+  RULE 2: Icon-only buttons MUST have aria-label on the button
+  When icon is the only content:
+  
+  <button aria-label="Settings" class="icon-button">
+    <i data-feather="settings" class="icon" aria-hidden="true"></i>
+  </button>
+  
+  RULE 3: Navigation links with icons should have aria-label
+  
+  <a href="#page" aria-label="Go to page">
+    <i data-feather="home" class="icon" aria-hidden="true"></i>
+    Home
+  </a>
+  
+  ========================================================================
+  ICON NAME REFERENCE - EMOJI TO FEATHER MAPPING
+  ========================================================================
+  
+  All available icons from the migration plan:
+  
+  ➕ → plus-circle       (Add/Create actions)
+  📊 → bar-chart-2       (Analytics, reports, charts)
+  📥 → download          (Export, download actions)
+  ❌ → x-circle          (Error, close, cancel)
+  ✓ / ✅ → check / check-circle (Success, confirmation)
+  🔍 → search            (Search fields)
+  ⚙️ → settings          (Configuration)
+  👤 → user              (Single user, profile)
+  👥 → users             (Multiple users, team)
+  📅 → calendar          (Dates, scheduling)
+  📝 → edit / file-text  (Edit actions, notes)
+  🏥 / 🩺 → activity     (Medical, health data)
+  🌿 / 🌱 / 🍃 → leaf    (Cannabis, plant data)
+  ⚠️ → alert-triangle    (Warnings)
+  🔒 → lock              (Secured, locked)
+  🔓 → unlock            (Unlocked, open)
+  📋 → clipboard         (Lists, clipboard)
+  🗑️ → trash-2           (Delete, remove)
+  💾 → save              (Save actions)
+  👁️ → eye               (View, visibility)
+  🔄 → refresh-cw        (Refresh, reload, sync)
+  🔬 → microscope        (Research, analysis)
+  🧬 → git-branch        (Genetic, branching)
+  🧪 → flask             (Experiments, lab)
+  📈 → trending-up       (Growth, increases)
+  📖 → book              (Reference, docs)
+  📚 → book-open         (Multiple references)
+  🐍 → code              (Programming, Python)
+  🎯 → target            (Goals, objectives)
+  ⚗️ → filter            (Chemistry, filtering)
+  💡 → lightbulb         (Ideas, insights)
+  🔔 → bell              (Notifications)
+  📌 → map-pin           (Pin, location)
+  🔥 → zap               (Important, priority)
+  ✕ → x                  (Close, exit)
+  ℹ️ → info              (Information)
+  🧠 → cpu               (Intelligence, processing)
+  
+  Additional common icons:
+  - home                 (Home, dashboard)
+  - log-out              (Logout action)
+  - menu                 (Menu toggle)
+  - grid                 (Dashboard view)
+  - list                 (List view)
+  - file                 (Generic file)
+  - folder               (Folder, directory)
+  - image                (Image file)
+  - upload               (Upload action)
+  - link                 (Link, connection)
+  - external-link        (External link)
+  - mail                 (Email)
+  - phone                (Phone)
+  - message-circle       (Messages, chat)
+  - help-circle          (Help, documentation)
+  - chevron-down         (Dropdown indicator)
+  - chevron-up           (Collapse indicator)
+  - chevron-left         (Previous, back)
+  - chevron-right        (Next, forward)
+  - arrow-left           (Navigate back)
+  - arrow-right          (Navigate forward)
+  - clock                (Time, history)
+  - shield               (Security, protection)
+  - award                (Achievement, badge)
+  - star                 (Favorite, rating)
+  - heart                (Like, favorite)
+  - tag                  (Tag, label)
+  - layers               (Layers, stack)
+  - package              (Package, module)
+  - database             (Database)
+  - server               (Server, backend)
+  - tool                 (Tools, utilities)
+  - sliders              (Adjustments, controls)
+  - maximize             (Expand, fullscreen)
+  - minimize             (Collapse, minimize)
+  - plus                 (Add simple)
+  - minus                (Remove simple)
+  - more-horizontal      (More options)
+  - more-vertical        (More options vertical)
+  
+  For complete icon list, visit: https://feathericons.com
+  
+  ========================================================================
+  TROUBLESHOOTING
+  ========================================================================
+  
+  ICONS NOT APPEARING:
+  1. Check browser console for "✓ Feather Icons initialized"
+  2. Verify CDN loaded: Network tab should show unpkg.com/feather-icons
+  3. Ensure data-feather attribute value is correct (check feathericons.com)
+  4. Verify icon name is lowercase and hyphenated (e.g., "check-circle" not "checkCircle")
+  
+  WRONG SIZE/COLOR:
+  1. Add utility classes: .icon-{sm|md|lg|xl} for size
+  2. Add color classes: .icon-{primary|muted|success|warning|danger|info}
+  3. Or use inline: style="width: 20px; height: 20px; color: #4CAF50;"
+  
+  ACCESSIBILITY WARNINGS:
+  1. Every decorative icon needs aria-hidden="true"
+  2. Every icon-only button needs aria-label on button element
+  3. Don't use title attribute (not screen reader friendly)
+  
+  DYNAMIC CONTENT:
+  After adding icons dynamically via JavaScript:
+  window.refreshFeatherIcons();
+  
+  ========================================================================
+-->

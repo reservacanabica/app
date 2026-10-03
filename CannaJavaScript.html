@@ -1,0 +1,620 @@
+<!--
+  CannaJavaScript.html
+  JavaScript utilities para Reserva Canabica
+  Sistema de notificações, validação de formulários e utilitários gerais
+  Versão: 1.0.0
+-->
+
+<script id="canna-toast-system">
+/**
+ * ========================================================================
+ * CANNA TOAST SYSTEM
+ * ========================================================================
+ * Sistema de notificações toast com suporte a múltiplas instâncias
+ * e fila de mensagens
+ */
+(function() {
+  'use strict';
+  
+  if (window.CannaToast) return;
+  
+  const TOAST_DURATION = 4000; // 4 segundos
+  const TOAST_POSITION = { right: '1rem', bottom: '1rem' };
+  const MAX_TOASTS = 3;
+  
+  let toastQueue = [];
+  let activeToasts = [];
+  
+  function createToastElement(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `canna-toast canna-toast-${type}`;
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    // Icon baseado no tipo
+    const iconMap = {
+      success: 'check-circle',
+      error: 'x-circle',
+      warning: 'alert-triangle',
+      info: 'info'
+    };
+    
+    const iconName = iconMap[type] || iconMap.info;
+    
+    toast.innerHTML = `
+      <div style="display: flex; align-items: start; gap: 0.75rem;">
+        <i data-feather="${iconName}" class="icon icon-md" aria-hidden="true" style="flex-shrink: 0;"></i>
+        <div style="flex: 1;">
+          <div style="font-weight: 600; margin-bottom: 0.25rem;">
+            ${type.charAt(0).toUpperCase() + type.slice(1)}
+          </div>
+          <div style="font-size: 0.875rem; color: var(--canna-text-secondary);">
+            ${message}
+          </div>
+        </div>
+      </div>
+    `;
+    
+    if (window.refreshFeatherIcons) window.refreshFeatherIcons();
+    
+    return toast;
+  }
+  
+  function positionToasts() {
+    activeToasts.forEach((toast, index) => {
+      const offset = index * (toast.offsetHeight + 12); // 12px gap
+      toast.style.bottom = `calc(${TOAST_POSITION.bottom} + ${offset}px)`;
+      toast.style.right = TOAST_POSITION.right;
+    });
+  }
+  
+  function showToast(toast) {
+    document.body.appendChild(toast);
+    
+    // Força reflow para anima ção funcionar
+    toast.offsetHeight;
+    
+    toast.classList.add('is-visible');
+    activeToasts.push(toast);
+    positionToasts();
+    
+    // Auto-remove após duração
+    setTimeout(() => hideToast(toast), TOAST_DURATION);
+    
+    // Click para fechar
+    toast.addEventListener('click', () => hideToast(toast));
+  }
+  
+  function hideToast(toast) {
+    if (!toast.classList.contains('is-visible')) return;
+    
+    toast.classList.remove('is-visible');
+    
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+      
+      const index = activeToasts.indexOf(toast);
+      if (index > -1) {
+        activeToasts.splice(index, 1);
+        positionToasts();
+      }
+      
+      // Processa próximo toast na fila
+      if (toastQueue.length > 0 && activeToasts.length < MAX_TOASTS) {
+        const next = toastQueue.shift();
+        showToast(next);
+      }
+    }, 200);
+  }
+  
+  function notify(message, type = 'info') {
+    const toast = createToastElement(message, type);
+    
+    if (activeToasts.length < MAX_TOASTS) {
+      showToast(toast);
+    } else {
+      toastQueue.push(toast);
+    }
+  }
+  
+  // API pública
+  window.CannaToast = {
+    success: (msg) => notify(msg, 'success'),
+    error: (msg) => notify(msg, 'error'),
+    warning: (msg) => notify(msg, 'warning'),
+    info: (msg) => notify(msg, 'info'),
+    show: notify
+  };
+  
+  console.info('[Canna] Toast system initialized');
+})();
+</script>
+
+<script id="canna-form-system">
+/**
+ * ========================================================================
+ * CANNA FORM SYSTEM
+ * ========================================================================
+ * Validação de formulários, auto-conexão de labels e estados
+ */
+(function() {
+  'use strict';
+  
+  if (window.CannaForm) return;
+  
+  // Conecta labels aos inputs automaticamente
+  function connectLabels(form) {
+    const fields = form.querySelectorAll('input:not([type="hidden"]), select, textarea');
+    
+    fields.forEach((field, index) => {
+      // Gerar ID se não existir
+      if (!field.id) {
+        field.id = `canna-field-${index}-${Math.random().toString(36).slice(2, 7)}`;
+      }
+      
+      // Procurar label associado
+      let label = form.querySelector(`label[for="${field.id}"]`);
+      
+      if (!label) {
+        // Tentar label como sibling anterior
+        const sibling = field.previousElementSibling;
+        if (sibling && sibling.tagName === 'LABEL') {
+          sibling.setAttribute('for', field.id);
+          label = sibling;
+        }
+      }
+      
+      // Adicionar classe wrapper se não existir
+      const parent = field.closest('.canna-field');
+      if (!parent && field.parentElement) {
+        field.parentElement.classList.add('canna-field');
+      }
+    });
+  }
+  
+  // Validação de campo individual
+  function validateField(field) {
+    const parent = field.closest('.canna-field');
+    if (!parent) return true;
+    
+    let isValid = field.validity.valid;
+    let errorMessage = '';
+    
+    // Validações customizadas
+    if (field.required && !field.value.trim()) {
+      isValid = false;
+      errorMessage = 'Este campo é obrigatório';
+    } else if (field.type === 'email' && field.value) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(field.value)) {
+        isValid = false;
+        errorMessage = 'Email inválido';
+      }
+    } else if (field.minLength && field.value.length < field.minLength) {
+      isValid = false;
+      errorMessage = `Mínimo de ${field.minLength} caracteres`;
+    }
+    
+    // Atualizar UI
+    if (isValid) {
+      parent.classList.remove('has-error');
+      const errorEl = parent.querySelector('.canna-field-error');
+      if (errorEl) errorEl.remove();
+    } else {
+      parent.classList.add('has-error');
+      
+      let errorEl = parent.querySelector('.canna-field-error');
+      if (!errorEl) {
+        errorEl = document.createElement('div');
+        errorEl.className = 'canna-field-error';
+        parent.appendChild(errorEl);
+      }
+      
+      errorEl.innerHTML = `<i data-feather="alert-triangle" class="icon icon-sm icon-warning" aria-hidden="true"></i> ${errorMessage || field.validationMessage}`;
+      if (window.refreshFeatherIcons) window.refreshFeatherIcons();
+    }
+    
+    return isValid;
+  }
+  
+  // Validar formulário completo
+  function validateForm(form) {
+    const fields = form.querySelectorAll('input:not([type="hidden"]), select, textarea');
+    let isValid = true;
+    
+    fields.forEach(field => {
+      if (!validateField(field)) {
+        isValid = false;
+      }
+    });
+    
+    return isValid;
+  }
+  
+  // Marcar formulário como ocupado
+  function setBusy(form, busy = true) {
+    if (busy) {
+      form.setAttribute('aria-busy', 'true');
+      const submitBtn = form.querySelector('[type="submit"], .canna-btn-submit');
+      if (submitBtn) {
+        submitBtn.dataset.originalText = submitBtn.textContent;
+        submitBtn.innerHTML = '<span class="canna-spinner"></span> Processando...';
+        submitBtn.disabled = true;
+      }
+    } else {
+      form.removeAttribute('aria-busy');
+      const submitBtn = form.querySelector('[type="submit"], .canna-btn-submit');
+      if (submitBtn) {
+        submitBtn.textContent = submitBtn.dataset.originalText || 'Enviar';
+        submitBtn.disabled = false;
+      }
+    }
+  }
+  
+  // Inicialização automática
+  function initForms() {
+    document.querySelectorAll('form').forEach(form => {
+      // Conectar labels
+      connectLabels(form);
+      
+      // Validação ao enviar
+      form.addEventListener('submit', function(e) {
+        if (!validateForm(form)) {
+          e.preventDefault();
+          CannaToast.error('Por favor, corrija os erros no formulário');
+          
+          // Focar primeiro campo com erro
+          const firstError = form.querySelector('.has-error input, .has-error select, .has-error textarea');
+          if (firstError) firstError.focus();
+        } else {
+          setBusy(form, true);
+        }
+      });
+      
+      // Validação em tempo real (ao perder foco)
+      form.querySelectorAll('input, select, textarea').forEach(field => {
+        field.addEventListener('blur', () => validateField(field));
+        
+        // Limpar erro ao digitar
+        field.addEventListener('input', () => {
+          const parent = field.closest('.canna-field');
+          if (parent && parent.classList.contains('has-error')) {
+            parent.classList.remove('has-error');
+          }
+        });
+      });
+    });
+  }
+  
+  // API pública
+  window.CannaForm = {
+    validate: validateForm,
+    validateField: validateField,
+    setBusy: setBusy,
+    connect: connectLabels,
+    init: initForms
+  };
+  
+  // Auto-init quando DOM carregar
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initForms);
+  } else {
+    initForms();
+  }
+  
+  console.info('[Canna] Form system initialized');
+})();
+</script>
+
+<script id="canna-utilities">
+/**
+ * ========================================================================
+ * CANNA UTILITIES
+ * ========================================================================
+ * Funções utilitárias gerais
+ */
+(function() {
+  'use strict';
+  
+  // Debounce
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+  
+  // Throttle
+  function throttle(func, limit) {
+    let inThrottle;
+    return function(...args) {
+      if (!inThrottle) {
+        func.apply(this, args);
+        inThrottle = true;
+        setTimeout(() => inThrottle = false, limit);
+      }
+    };
+  }
+  
+  // Format date para exibição
+  function formatDate(date, format = 'pt-BR') {
+    if (!(date instanceof Date)) date = new Date(date);
+    return new Intl.DateTimeFormat(format, {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(date);
+  }
+  
+  // Format number para exibição
+  function formatNumber(num, decimals = 2) {
+    return new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    }).format(num);
+  }
+  
+  // Copy to clipboard
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      CannaToast.success('Copiado para área de transferência');
+      return true;
+    } catch (err) {
+      CannaToast.error('Erro ao copiar');
+      return false;
+    }
+  }
+  
+  // Escape HTML
+  function escapeHtml(unsafe) {
+    return unsafe
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+  
+  // Generate unique ID
+  function generateId(prefix = 'canna') {
+    return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
+  
+  // Verificar se elemento está visível
+  function isVisible(element) {
+    return !!(element.offsetWidth || element.offsetHeight || element.getClientRects().length);
+  }
+  
+  // Scroll suave para elemento
+  function scrollToElement(element, offset = 0) {
+    if (typeof element === 'string') {
+      element = document.querySelector(element);
+    }
+    
+    if (!element) return;
+    
+    const y = element.getBoundingClientRect().top + window.pageYOffset + offset;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+  }
+  
+  // API pública
+  window.CannaUtils = {
+    debounce,
+    throttle,
+    formatDate,
+    formatNumber,
+    copyToClipboard,
+    escapeHtml,
+    generateId,
+    isVisible,
+    scrollToElement
+  };
+  
+  console.info('[Canna] Utilities initialized');
+})();
+</script>
+
+<script id="canna-google-script-wrapper">
+/**
+ * ========================================================================
+ * CANNA GOOGLE SCRIPT WRAPPER
+ * ========================================================================
+ * Wrapper para google.script.run com tratamento de erros e loading
+ */
+(function() {
+  'use strict';
+  
+  if (window.CannaAPI) return;
+  
+  // Wrapper para chamadas ao backend
+  function call(functionName, args = {}) {
+    return new Promise((resolve, reject) => {
+      const form = args._form;
+      const showToast = args._showToast !== false;
+      const loadingMessage = args._loadingMessage || 'Carregando...';
+      
+      // Remover propriedades internas
+      delete args._form;
+      delete args._showToast;
+      delete args._loadingMessage;
+      
+      // Marcar formulário como ocupado
+      if (form) {
+        CannaForm.setBusy(form, true);
+      }
+      
+      // Mostrar loading toast
+      if (showToast) {
+        CannaToast.info(loadingMessage);
+      }
+      
+      google.script.run
+        .withSuccessHandler(response => {
+          if (form) {
+            CannaForm.setBusy(form, false);
+          }
+          
+          if (response && response.success === false) {
+            if (showToast) {
+              CannaToast.error(response.message || 'Operação falhou');
+            }
+            reject(response);
+          } else {
+            if (showToast && response && response.message) {
+              CannaToast.success(response.message);
+            }
+            resolve(response);
+          }
+        })
+        .withFailureHandler(error => {
+          if (form) {
+            CannaForm.setBusy(form, false);
+          }
+          
+          if (showToast) {
+            CannaToast.error('Erro ao conectar com servidor');
+          }
+          
+          console.error('API Error:', error);
+          reject(error);
+        })
+        [functionName](args);
+    });
+  }
+  
+  // API pública
+  window.CannaAPI = {
+    call
+  };
+  
+  console.info('[Canna] API wrapper initialized');
+})();
+</script>
+
+<script id="canna-keyboard-shortcuts">
+/**
+ * ========================================================================
+ * CANNA KEYBOARD SHORTCUTS
+ * ========================================================================
+ * Sistema de atalhos de teclado
+ */
+(function() {
+  'use strict';
+  
+  const shortcuts = new Map();
+  
+  function registerShortcut(key, callback, description = '') {
+    const normalizedKey = key.toLowerCase().replace(/\s+/g, '+');
+    shortcuts.set(normalizedKey, { callback, description });
+  }
+  
+  function handleKeyDown(e) {
+    const parts = [];
+    
+    if (e.ctrlKey) parts.push('ctrl');
+    if (e.altKey) parts.push('alt');
+    if (e.shiftKey) parts.push('shift');
+    if (e.metaKey) parts.push('meta');
+    
+    const key = e.key.toLowerCase();
+    if (!['control', 'alt', 'shift', 'meta'].includes(key)) {
+      parts.push(key);
+    }
+    
+    const combination = parts.join('+');
+    const shortcut = shortcuts.get(combination);
+    
+    if (shortcut) {
+      e.preventDefault();
+      shortcut.callback(e);
+    }
+  }
+  
+  document.addEventListener('keydown', handleKeyDown);
+  
+  // Atalhos padrão
+  registerShortcut('ctrl+k', () => {
+    const searchInput = document.querySelector('[data-search], [type="search"], #search');
+    if (searchInput) {
+      searchInput.focus();
+      searchInput.select();
+    }
+  }, 'Focar busca');
+  
+  registerShortcut('escape', () => {
+    const modal = document.querySelector('.modal.is-open, [role="dialog"][open]');
+    if (modal) {
+      modal.close?.();
+      modal.classList.remove('is-open');
+    }
+  }, 'Fechar modal');
+  
+  window.CannaShortcuts = {
+    register: registerShortcut,
+    list: () => Array.from(shortcuts.entries()).map(([key, { description }]) => ({ key, description }))
+  };
+  
+  console.info('[Canna] Keyboard shortcuts initialized');
+})();
+</script>
+
+<script id="canna-init">
+/**
+ * ========================================================================
+ * CANNA INITIALIZATION
+ * ========================================================================
+ * Inicialização global do sistema
+ */
+(function() {
+  'use strict';
+  
+  // Log de inicialização
+  console.group('%c🌿 Reserva Canabica', 'color: #4CAF50; font-size: 14px; font-weight: bold');
+  console.log('%cDesign System v1.0.0', 'color: #81C784');
+  console.log('%cEnvironment:', 'color: #66BB6A', document.location.hostname);
+  console.log('%cComponents loaded:', 'color: #4CAF50', [
+    'CannaToast',
+    'CannaForm',
+    'CannaUtils',
+    'CannaAPI',
+    'CannaShortcuts'
+  ]);
+  console.groupEnd();
+  
+  // Adicionar classe de ambiente
+  document.documentElement.setAttribute('data-env', 
+    document.location.hostname.includes('localhost') ? 'dev' : 'prod'
+  );
+  
+  // Adicionar ano no footer
+  document.addEventListener('DOMContentLoaded', () => {
+    const yearElements = document.querySelectorAll('[data-year]');
+    yearElements.forEach(el => {
+      el.textContent = new Date().getFullYear();
+    });
+  });
+  
+  // Expor API global
+  window.Canna = {
+    version: '1.0.0',
+    toast: window.CannaToast,
+    form: window.CannaForm,
+    utils: window.CannaUtils,
+    api: window.CannaAPI,
+    shortcuts: window.CannaShortcuts
+  };
+  
+  // Marca sistema como pronto
+  window.CannaReady = true;
+  document.dispatchEvent(new Event('canna:ready'));
+})();
+</script>
