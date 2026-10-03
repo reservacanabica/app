@@ -1,0 +1,388 @@
+<!--
+COMPONENTE: frontend-config.html
+PAPEL: Configuração centralizada do frontend.
+
+PRINCIPAIS FUNCIONALIDADES:
+- Configurações globais da aplicação
+- Constantes de API
+- Configuração de features
+- Temas e estilos
+- Rotas da aplicação
+
+STATUS: PRODUÇÃO - Configuração centralizada
+-->
+<script>
+(function() {
+  'use strict';
+  
+  /**
+   * Configuração global da aplicação frontend
+   */
+  window.AppConfig = {
+    // Informações da aplicação
+    app: {
+      name: 'Canabica WebApp',
+      version: '1.0.0',
+      environment: 'production', // 'development' | 'staging' | 'production'
+      locale: 'pt-BR'
+    },
+    
+    // Configuração da API
+    api: {
+      timeout: 30000,
+      retries: 3,
+      cache: true,
+      cacheTTL: 300000, // 5 minutos
+      enableInterceptors: true,
+      enableMetrics: true,
+      enableLogging: true
+    },
+    
+    // Configuração de autenticação
+    auth: {
+      tokenKey: 'canabica_token',
+      userKey: 'canabica_user',
+      sessionTimeout: 3600000, // 1 hora
+      autoRefresh: true,
+      refreshInterval: 300000 // 5 minutos
+    },
+    
+    // Configuração de paginação
+    pagination: {
+      defaultPageSize: 20,
+      pageSizeOptions: [10, 20, 50, 100],
+      maxPageSize: 100
+    },
+    
+    // Configuração de validação
+    validation: {
+      showErrors: true,
+      validateOnBlur: true,
+      validateOnChange: false
+    },
+    
+    // Configuração de UI
+    ui: {
+      theme: 'light', // 'light' | 'dark' | 'auto'
+      showLoadingIndicator: true,
+      toastDuration: 5000,
+      animationsEnabled: true,
+      compactMode: false
+    },
+    
+    // Feature flags (podem ser sobrescritos pelo backend)
+    features: {
+      advancedFilters: true,
+      batchOperations: true,
+      exportFormats: true,
+      darkMode: false,
+      accessibility: true,
+      webComponents: true,
+      offlineMode: false
+    },
+    
+    // Rotas da aplicação
+    routes: {
+      home: '#/dashboard',
+      login: '#/login',
+      logout: '#/logout',
+      studies: '#/studies',
+      studyDetail: '#/studies/:id',
+      studyForm: '#/studies/form/:id?',
+      experiments: '#/experiments',
+      experimentForm: '#/experiments/form/:id?',
+      observations: '#/observations',
+      observationForm: '#/observations/form/:id?',
+      settings: '#/settings',
+      users: '#/users',
+      audit: '#/audit',
+      health: '#/health',
+      maturity: '#/maturity'
+    },
+    
+    // Ações da API (mapeamento para facilitar manutenção)
+    actions: {
+      // System
+      ping: 'system.ping',
+      health: 'system.health',
+      info: 'system.info',
+      
+      // Auth
+      login: 'auth.login',
+      logout: 'auth.logout',
+      validate: 'auth.validate',
+      refresh: 'auth.refresh',
+      
+      // Studies
+      listStudies: 'studies.list',
+      getStudy: 'studies.get',
+      createStudy: 'studies.create',
+      updateStudy: 'studies.update',
+      deleteStudy: 'studies.delete',
+      
+      // Experiments
+      listExperiments: 'experiments.list',
+      createExperiment: 'experiments.create',
+      updateExperiment: 'experiments.update',
+      
+      // Observations
+      listObservations: 'observations.list',
+      createObservation: 'observations.create',
+      
+      // Dashboard
+      dashboard: 'dashboard.summary',
+      
+      // Maturity
+      backendMaturity: 'maturity.backend',
+      frontendMaturity: 'maturity.frontend',
+      
+      // Cache
+      cacheStats: 'cache.stats',
+      cacheClear: 'cache.clear',
+      
+      // Features
+      listFeatures: 'features.list',
+      getFeature: 'features.get',
+      
+      // Backup
+      createBackup: 'backup.create',
+      listBackups: 'backup.list',
+      
+      // Observability
+      observabilityMetrics: 'observability.metrics',
+      observabilityDashboard: 'observability.dashboard'
+    },
+    
+    // Mensagens padrão
+    messages: {
+      loading: 'Carregando...',
+      saving: 'Salvando...',
+      deleting: 'Excluindo...',
+      success: 'Operação realizada com sucesso',
+      error: 'Ocorreu um erro. Tente novamente.',
+      networkError: 'Erro de conexão. Verifique sua internet.',
+      sessionExpired: 'Sessão expirada. Faça login novamente.',
+      unauthorized: 'Você não tem permissão para esta ação.',
+      notFound: 'Recurso não encontrado.',
+      validationError: 'Verifique os campos do formulário.'
+    },
+    
+    // Configuração de campos de formulário
+    fields: {
+      study: {
+        title: { required: true, minLength: 3, maxLength: 200 },
+        description: { required: false, maxLength: 1000 },
+        hostSpecies: { required: true, maxLength: 100 },
+        fungalStrain: { required: false, maxLength: 100 },
+        cultivar: { required: false, maxLength: 100 },
+        status: { 
+          required: true, 
+          options: ['DRAFT', 'ACTIVE', 'COMPLETED', 'ARCHIVED'] 
+        }
+      },
+      experiment: {
+        studyId: { required: true },
+        title: { required: true, minLength: 3, maxLength: 200 },
+        protocol: { required: true },
+        replicates: { required: true, min: 1, max: 1000 }
+      },
+      observation: {
+        experimentId: { required: true },
+        variable: { required: true, maxLength: 100 },
+        value: { required: true, type: 'number' },
+        unit: { required: true, maxLength: 50 },
+        timestamp: { required: true, type: 'datetime' }
+      }
+    },
+    
+    // Configuração de status e seus labels
+    status: {
+      study: {
+        DRAFT: { label: 'Rascunho', color: 'gray', icon: '📝' },
+        ACTIVE: { label: 'Ativo', color: 'green', icon: '✅' },
+        COMPLETED: { label: 'Concluído', color: 'blue', icon: '🏁' },
+        ARCHIVED: { label: 'Arquivado', color: 'orange', icon: '📦' }
+      }
+    },
+    
+    // Configuração de permissões
+    permissions: {
+      studies: {
+        read: 'studies.read',
+        create: 'studies.create',
+        update: 'studies.update',
+        delete: 'studies.delete'
+      },
+      experiments: {
+        read: 'experiments.read',
+        create: 'experiments.create',
+        update: 'experiments.update'
+      },
+      system: {
+        read: 'system.read',
+        admin: 'system.admin'
+      }
+    }
+  };
+  
+  /**
+   * Utilitários de configuração
+   */
+  window.AppConfig.utils = {
+    /**
+     * Obtém valor de configuração aninhado
+     */
+    get(path, defaultValue) {
+      const keys = path.split('.');
+      let value = window.AppConfig;
+      
+      for (const key of keys) {
+        if (value && typeof value === 'object' && key in value) {
+          value = value[key];
+        } else {
+          return defaultValue;
+        }
+      }
+      
+      return value;
+    },
+    
+    /**
+     * Define valor de configuração aninhado
+     */
+    set(path, value) {
+      const keys = path.split('.');
+      const lastKey = keys.pop();
+      let target = window.AppConfig;
+      
+      for (const key of keys) {
+        if (!(key in target)) {
+          target[key] = {};
+        }
+        target = target[key];
+      }
+      
+      target[lastKey] = value;
+    },
+    
+    /**
+     * Verifica se feature está habilitada
+     */
+    isFeatureEnabled(feature) {
+      return window.AppConfig.features[feature] === true;
+    },
+    
+    /**
+     * Obtém mensagem localizada
+     */
+    getMessage(key, defaultMsg) {
+      return window.AppConfig.messages[key] || defaultMsg || key;
+    },
+    
+    /**
+     * Obtém rota com parâmetros
+     */
+    getRoute(name, params = {}) {
+      let route = window.AppConfig.routes[name];
+      if (!route) return '#/';
+      
+      for (const [key, value] of Object.entries(params)) {
+        route = route.replace(':' + key + '?', value).replace(':' + key, value);
+      }
+      
+      // Remove parâmetros opcionais não preenchidos
+      route = route.replace(/\/:[^/]+\?/g, '');
+      
+      return route;
+    },
+    
+    /**
+     * Obtém configuração de campo
+     */
+    getFieldConfig(entity, field) {
+      return window.AppConfig.fields[entity]?.[field] || {};
+    },
+    
+    /**
+     * Obtém label de status
+     */
+    getStatusLabel(entity, status) {
+      const config = window.AppConfig.status[entity]?.[status];
+      return config ? config.label : status;
+    },
+    
+    /**
+     * Obtém cor de status
+     */
+    getStatusColor(entity, status) {
+      const config = window.AppConfig.status[entity]?.[status];
+      return config ? config.color : 'gray';
+    },
+    
+    /**
+     * Verifica se está em modo de desenvolvimento
+     */
+    isDevelopment() {
+      return window.AppConfig.app.environment === 'development';
+    },
+    
+    /**
+     * Verifica se está em produção
+     */
+    isProduction() {
+      return window.AppConfig.app.environment === 'production';
+    }
+  };
+  
+  /**
+   * Inicializa configuração
+   */
+  window.AppConfig.init = function() {
+    console.log('🔧 Initializing AppConfig v' + this.app.version);
+    
+    // Carrega configurações do localStorage se existirem
+    try {
+      const savedConfig = localStorage.getItem('canabica_config');
+      if (savedConfig) {
+        const parsed = JSON.parse(savedConfig);
+        Object.assign(this.ui, parsed.ui || {});
+        Object.assign(this.features, parsed.features || {});
+      }
+    } catch (e) {
+      console.warn('Failed to load saved config:', e);
+    }
+    
+    // Detecta tema do sistema
+    if (this.ui.theme === 'auto') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      this.ui.theme = prefersDark ? 'dark' : 'light';
+    }
+    
+    console.log('✅ AppConfig initialized');
+  };
+  
+  /**
+   * Salva configurações no localStorage
+   */
+  window.AppConfig.save = function() {
+    try {
+      const toSave = {
+        ui: this.ui,
+        features: this.features
+      };
+      localStorage.setItem('canabica_config', JSON.stringify(toSave));
+      console.log('💾 Config saved');
+    } catch (e) {
+      console.error('Failed to save config:', e);
+    }
+  };
+  
+  // Auto-inicializa quando DOM estiver pronto
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => window.AppConfig.init());
+  } else {
+    window.AppConfig.init();
+  }
+  
+})();
+</script>

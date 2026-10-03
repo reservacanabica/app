@@ -1,0 +1,274 @@
+<style>
+/* ========================================
+   MICROINTERACTIONS.CSS
+   Padrões centralizados de microinterações
+   Fase 5/5 — Sistema de Design Canabica
+   ======================================== */
+
+/* Tokens de microinteração */
+:root {
+  --mi-instant:  100ms;   /* pressed/active */
+  --mi-fast:     150ms;   /* hover enter */
+  --mi-base:     200ms;   /* transição padrão */
+  --mi-slow:     300ms;   /* modais, gavetas */
+  --mi-ease-std: cubic-bezier(0.4, 0.0, 0.2, 1);   /* Material standard */
+  --mi-ease-out: cubic-bezier(0.0, 0.0, 0.2, 1);   /* saída de elementos */
+  --mi-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);  /* spring sutil */
+  --mi-lift-sm:  translateY(-1px);   /* botões inline */
+  --mi-lift-md:  translateY(-2px);   /* cards */
+  --mi-focus-ring: 0 0 0 3px rgba(46, 204, 113, 0.1);
+}
+
+/* Botões .btn (padrão) */
+.btn {
+  transition: all var(--mi-fast) var(--mi-ease-std);
+  will-change: transform;
+}
+
+.btn:hover:not(:disabled) {
+  transform: var(--mi-lift-sm);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active:not(:disabled) {
+  transition-duration: var(--mi-instant);
+  transform: translateY(0);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--primary, #2ecc71);
+  outline-offset: 2px;
+  box-shadow: var(--mi-focus-ring);
+}
+
+/* Cards interativos */
+.card-interactive,
+.metric-card,
+.medico-card {
+  transition: transform var(--mi-base) var(--mi-ease-std), 
+              box-shadow var(--mi-base) var(--mi-ease-std);
+  will-change: transform;
+}
+
+.card-interactive:hover,
+.metric-card:hover,
+.medico-card:hover {
+  transform: var(--mi-lift-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Modais — entrada com scale + fade */
+.modal-content,
+.st-modal-content,
+.cf-modal-content {
+  animation: modal-enter var(--mi-base) var(--mi-ease-out);
+}
+
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-overlay {
+  animation: overlay-enter var(--mi-base) ease-out;
+}
+
+@keyframes overlay-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Form controls — focus ring unificado */
+.form-control:focus,
+.cf-search:focus,
+.st-search-input:focus,
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus,
+.search-box input:focus,
+.filter-select:focus {
+  transition: border-color var(--mi-fast), box-shadow var(--mi-fast);
+  box-shadow: var(--mi-focus-ring);
+}
+
+/* Tabela — hover suave em linhas */
+.table tbody tr {
+  transition: background-color var(--mi-fast) var(--mi-ease-std);
+}
+
+.table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+/* Botões de ação em tabelas — revelação progressiva */
+.table tbody tr .table-actions button {
+  opacity: 0.85;
+  transition: opacity var(--mi-fast), transform var(--mi-fast);
+}
+
+.table tbody tr:hover .table-actions button {
+  opacity: 1;
+}
+
+/* Chips — entrada com spring */
+.cf-selected-chip,
+.tag,
+.type-badge,
+.status-badge {
+  animation: chip-enter var(--mi-base) var(--mi-ease-spring);
+}
+
+@keyframes chip-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Toast — slide-in da direita */
+.toast {
+  animation: toast-enter var(--mi-base) var(--mi-ease-out);
+}
+
+@keyframes toast-enter {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast.toast-exit {
+  animation: toast-exit var(--mi-base) var(--mi-ease-std);
+}
+
+@keyframes toast-exit {
+  from {
+    max-height: 200px;
+    opacity: 1;
+  }
+  to {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+/* Skeleton — shimmer aprimorado */
+.skeleton {
+  background: linear-gradient(90deg, 
+    #f0f0f0 25%, 
+    #e0e0e0 50%, 
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Loading spinner — suavização */
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Timeline — dot hover */
+.timeline-dot {
+  transition: transform var(--mi-fast), background-color var(--mi-fast);
+}
+
+.timeline-item:hover .timeline-dot {
+  transform: scale(1.4);
+  background-color: var(--primary, #2ecc71);
+}
+
+/* Links externos */
+a[href^="http"]:hover,
+a[target="_blank"]:hover {
+  transform: var(--mi-lift-sm);
+  transition: transform var(--mi-fast);
+}
+
+/* Global — scroll behavior suave */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Acessibilidade — focus-visible global */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--primary, #2ecc71);
+  outline-offset: 2px;
+}
+
+/* Animação de fade-in para elementos que aparecem */
+.fade-in {
+  animation: fade-in var(--mi-base) var(--mi-ease-out);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Empty state suave */
+.empty-state {
+  animation: fade-in var(--mi-slow) var(--mi-ease-out);
+}
+
+/* Alert suave */
+.alert {
+  animation: fade-in var(--mi-base) var(--mi-ease-out);
+}
+
+/* Modal close button hover */
+.modal-close:hover {
+  transform: scale(1.1);
+  transition: transform var(--mi-fast);
+}
+
+/* Pagination buttons */
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* prefers-reduced-motion — WCAG 2.3.3 (AAA) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+</style>

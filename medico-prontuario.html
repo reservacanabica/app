@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prontuário Médico - Reserva Canábica</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  
+  <!-- Incluir CSS customizado do sistema -->
+  <?!= include('quality-components-css') ?>
+  
+  <style>
+    .section-card {
+      transition: all 0.3s ease;
+    }
+    .section-card:hover {
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -8px;
+      top: 8px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #6366f1;
+      border: 3px solid white;
+      box-shadow: 0 0 0 2px #6366f1;
+    }
+  </style>
+</head>
+<body class="bg-gray-50" x-data="medicoProntuario()">
+  
+  <!-- Header -->
+  <header class="bg-indigo-600 text-white shadow-lg">
+    <div class="container mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <button @click="voltarDashboard()" class="p-2 hover:bg-indigo-700 rounded-lg transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+          </button>
+          <div>
+            <h1 class="text-2xl font-bold">Prontuário do Paciente</h1>
+            <p class="text-indigo-100 text-sm">Consulta e Prescrição Médica</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 py-8 max-w-7xl">
+    
+    <!-- Loading State -->
+    <div x-show="loading" class="flex items-center justify-center py-20">
+      <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600"></div>
+    </div>
+
+    <!-- Success Message -->
+    <div x-show="successMessage" x-transition class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <svg class="w-6 h-6 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+          <div>
+            <p class="text-green-800 font-medium" x-text="successMessage"></p>
+            <a x-show="pdfUrl" :href="pdfUrl" target="_blank" class="text-green-600 text-sm underline hover:text-green-800">
+              📄 Visualizar PDF Gerado
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div x-show="errorMessage" x-transition class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+      <div class="flex items-center">
+        <svg class="w-6 h-6 text-red-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+        <p class="text-red-800 font-medium" x-text="errorMessage"></p>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div x-show="!loading">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left Column: Patient Info & History -->
+        <div class="lg:col-span-1 space-y-6">
+          
+          <!-- Patient Card -->
+          <div class="section-card bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+              <svg class="w-5 h-5 text-indigo-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+              </svg>
+              Identificação do Paciente
+            </h2>
+            
+            <div class="flex items-center mb-4">
+              <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center">
+                <span class="text-indigo-600 font-bold text-xl" x-text="paciente.iniciais"></span>
+              </div>
+              <div class="ml-4">
+                <h3 class="font-bold text-lg text-gray-800" x-text="paciente.nome"></h3>
+                <p class="text-sm text-gray-500" x-text="paciente.idade + ' anos • ' + paciente.sexo"></p>
+              </div>
+            </div>
+            
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between py-2 border-b">
+                <span class="text-gray-500">CPF:</span>
+                <span class="font-medium text-gray-800" x-text="paciente.cpf_mascarado"></span>
+              </div>
+              <div class="flex justify-between py-2 border-b">
+                <span class="text-gray-500">Data de Nasc:</span>
+                <span class="font-medium text-gray-800" x-text="formatarData(paciente.data_nasc)"></span>
+              </div>
+              <div class="flex justify-between py-2 border-b">
+                <span class="text-gray-500">Telefone:</span>
+                <span class="font-medium text-gray-800" x-text="paciente.telefone"></span>
+              </div>
+              <div class="flex justify-between py-2">
+                <span class="text-gray-500">E-mail:</span>
+                <span class="font-medium text-gray-800 text-xs" x-text="paciente.email"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CID-10 History Card -->
+          <div class="section-card bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+              <svg class="w-5 h-5 text-purple-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+              </svg>
+              Histórico de Patologias
+            </h2>
+            
+            <div class="space-y-3">
+              <template x-for="patologia in prontuario.patologias" :key="patologia.cid10">
+                <div class="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                  <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                      <p class="font-semibold text-purple-900" x-text="patologia.cid10"></p>
+                      <p class="text-sm text-gray-700 mt-1" x-text="patologia.nome"></p>
+                    </div>
+                    <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded" 
+                          x-show="patologia.elegivel">
+                      ✓ Elegível
+                    </span>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-2" x-text="'Diagnóstico: ' + formatarData(patologia.data_diagnostico)"></p>
+                </div>
+              </template>
+              
+              <div x-show="prontuario.patologias.length === 0" class="text-center py-4 text-gray-400">
+                Nenhuma patologia registrada
+              </div>
+            </div>
+          </div>
+
+          <!-- Previous Prescriptions -->
+          <div class="section-card bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+              <svg class="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+              </svg>
+              Receitas Anteriores
+            </h2>
+            
+            <div class="space-y-2 relative border-l-2 border-indigo-200 pl-6 ml-2">
+              <template x-for="receita in receitasAnteriores" :key="receita.id">
+                <div class="timeline-item relative mb-4">
+                  <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="text-xs text-gray-500" x-text="formatarData(receita.emitido_em)"></p>
+                    <p class="font-medium text-gray-800 mt-1" x-text="receita.produto_nome"></p>
+                    <p class="text-sm text-gray-600 mt-1" x-text="receita.posologia"></p>
+                    <div class="mt-2 flex items-center space-x-2">
+                      <span class="px-2 py-1 text-xs rounded"
+                            :class="receita.status === 'ASSINADA' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
+                            x-text="receita.status">
+                      </span>
+                      <button x-show="receita.pdf_drive_id" @click="abrirPdf(receita.pdf_drive_id)" 
+                              class="text-xs text-indigo-600 hover:text-indigo-800 underline">
+                        Ver PDF
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </template>
+              
+              <div x-show="receitasAnteriores.length === 0" class="text-center py-4 text-gray-400">
+                Nenhuma receita anterior
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Column: Prescription Form -->
+        <div class="lg:col-span-2">
+          
+          <div class="section-card bg-white rounded-xl shadow-md p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+              <svg class="w-7 h-7 text-indigo-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"/>
+              </svg>
+              Emissão de Receita Médica
+            </h2>
+
+            <form @submit.prevent="emitirReceitaPdf()">
+              
+              <!-- Produto Comercial -->
+              <div class="mb-6">
+                <label for="inputProduto" class="block text-sm font-semibold text-gray-700 mb-2">
+                  Produto Comercial *
+                </label>
+                <select 
+                  id="inputProduto"
+                  x-model="formReceita.produto_nome"
+                  required
+                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                  <option value="">-- Selecione o produto --</option>
+                  <option value="Óleo CBD Full Spectrum 3000mg">Óleo CBD Full Spectrum 3000mg (30ml)</option>
+                  <option value="Óleo CBD Isolado 5000mg">Óleo CBD Isolado 5000mg (30ml)</option>
+                  <option value="Óleo THC:CBD 1:1 2000mg">Óleo THC:CBD 1:1 2000mg (30ml)</option>
+                  <option value="Óleo THC:CBD 1:20 1000mg THC + 20000mg CBD">Óleo THC:CBD 1:20 1000mg THC + 20000mg CBD (30ml)</option>
+                  <option value="Flores Secas Indica 15% THC">Flores Secas Indica 15% THC (5g)</option>
+                  <option value="Flores Secas Sativa 20% THC">Flores Secas Sativa 20% THC (5g)</option>
+                </select>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                
+                <!-- Concentração -->
+                <div>
+                  <label for="inputConcentracao" class="block text-sm font-semibold text-gray-700 mb-2">
+                    Concentração / Dosagem *
+                  </label>
+                  <input 
+                    type="text" 
+                    id="inputConcentracao"
+                    x-model="formReceita.concentracao"
+                    required
+                    placeholder="Ex: 100mg/ml ou 15% THC"
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+
+                <!-- Via de Administração -->
+                <div>
+                  <label for="inputVia" class="block text-sm font-semibold text-gray-700 mb-2">
+                    Via de Administração *
+                  </label>
+                  <select 
+                    id="inputVia"
+                    x-model="formReceita.via_adm"
+                    required
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">-- Selecione --</option>
+                    <option value="Oral (sublingual)">Oral (sublingual)</option>
+                    <option value="Inalatória (vaporização)">Inalatória (vaporização)</option>
+                    <option value="Tópica">Tópica</option>
+                  </select>
+                </div>
+
+              </div>
+
+              <!-- Quimiotipo -->
+              <div class="mb-6">
+                <label for="inputQuimiotipo" class="block text-sm font-semibold text-gray-700 mb-2">
+                  Quimiotipo / Perfil Canabinoide
+                </label>
+                <input 
+                  type="text" 
+                  id="inputQuimiotipo"
+                  x-model="formReceita.quimiotipo"
+                  placeholder="Ex: Dominância CBD, Balanceado THC:CBD, Dominância THC"
+                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+              </div>
+
+              <!-- Posologia Detalhada -->
+              <div class="mb-6">
+                <label for="inputPosologia" class="block text-sm font-semibold text-gray-700 mb-2">
+                  Posologia Diária Detalhada *
+                </label>
+                <textarea 
+                  id="inputPosologia"
+                  x-model="formReceita.posologia"
+                  required
+                  rows="5"
+                  placeholder="Exemplo:&#10;Manhã: 5 gotas (sublingual)&#10;Tarde: 5 gotas (sublingual)&#10;Noite: 10 gotas (sublingual)&#10;&#10;Iniciar com dose mínima e titular gradualmente conforme tolerância e resposta clínica."
+                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"></textarea>
+                <p class="mt-2 text-xs text-gray-500">
+                  Descreva detalhadamente a posologia, incluindo horários, quantidade e orientações de titulação.
+                </p>
+              </div>
+
+              <!-- CID-10 para Receita -->
+              <div class="mb-8">
+                <label for="inputCid10" class="block text-sm font-semibold text-gray-700 mb-2">
+                  CID-10 Relacionado *
+                </label>
+                <select 
+                  id="inputCid10"
+                  x-model="formReceita.cid10"
+                  required
+                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                  <option value="">-- Selecione a patologia --</option>
+                  <template x-for="patologia in prontuario.patologias" :key="patologia.cid10">
+                    <option :value="patologia.cid10" x-text="patologia.cid10 + ' - ' + patologia.nome"></option>
+                  </template>
+                </select>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex items-center justify-between pt-6 border-t-2 border-gray-200">
+                <button 
+                  type="button"
+                  @click="voltarDashboard()"
+                  class="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition">
+                  Voltar ao Dashboard
+                </button>
+                
+                <button 
+                  id="btnEmitirReceitaPdf"
+                  type="submit"
+                  :disabled="emitindo"
+                  :class="emitindo ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-700 transform hover:scale-105'"
+                  class="flex items-center space-x-2 px-8 py-3 bg-indigo-600 text-white font-bold rounded-lg shadow-lg transition">
+                  <svg x-show="emitindo" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <svg x-show="!emitindo" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"/>
+                  </svg>
+                  <span x-text="emitindo ? 'Gerando PDF...' : 'Emitir Receita PDF'"></span>
+                </button>
+              </div>
+
+            </form>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Incluir API Client -->
+  <?!= include('api-client') ?>
+
+  <script>
+    function medicoProntuario() {
+      return {
+        loading: true,
+        emitindo: false,
+        successMessage: '',
+        errorMessage: '',
+        pdfUrl: '',
+        pacienteId: '',
+        
+        paciente: {
+          id: '',
+          nome: '',
+          iniciais: '',
+          idade: 0,
+          sexo: '',
+          cpf_mascarado: '',
+          data_nasc: '',
+          telefone: '',
+          email: ''
+        },
+        
+        prontuario: {
+          id: '',
+          patologias: []
+        },
+        
+        receitasAnteriores: [],
+        
+        formReceita: {
+          produto_nome: '',
+          concentracao: '',
+          via_adm: '',
+          quimiotipo: '',
+          posologia: '',
+          cid10: ''
+        },
+
+        async init() {
+          // Obter paciente_id da URL
+          const urlParams = new URLSearchParams(window.location.search);
+          this.pacienteId = urlParams.get('paciente_id');
+          
+          if (!this.pacienteId) {
+            this.errorMessage = 'ID do paciente não fornecido';
+            this.loading = false;
+            return;
+          }
+          
+          await this.carregarDados();
+        },
+
+        async carregarDados() {
+          this.loading = true;
+          this.errorMessage = '';
+          
+          try {
+            const response = await this.apiRequest('medico.prontuario.carregar', {
+              paciente_id: this.pacienteId
+            });
+            
+            if (response.success) {
+              this.paciente = response.data.paciente || this.paciente;
+              this.prontuario = response.data.prontuario || this.prontuario;
+              this.receitasAnteriores = response.data.receitas || [];
+            } else {
+              throw new Error(response.error?.message || 'Erro ao carregar prontuário');
+            }
+          } catch (err) {
+            this.errorMessage = err.message || 'Erro ao conectar com servidor';
+            console.error('Erro ao carregar prontuário:', err);
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        async emitirReceitaPdf() {
+          this.emitindo = true;
+          this.errorMessage = '';
+          this.successMessage = '';
+          this.pdfUrl = '';
+          
+          try {
+            const payload = {
+              paciente_id: this.pacienteId,
+              prontuario_id: this.prontuario.id,
+              ...this.formReceita,
+              emitido_em: new Date().toISOString()
+            };
+            
+            const response = await this.apiRequest('prescricao.emitir', payload);
+            
+            if (response.success) {
+              this.successMessage = '✅ Receita emitida com sucesso! PDF gerado e pronto para assinatura.';
+              this.pdfUrl = response.data.pdfUrl || '';
+              
+              // Limpar formulário
+              this.formReceita = {
+                produto_nome: '',
+                concentracao: '',
+                via_adm: '',
+                quimiotipo: '',
+                posologia: '',
+                cid10: ''
+              };
+              
+              // Recarregar receitas anteriores
+              setTimeout(() => {
+                this.carregarDados();
+              }, 2000);
+              
+            } else {
+              throw new Error(response.error?.message || 'Erro ao emitir receita');
+            }
+          } catch (err) {
+            this.errorMessage = err.message || 'Erro ao conectar com servidor';
+            console.error('Erro ao emitir receita:', err);
+          } finally {
+            this.emitindo = false;
+          }
+        },
+
+        async apiRequest(action, data) {
+          return new Promise((resolve, reject) => {
+            const token = sessionStorage.getItem('token') || '';
+            
+            google.script.run
+              .withSuccessHandler(resolve)
+              .withFailureHandler(reject)
+              .routeRequest({
+                action: action,
+                token: token,
+                data: data,
+                correlationId: 'prontuario-' + Date.now()
+              });
+          });
+        },
+
+        formatarData(dataStr) {
+          if (!dataStr) return 'N/A';
+          const data = new Date(dataStr);
+          return data.toLocaleDateString('pt-BR');
+        },
+
+        abrirPdf(driveFileId) {
+          window.open(`https://drive.google.com/file/d/${driveFileId}/view`, '_blank');
+        },
+
+        voltarDashboard() {
+          window.location.href = '?page=medico-dashboard';
+        }
+      }
+    }
+  </script>
+
+</body>
+</html>

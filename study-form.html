@@ -1,0 +1,174 @@
+<!--
+COMPONENTE: study-form.html
+PAPEL: Formulário de estudo.
+
+PRINCIPAIS FUNCIONALIDADES:
+- criação/edição de estudo e metadados do corpus;
+- mantém o estado de UI separado do processamento no Apps Script;
+- não acessa diretamente a planilha: usa client.html e os contratos do Web App.
+
+INTEGRAÇÕES:
+- StudyService, field partials;
+- dados esperados: Studies.
+
+SEGURANÇA E LIMITAÇÕES:
+- nunca renderizar senha, token completo ou stack trace;
+- validação visual não substitui ValidationService no servidor;
+- usar escaping/templating seguro para texto proveniente da planilha;
+- esqueleto preparado para HtmlService e componentes parciais.
+
+STATUS: v2.0 — Completo com ARIA labels e validação
+-->
+<section class="view" data-component="study-form.html" role="main" aria-labelledby="study-form-title">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow" aria-label="Seção">Formulário de estudo</p>
+      <h1 id="study-form-title">Study Form</h1>
+      <p>Criação e edição de estudos e metadados do corpus</p>
+    </div>
+    <button data-action="back" aria-label="Voltar à lista de estudos">
+      Voltar
+    </button>
+  </header>
+
+  <form id="studyForm" aria-label="Formulário de criação de estudo" role="form">
+    
+    <div class="form-group" role="group" aria-labelledby="title-label">
+      <label for="title" id="title-label">Título do Estudo <span aria-label="obrigatório">*</span></label>
+      <input 
+        type="text" 
+        id="title" 
+        name="title" 
+        required 
+        minlength="3"
+        maxlength="255"
+        aria-required="true"
+        aria-describedby="title-hint"
+        placeholder="Ex: Efeito de fungos micorrízicos em Cannabis sativa">
+      <small id="title-hint" class="hint">Título descritivo do estudo (3-255 caracteres)</small>
+      <span class="error" role="alert" aria-live="polite"></span>
+    </div>
+
+    <div class="form-group" role="group" aria-labelledby="objective-label">
+      <label for="objective" id="objective-label">Objetivo</label>
+      <textarea 
+        id="objective" 
+        name="objective" 
+        rows="4"
+        maxlength="2000"
+        aria-describedby="objective-hint"
+        placeholder="Descreva os objetivos principais do estudo"></textarea>
+      <small id="objective-hint" class="hint">Objetivos e hipóteses (até 2000 caracteres)</small>
+      <span class="error" role="alert" aria-live="polite"></span>
+    </div>
+
+    <div class="form-group" role="group" aria-labelledby="hostSpecies-label">
+      <label for="hostSpecies" id="hostSpecies-label">Espécie Hospedeira <span aria-label="obrigatório">*</span></label>
+      <input 
+        type="text" 
+        id="hostSpecies" 
+        name="hostSpecies" 
+        required
+        maxlength="255"
+        aria-required="true"
+        aria-describedby="hostSpecies-hint"
+        placeholder="Ex: Cannabis sativa L.">
+      <small id="hostSpecies-hint" class="hint">Nome científico da espécie hospedeira</small>
+      <span class="error" role="alert" aria-live="polite"></span>
+    </div>
+
+    <div class="form-group" role="group" aria-labelledby="fungalStrain-label">
+      <label for="fungalStrain" id="fungalStrain-label">Cepa Fúngica <span aria-label="obrigatório">*</span></label>
+      <input 
+        type="text" 
+        id="fungalStrain" 
+        name="fungalStrain" 
+        required
+        maxlength="255"
+        aria-required="true"
+        aria-describedby="fungalStrain-hint"
+        placeholder="Ex: Rhizophagus irregularis MUCL 41833">
+      <small id="fungalStrain-hint" class="hint">Identificação completa da cepa utilizada</small>
+      <span class="error" role="alert" aria-live="polite"></span>
+    </div>
+
+    <div class="form-group" role="group" aria-labelledby="cultivar-label">
+      <label for="cultivar" id="cultivar-label">Cultivar</label>
+      <input 
+        type="text" 
+        id="cultivar" 
+        name="cultivar"
+        maxlength="255"
+        aria-describedby="cultivar-hint"
+        placeholder="Ex: ACDC, Charlotte's Web">
+      <small id="cultivar-hint" class="hint">Nome da cultivar (opcional)</small>
+      <span class="error" role="alert" aria-live="polite"></span>
+    </div>
+
+    <div class="form-actions" role="group" aria-label="Ações do formulário">
+      <button 
+        type="button" 
+        data-action="cancel"
+        aria-label="Cancelar criação do estudo">
+        Cancelar
+      </button>
+      <button 
+        type="submit" 
+        data-action="save"
+        aria-label="Salvar estudo">
+        Salvar
+      </button>
+    </div>
+
+  </form>
+
+  <div id="formStatus" role="status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+
+</section>
+
+<script>
+  (function() {
+    const form = document.getElementById('studyForm');
+    const formStatus = document.getElementById('formStatus');
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = {
+        title: document.getElementById('title').value,
+        objective: document.getElementById('objective').value,
+        hostSpecies: document.getElementById('hostSpecies').value,
+        fungalStrain: document.getElementById('fungalStrain').value,
+        cultivar: document.getElementById('cultivar').value
+      };
+
+      formStatus.textContent = 'Salvando estudo...';
+
+      google.script.run
+        .withSuccessHandler(function(response) {
+          if (response.success) {
+            formStatus.textContent = 'Estudo salvo com sucesso!';
+            setTimeout(() => {
+              window.history.back();
+            }, 1500);
+          } else {
+            formStatus.textContent = 'Erro: ' + response.error;
+          }
+        })
+        .withFailureHandler(function(error) {
+          formStatus.textContent = 'Erro ao salvar: ' + error.message;
+        })
+        .apiCall({action: 'studies.create', data: formData});
+    });
+
+    document.querySelector('[data-action="cancel"]').addEventListener('click', function() {
+      if (confirm('Descartar alterações?')) {
+        window.history.back();
+      }
+    });
+
+    document.querySelector('[data-action="back"]').addEventListener('click', function() {
+      window.history.back();
+    });
+  })();
+</script>

@@ -1,0 +1,497 @@
+<!--
+⚠️ ARQUIVO LEGADO — NÃO PRODUTIVO
+Este arquivo não é mais servido por rotas ativas.
+Dashboard específico por role foi descontinuado.
+A versão produtiva é: dashboard.html (unificado, incluído via layout.html)
+Filtragem por role é feita via permissões no backend.
+Manter apenas como referência histórica ou remover em limpeza futura.
+Data de descontinuação: 2026-01-20
+Motivo: Padronização visual — dashboard unificado com filtros dinâmicos
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meu Tratamento - Reserva Canábica</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  
+  <!-- Incluir CSS customizado do sistema -->
+  <?!= include('quality-components-css') ?>
+  
+  <style>
+    .info-card {
+      transition: all 0.3s ease;
+    }
+    .info-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+    .dose-indicator {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .alerta-badge {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen" x-data="pacienteDashboard()">
+  
+  <!-- Header -->
+  <header class="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+    <div class="container mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11 4a1 1 0 10-2 0v4a1 1 0 102 0V7z" clip-rule="evenodd"/>
+          </svg>
+          <div>
+            <h1 class="text-2xl font-bold">Meu Tratamento</h1>
+            <p class="text-blue-100 text-sm">Acompanhamento Terapêutico</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-4">
+          <span class="text-sm">Olá, <span x-text="pacienteNome" class="font-semibold"></span></span>
+          <button @click="logout()" class="px-4 py-2 bg-blue-700 hover:bg-blue-800 rounded-lg transition">
+            Sair
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 py-8 max-w-7xl">
+    
+    <!-- Loading State -->
+    <div x-show="loading" class="flex items-center justify-center py-20">
+      <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+    </div>
+
+    <!-- Error State -->
+    <div x-show="error" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+      <div class="flex items-center">
+        <svg class="w-6 h-6 text-red-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+        <p class="text-red-800 font-medium" x-text="errorMessage"></p>
+      </div>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div x-show="!loading && !error">
+      
+      <!-- Alertas Ativos -->
+      <div x-show="alertas.length > 0" class="mb-8">
+        <div class="bg-red-50 border-2 border-red-300 rounded-xl p-6 shadow-lg">
+          <div class="flex items-start">
+            <div class="p-3 bg-red-100 rounded-full alerta-badge">
+              <svg class="w-8 h-8 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <div class="ml-4 flex-1">
+              <h3 class="text-lg font-bold text-red-900 mb-2">⚠️ Alertas Importantes</h3>
+              <div class="space-y-2">
+                <template x-for="alerta in alertas" :key="alerta.id">
+                  <div class="bg-white rounded-lg p-3 border border-red-200">
+                    <p class="font-semibold text-red-800" x-text="alerta.titulo"></p>
+                    <p class="text-sm text-gray-700 mt-1" x-text="alerta.descricao"></p>
+                    <p class="text-xs text-gray-500 mt-2" x-text="'Registrado: ' + formatarData(alerta.criado_em)"></p>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid Principal -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        
+        <!-- Coluna Esquerda: Resumo do Tratamento -->
+        <div class="lg:col-span-2 space-y-6">
+          
+          <!-- Próximas Doses -->
+          <div class="info-card bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                <svg class="w-6 h-6 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                </svg>
+                Próximas Doses de Hoje
+              </h2>
+              <button @click="registrarDose()" 
+                      class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition">
+                + Registrar Dose
+              </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <template x-for="dose in proximasDoses" :key="dose.periodo">
+                <div class="p-4 rounded-lg border-2 transition"
+                     :class="dose.registrada ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-300'">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-semibold text-gray-700" x-text="dose.periodo_nome"></span>
+                    <div class="dose-indicator"
+                         :class="dose.registrada ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'"
+                         x-text="dose.gotas + '💧'">
+                    </div>
+                  </div>
+                  <p class="text-xs text-gray-600" x-text="dose.horario"></p>
+                  <div class="mt-3">
+                    <span x-show="dose.registrada" class="text-xs text-green-700 font-medium">✓ Aplicada</span>
+                    <span x-show="!dose.registrada" class="text-xs text-gray-500">Pendente</span>
+                  </div>
+                </div>
+              </template>
+            </div>
+            
+            <div x-show="proximasDoses.length === 0" class="text-center py-8 text-gray-400">
+              <p>Nenhuma dose programada para hoje</p>
+            </div>
+          </div>
+
+          <!-- Histórico de Receitas -->
+          <div class="info-card bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+              <svg class="w-6 h-6 text-purple-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
+              </svg>
+              Minhas Receitas
+            </h2>
+            
+            <div class="space-y-4">
+              <template x-for="receita in receitas" :key="receita.id">
+                <div class="p-4 border border-gray-200 rounded-lg hover:border-purple-300 transition cursor-pointer"
+                     @click="abrirReceita(receita.id)">
+                  <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                      <div class="flex items-center space-x-2 mb-2">
+                        <h3 class="font-semibold text-gray-800" x-text="receita.produto_nome"></h3>
+                        <span class="px-2 py-1 text-xs font-semibold rounded"
+                              :class="{
+                                'bg-green-100 text-green-800': receita.status === 'ASSINADA',
+                                'bg-yellow-100 text-yellow-800': receita.status === 'PRONTO_PARA_ASSINATURA',
+                                'bg-gray-100 text-gray-800': receita.status === 'RASCUNHO'
+                              }"
+                              x-text="receita.status">
+                        </span>
+                      </div>
+                      <p class="text-sm text-gray-600 mb-2" x-text="receita.posologia"></p>
+                      <div class="flex items-center space-x-4 text-xs text-gray-500">
+                        <span x-text="'Emitida: ' + formatarData(receita.emitido_em)"></span>
+                        <span x-text="'CID-10: ' + receita.cid10"></span>
+                      </div>
+                    </div>
+                    <button x-show="receita.pdf_drive_id" 
+                            @click.stop="visualizarPdf(receita.pdf_drive_id)"
+                            class="ml-4 px-3 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs font-semibold rounded-lg transition">
+                      📄 Ver PDF
+                    </button>
+                  </div>
+                </div>
+              </template>
+              
+              <div x-show="receitas.length === 0" class="text-center py-8 text-gray-400">
+                <p>Nenhuma receita encontrada</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gráfico de Evolução -->
+          <div class="info-card bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+              <svg class="w-6 h-6 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+              </svg>
+              Evolução dos Sintomas (Últimos 7 Dias)
+            </h2>
+            
+            <div class="h-64 flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 rounded-lg">
+              <p class="text-gray-500">Gráfico de evolução da escala de dor</p>
+              <p class="text-xs text-gray-400 mt-2">(Implementação com Chart.js em produção)</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Coluna Direita: Info Cards -->
+        <div class="space-y-6">
+          
+          <!-- Card Tratamento Atual -->
+          <div class="info-card bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-xl shadow-md p-6">
+            <h3 class="text-lg font-bold mb-4">Tratamento Atual</h3>
+            <div class="space-y-3">
+              <div>
+                <p class="text-blue-100 text-sm">Produto</p>
+                <p class="font-semibold" x-text="tratamentoAtual.produto"></p>
+              </div>
+              <div>
+                <p class="text-blue-100 text-sm">Concentração</p>
+                <p class="font-semibold" x-text="tratamentoAtual.concentracao"></p>
+              </div>
+              <div>
+                <p class="text-blue-100 text-sm">Via de Administração</p>
+                <p class="font-semibold" x-text="tratamentoAtual.via_adm"></p>
+              </div>
+              <div class="pt-3 border-t border-blue-400">
+                <p class="text-blue-100 text-sm">Início do Tratamento</p>
+                <p class="font-semibold" x-text="formatarData(tratamentoAtual.inicio)"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Médico Responsável -->
+          <div class="info-card bg-white rounded-xl shadow-md p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+              <svg class="w-5 h-5 text-indigo-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+              </svg>
+              Médico Responsável
+            </h3>
+            <div class="flex items-center mb-4">
+              <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center">
+                <span class="text-indigo-600 font-bold" x-text="medico.iniciais"></span>
+              </div>
+              <div class="ml-3">
+                <p class="font-semibold text-gray-800" x-text="medico.nome"></p>
+                <p class="text-sm text-gray-500" x-text="'CRM: ' + medico.crm"></p>
+              </div>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex items-center text-gray-600">
+                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                </svg>
+                <span x-text="medico.email"></span>
+              </div>
+              <div class="flex items-center text-gray-600">
+                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                </svg>
+                <span x-text="medico.telefone"></span>
+              </div>
+            </div>
+            <button @click="agendarConsulta()" 
+                    class="w-full mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition">
+              Agendar Consulta
+            </button>
+          </div>
+
+          <!-- Card Estatísticas Pessoais -->
+          <div class="info-card bg-white rounded-xl shadow-md p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Minhas Estatísticas</h3>
+            <div class="space-y-4">
+              <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                <div class="flex items-center">
+                  <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                    <span x-text="stats.diasTratamento"></span>
+                  </div>
+                  <span class="ml-3 text-sm font-medium text-gray-700">Dias de Tratamento</span>
+                </div>
+              </div>
+              
+              <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                <div class="flex items-center">
+                  <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">
+                    <span x-text="stats.dosesRegistradas"></span>
+                  </div>
+                  <span class="ml-3 text-sm font-medium text-gray-700">Doses Registradas</span>
+                </div>
+              </div>
+              
+              <div class="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                <div class="flex items-center">
+                  <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    <span x-text="stats.mediaDor.toFixed(1)"></span>
+                  </div>
+                  <span class="ml-3 text-sm font-medium text-gray-700">Média de Dor (0-10)</span>
+                </div>
+              </div>
+              
+              <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                <div class="flex items-center">
+                  <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold">
+                    <span x-text="stats.aderencia + '%'"></span>
+                  </div>
+                  <span class="ml-3 text-sm font-medium text-gray-700">Aderência ao Tratamento</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="info-card bg-white rounded-xl shadow-md p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Ações Rápidas</h3>
+            <div class="space-y-2">
+              <button @click="registrarDose()" 
+                      class="w-full px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold rounded-lg transition text-left flex items-center">
+                <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                </svg>
+                Registrar Dose
+              </button>
+              
+              <button @click="verHistorico()" 
+                      class="w-full px-4 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold rounded-lg transition text-left flex items-center">
+                <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                </svg>
+                Ver Histórico Completo
+              </button>
+              
+              <button @click="falarSuporte()" 
+                      class="w-full px-4 py-3 bg-green-50 hover:bg-green-100 text-green-700 font-semibold rounded-lg transition text-left flex items-center">
+                <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                </svg>
+                Falar com Suporte
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Incluir API Client -->
+  <?!= include('api-client') ?>
+
+  <script>
+    function pacienteDashboard() {
+      return {
+        loading: true,
+        error: false,
+        errorMessage: '',
+        pacienteNome: 'Paciente',
+        
+        alertas: [],
+        proximasDoses: [],
+        receitas: [],
+        
+        tratamentoAtual: {
+          produto: 'Óleo CBD Full Spectrum 3000mg',
+          concentracao: '100mg/ml',
+          via_adm: 'Oral (sublingual)',
+          inicio: '2026-01-15'
+        },
+        
+        medico: {
+          nome: 'Dr. João Silva',
+          iniciais: 'JS',
+          crm: 'SP-123456',
+          email: 'dr.joao@reservacanabica.com.br',
+          telefone: '(11) 98765-4321'
+        },
+        
+        stats: {
+          diasTratamento: 0,
+          dosesRegistradas: 0,
+          mediaDor: 0,
+          aderencia: 0
+        },
+
+        async init() {
+          await this.carregarDados();
+        },
+
+        async carregarDados() {
+          this.loading = true;
+          this.error = false;
+          
+          try {
+            const response = await this.apiRequest('paciente.dashboard.dados', {});
+            
+            if (response.success) {
+              this.pacienteNome = response.data.paciente_nome || this.pacienteNome;
+              this.alertas = response.data.alertas || [];
+              this.proximasDoses = response.data.proximas_doses || [];
+              this.receitas = response.data.receitas || [];
+              this.tratamentoAtual = response.data.tratamento_atual || this.tratamentoAtual;
+              this.medico = response.data.medico || this.medico;
+              this.stats = response.data.stats || this.stats;
+            } else {
+              throw new Error(response.error?.message || 'Erro ao carregar dados');
+            }
+          } catch (err) {
+            this.error = true;
+            this.errorMessage = err.message || 'Erro ao conectar com servidor';
+            console.error('Erro ao carregar dashboard:', err);
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        async apiRequest(action, data) {
+          return new Promise((resolve, reject) => {
+            const token = sessionStorage.getItem('token') || '';
+            
+            google.script.run
+              .withSuccessHandler(resolve)
+              .withFailureHandler(reject)
+              .routeRequest({
+                action: action,
+                token: token,
+                data: data,
+                correlationId: 'paciente-dash-' + Date.now()
+              });
+          });
+        },
+
+        registrarDose() {
+          window.location.href = '?page=paciente-doses';
+        },
+
+        abrirReceita(receitaId) {
+          window.location.href = `?page=receita-detalhes&id=${receitaId}`;
+        },
+
+        visualizarPdf(driveFileId) {
+          window.open(`https://drive.google.com/file/d/${driveFileId}/view`, '_blank');
+        },
+
+        agendarConsulta() {
+          window.location.href = '?page=agendar-consulta';
+        },
+
+        verHistorico() {
+          window.location.href = '?page=historico-completo';
+        },
+
+        falarSuporte() {
+          window.location.href = 'mailto:suporte@reservacanabica.com.br';
+        },
+
+        formatarData(dataStr) {
+          if (!dataStr) return 'N/A';
+          const data = new Date(dataStr);
+          return data.toLocaleDateString('pt-BR');
+        },
+
+        logout() {
+          sessionStorage.clear();
+          window.location.href = '/';
+        }
+      }
+    }
+  </script>
+
+</body>
+</html>

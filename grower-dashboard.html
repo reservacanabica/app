@@ -1,0 +1,400 @@
+<!--
+⚠️ ARQUIVO LEGADO — NÃO PRODUTIVO
+Este arquivo não é mais servido por rotas ativas.
+Dashboard específico por role foi descontinuado.
+A versão produtiva é: dashboard.html (unificado, incluído via layout.html)
+Filtragem por role é feita via permissões no backend.
+Manter apenas como referência histórica ou remover em limpeza futura.
+Data de descontinuação: 2026-01-20
+Motivo: Padronização visual — dashboard unificado com filtros dinâmicos
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Cultivador - Reserva Canábica</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  
+  <!-- Chart.js para gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  
+  <!-- Incluir CSS customizado do sistema -->
+  <?!= include('quality-components-css') ?>
+  
+  <style>
+    .metric-card {
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .metric-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+    }
+    .progress-bar-fill {
+      transition: width 0.6s ease-in-out;
+    }
+    .plant-row:hover {
+      background-color: #f0fdf4;
+    }
+  </style>
+</head>
+<body class="bg-gray-50" x-data="growerDashboard()">
+  
+  <!-- Header -->
+  <header class="bg-green-600 text-white shadow-lg">
+    <div class="container mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
+          </svg>
+          <div>
+            <h1 class="text-2xl font-bold">Dashboard do Cultivador</h1>
+            <p class="text-green-100 text-sm">Sistema de Monitoramento Agrícola</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-4">
+          <span class="text-sm" x-text="'Olá, ' + userName"></span>
+          <button @click="logout()" class="px-4 py-2 bg-green-700 hover:bg-green-800 rounded-lg transition">
+            Sair
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 py-8">
+    
+    <!-- Loading State -->
+    <div x-show="loading" class="flex items-center justify-center py-20">
+      <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-green-600"></div>
+    </div>
+
+    <!-- Error State -->
+    <div x-show="error" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+      <div class="flex items-center">
+        <svg class="w-6 h-6 text-red-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+        <p class="text-red-800 font-medium" x-text="errorMessage"></p>
+      </div>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div x-show="!loading && !error">
+      
+      <!-- Metrics Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        
+        <!-- Card 1: Total de Plantas -->
+        <div class="metric-card bg-white rounded-xl shadow-md p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="p-3 bg-green-100 rounded-lg">
+              <svg class="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
+              </svg>
+            </div>
+          </div>
+          <h3 class="text-gray-500 text-sm font-medium mb-1">Total de Plantas</h3>
+          <p class="text-3xl font-bold text-gray-800" x-text="metrics.totalPlantas"></p>
+          <p class="text-green-600 text-sm mt-2">✓ Ativas no sistema</p>
+        </div>
+
+        <!-- Card 2: Plantas em Floração -->
+        <div class="metric-card bg-white rounded-xl shadow-md p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="p-3 bg-purple-100 rounded-lg">
+              <svg class="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V5h2v4z"/>
+              </svg>
+            </div>
+          </div>
+          <h3 class="text-gray-500 text-sm font-medium mb-1">Plantas em Floração</h3>
+          <p class="text-3xl font-bold text-gray-800" x-text="metrics.plantasFlorecendo"></p>
+          <p class="text-purple-600 text-sm mt-2">
+            <span x-text="((metrics.plantasFlorecendo / metrics.totalPlantas) * 100).toFixed(1)"></span>% do total
+          </p>
+        </div>
+
+        <!-- Card 3: Média VPD 24h -->
+        <div class="metric-card bg-white rounded-xl shadow-md p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="p-3 rounded-lg" :class="metrics.vpdStatus === 'ideal' ? 'bg-green-100' : 'bg-yellow-100'">
+              <svg class="w-8 h-8" :class="metrics.vpdStatus === 'ideal' ? 'text-green-600' : 'text-yellow-600'" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+              </svg>
+            </div>
+          </div>
+          <h3 class="text-gray-500 text-sm font-medium mb-1">Média VPD (24h)</h3>
+          <p class="text-3xl font-bold text-gray-800">
+            <span x-text="metrics.vpdMedia24h"></span> <span class="text-lg text-gray-500">kPa</span>
+          </p>
+          <p class="text-sm mt-2" :class="metrics.vpdStatus === 'ideal' ? 'text-green-600' : 'text-yellow-600'">
+            <span x-show="metrics.vpdStatus === 'ideal'">✓ Faixa ideal</span>
+            <span x-show="metrics.vpdStatus !== 'ideal'">⚠ Fora da faixa ideal</span>
+          </p>
+        </div>
+
+        <!-- Card 4: Próxima Rega -->
+        <div class="metric-card bg-white rounded-xl shadow-md p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="p-3 bg-blue-100 rounded-lg">
+              <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+          </div>
+          <h3 class="text-gray-500 text-sm font-medium mb-1">Próxima Rega</h3>
+          <p class="text-2xl font-bold text-gray-800" x-text="metrics.proximaRega"></p>
+          <p class="text-blue-600 text-sm mt-2" x-text="metrics.proximaRegaRelativo"></p>
+        </div>
+
+      </div>
+
+      <!-- Actions Bar -->
+      <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-bold text-gray-800 mb-1">Minhas Plantas</h2>
+            <p class="text-gray-500 text-sm">Monitore o progresso e registre leituras ambientais</p>
+          </div>
+          <button 
+            @click="abrirFormularioLog()" 
+            class="flex items-center space-x-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg transition transform hover:scale-105">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+            </svg>
+            <span>Registrar Leitura Ambiental</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Plants Table -->
+      <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <table id="tableMinhasPlantas" class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID / Nome</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fase Fenológica</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progresso (Dias)</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">VPD Atual</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Última Leitura</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <template x-for="planta in plantas" :key="planta.id">
+              <tr class="plant-row cursor-pointer" @click="verDetalhesPlanta(planta.id)">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                      <span class="text-green-600 font-bold text-sm" x-text="planta.id.substring(0,2).toUpperCase()"></span>
+                    </div>
+                    <div class="ml-4">
+                      <div class="text-sm font-medium text-gray-900" x-text="planta.identificador || planta.id"></div>
+                      <div class="text-sm text-gray-500" x-text="planta.genetica || 'Não especificado'"></div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
+                    :class="{
+                      'bg-yellow-100 text-yellow-800': planta.fase_fenologica === 'GERMINACAO',
+                      'bg-green-100 text-green-800': planta.fase_fenologica === 'VEGETATIVO',
+                      'bg-purple-100 text-purple-800': planta.fase_fenologica === 'FLORACAO',
+                      'bg-orange-100 text-orange-800': planta.fase_fenologica === 'SECAGEM',
+                      'bg-gray-100 text-gray-800': planta.fase_fenologica === 'CURA'
+                    }"
+                    x-text="planta.fase_fenologica">
+                  </span>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex items-center">
+                    <div class="w-full mr-4">
+                      <div class="text-xs text-gray-600 mb-1" x-text="planta.dias_desde_germinacao + ' dias'"></div>
+                      <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="progress-bar-fill bg-green-600 h-2.5 rounded-full" 
+                          :style="'width: ' + Math.min((planta.dias_desde_germinacao / 120) * 100, 100) + '%'">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="text-sm font-medium" 
+                    :class="{
+                      'text-green-600': planta.vpd_atual >= 0.8 && planta.vpd_atual <= 1.5,
+                      'text-yellow-600': planta.vpd_atual < 0.8 || planta.vpd_atual > 1.5,
+                      'text-gray-400': !planta.vpd_atual
+                    }"
+                    x-text="planta.vpd_atual ? planta.vpd_atual.toFixed(2) + ' kPa' : 'N/A'">
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatarDataRelativa(planta.ultima_leitura)">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button @click.stop="registrarLeituraPlanta(planta.id)" class="text-green-600 hover:text-green-900 mr-3">
+                    Registrar
+                  </button>
+                  <button @click.stop="verDetalhesPlanta(planta.id)" class="text-blue-600 hover:text-blue-900">
+                    Detalhes
+                  </button>
+                </td>
+              </tr>
+            </template>
+            
+            <!-- Empty State -->
+            <tr x-show="plantas.length === 0">
+              <td colspan="6" class="px-6 py-12 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                </svg>
+                <p class="mt-4 text-gray-500 font-medium">Nenhuma planta cadastrada</p>
+                <p class="mt-2 text-gray-400 text-sm">Adicione sua primeira planta para começar o monitoramento</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Incluir API Client -->
+  <?!= include('api-client') ?>
+
+  <script>
+    function growerDashboard() {
+      return {
+        loading: true,
+        error: false,
+        errorMessage: '',
+        userName: 'Cultivador',
+        
+        metrics: {
+          totalPlantas: 0,
+          plantasFlorecendo: 0,
+          vpdMedia24h: 0,
+          vpdStatus: 'ideal',
+          proximaRega: '--:--',
+          proximaRegaRelativo: 'Aguardando dados'
+        },
+        
+        plantas: [],
+
+        async init() {
+          await this.carregarDados();
+        },
+
+        async carregarDados() {
+          this.loading = true;
+          this.error = false;
+          
+          try {
+            // Carregar plantas do cultivador
+            const response = await this.apiRequest('cultivo.plantas.list', {});
+            
+            if (response.success) {
+              this.plantas = response.data.plantas || [];
+              this.calcularMetricas();
+            } else {
+              throw new Error(response.error?.message || 'Erro ao carregar dados');
+            }
+          } catch (err) {
+            this.error = true;
+            this.errorMessage = err.message || 'Erro ao conectar com servidor';
+            console.error('Erro ao carregar dashboard:', err);
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        calcularMetricas() {
+          this.metrics.totalPlantas = this.plantas.length;
+          this.metrics.plantasFlorecendo = this.plantas.filter(p => p.fase_fenologica === 'FLORACAO').length;
+          
+          // Calcular média VPD das últimas 24h
+          const vpdValores = this.plantas.map(p => p.vpd_atual).filter(v => v != null && v > 0);
+          if (vpdValores.length > 0) {
+            const soma = vpdValores.reduce((acc, v) => acc + v, 0);
+            this.metrics.vpdMedia24h = (soma / vpdValores.length).toFixed(2);
+            
+            const vpdNum = parseFloat(this.metrics.vpdMedia24h);
+            this.metrics.vpdStatus = (vpdNum >= 0.8 && vpdNum <= 1.5) ? 'ideal' : 'ajustar';
+          }
+          
+          // Calcular próxima rega (simulação baseada em última leitura)
+          const agoraMilissegundos = Date.now();
+          const horasAteRega = 6; // Exemplo: regar a cada 6 horas
+          this.metrics.proximaRega = new Date(agoraMilissegundos + (horasAteRega * 60 * 60 * 1000))
+            .toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+          this.metrics.proximaRegaRelativo = `Em ${horasAteRega} horas`;
+        },
+
+        async apiRequest(action, data) {
+          return new Promise((resolve, reject) => {
+            const token = sessionStorage.getItem('token') || '';
+            
+            google.script.run
+              .withSuccessHandler(resolve)
+              .withFailureHandler(reject)
+              .routeRequest({
+                action: action,
+                token: token,
+                data: data,
+                correlationId: 'grower-dash-' + Date.now()
+              });
+          });
+        },
+
+        abrirFormularioLog() {
+          // Redirecionar para página de registro de log
+          window.location.href = '?page=cultivo-log-form';
+        },
+
+        registrarLeituraPlanta(plantaId) {
+          // Redirecionar para formulário com ID pré-selecionado
+          window.location.href = `?page=cultivo-log-form&planta_id=${plantaId}`;
+        },
+
+        verDetalhesPlanta(plantaId) {
+          // Navegar para página de detalhes
+          window.location.href = `?page=planta-detalhes&id=${plantaId}`;
+        },
+
+        formatarDataRelativa(dataStr) {
+          if (!dataStr) return 'Nunca';
+          
+          const data = new Date(dataStr);
+          const agora = new Date();
+          const diferencaMs = agora - data;
+          const diferencaHoras = Math.floor(diferencaMs / (1000 * 60 * 60));
+          
+          if (diferencaHoras < 1) {
+            const minutos = Math.floor(diferencaMs / (1000 * 60));
+            return `Há ${minutos} min`;
+          } else if (diferencaHoras < 24) {
+            return `Há ${diferencaHoras}h`;
+          } else {
+            const dias = Math.floor(diferencaHoras / 24);
+            return `Há ${dias} dia(s)`;
+          }
+        },
+
+        logout() {
+          sessionStorage.clear();
+          window.location.href = '/';
+        }
+      }
+    }
+  </script>
+
+</body>
+</html>

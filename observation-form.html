@@ -1,0 +1,238 @@
+<!--
+COMPONENTE: observation-form.html
+PAPEL: Formulário de observação.
+
+PRINCIPAIS FUNCIONALIDADES:
+- registro de variável, valor, unidade, grupo e replicata;
+- mantém o estado de UI separado do processamento no Apps Script;
+- não acessa diretamente a planilha: usa client.html e os contratos do Web App.
+
+INTEGRAÇÕES:
+- ObservationService, field partials;
+- dados esperados: Observations.
+
+SEGURANÇA E LIMITAÇÕES:
+- nunca renderizar senha, token completo ou stack trace;
+- validação visual não substitui ValidationService no servidor;
+- usar escaping/templating seguro para texto proveniente da planilha;
+- esqueleto preparado para HtmlService e componentes parciais.
+
+STATUS: v2.0 — Completo com ARIA labels e validação
+-->
+<section class="view" data-component="observation-form.html" role="main" aria-labelledby="observation-form-title">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow" aria-label="Seção">Formulário de observação</p>
+      <h1 id="observation-form-title">Observation Form</h1>
+      <p>Registro de variáveis, valores, unidades e replicatas</p>
+    </div>
+    <button data-action="back" aria-label="Voltar à lista de observações">
+      Voltar
+    </button>
+  </header>
+
+  <form id="observationForm" aria-label="Formulário de registro de observação" role="form">
+    
+    <div class="form-group" role="group" aria-labelledby="experimentId-label">
+      <label for="experimentId" id="experimentId-label">Experimento <span aria-label="obrigatório">*</span></label>
+      <select 
+        id="experimentId" 
+        name="experimentId" 
+        required
+        aria-required="true"
+        aria-describedby="experimentId-hint">
+        <option value="">Selecione um experimento</option>
+        <!-- Opciones cargadas dinámicamente -->
+      </select>
+      <small id="experimentId-hint" class="hint">Experimento ao qual esta observação pertence</small>
+      <span class="error" role="alert" aria-live="polite"></span>
+    </div>
+
+    <div class="form-group" role="group" aria-labelledby="variable-label">
+      <label for="variable" id="variable-label">Variável Observada <span aria-label="obrigatório">*</span></label>
+      <input 
+        type="text" 
+        id="variable" 
+        name="variable" 
+        required
+        maxlength="100"
+        aria-required="true"
+        aria-describedby="variable-hint"
+        placeholder="Ex: Altura da planta, Massa seca, pH do solo">
+      <small id="variable-hint" class="hint">Nome da variável medida</small>
+      <span class="error" role="alert" aria-live="polite"></span>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group" role="group" aria-labelledby="value-label">
+        <label for="value" id="value-label">Valor <span aria-label="obrigatório">*</span></label>
+        <input 
+          type="text" 
+          id="value" 
+          name="value" 
+          required
+          maxlength="500"
+          aria-required="true"
+          aria-describedby="value-hint"
+          placeholder="Ex: 35.7">
+        <small id="value-hint" class="hint">Valor observado</small>
+        <span class="error" role="alert" aria-live="polite"></span>
+      </div>
+
+      <div class="form-group" role="group" aria-labelledby="unit-label">
+        <label for="unit" id="unit-label">Unidade <span aria-label="obrigatório">*</span></label>
+        <input 
+          type="text" 
+          id="unit" 
+          name="unit" 
+          required
+          maxlength="50"
+          aria-required="true"
+          aria-describedby="unit-hint"
+          placeholder="Ex: cm, g, mg/L">
+        <small id="unit-hint" class="hint">Unidade de medida</small>
+        <span class="error" role="alert" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group" role="group" aria-labelledby="groupName-label">
+        <label for="groupName" id="groupName-label">Grupo/Tratamento</label>
+        <input 
+          type="text" 
+          id="groupName" 
+          name="groupName"
+          maxlength="100"
+          aria-describedby="groupName-hint"
+          placeholder="Ex: T1, Controle">
+        <small id="groupName-hint" class="hint">Identificação do grupo experimental</small>
+        <span class="error" role="alert" aria-live="polite"></span>
+      </div>
+
+      <div class="form-group" role="group" aria-labelledby="replicate-label">
+        <label for="replicate" id="replicate-label">Repetição <span aria-label="obrigatório">*</span></label>
+        <input 
+          type="number" 
+          id="replicate" 
+          name="replicate" 
+          required
+          min="1"
+          aria-required="true"
+          aria-describedby="replicate-hint"
+          placeholder="Ex: 1">
+        <small id="replicate-hint" class="hint">Número da repetição</small>
+        <span class="error" role="alert" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="form-group" role="group" aria-labelledby="observedAt-label">
+      <label for="observedAt" id="observedAt-label">Data da Observação <span aria-label="obrigatório">*</span></label>
+      <input 
+        type="date" 
+        id="observedAt" 
+        name="observedAt" 
+        required
+        aria-required="true"
+        aria-describedby="observedAt-hint">
+      <small id="observedAt-hint" class="hint">Data em que a medição foi realizada</small>
+      <span class="error" role="alert" aria-live="polite"></span>
+    </div>
+
+    <div class="form-group" role="group" aria-labelledby="notes-label">
+      <label for="notes" id="notes-label">Notas</label>
+      <textarea 
+        id="notes" 
+        name="notes" 
+        rows="3"
+        maxlength="2000"
+        aria-describedby="notes-hint"
+        placeholder="Observações adicionais sobre esta medição"></textarea>
+      <small id="notes-hint" class="hint">Informações complementares (até 2000 caracteres)</small>
+      <span class="error" role="alert" aria-live="polite"></span>
+    </div>
+
+    <div class="form-actions" role="group" aria-label="Ações do formulário">
+      <button 
+        type="button" 
+        data-action="cancel"
+        aria-label="Cancelar registro da observação">
+        Cancelar
+      </button>
+      <button 
+        type="submit" 
+        data-action="save"
+        aria-label="Salvar observação">
+        Salvar
+      </button>
+    </div>
+
+  </form>
+
+  <div id="formStatus" role="status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+
+</section>
+
+<script>
+  (function() {
+    const form = document.getElementById('observationForm');
+    const formStatus = document.getElementById('formStatus');
+    const experimentSelect = document.getElementById('experimentId');
+
+    // Cargar experimentos disponibles
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if (response.success && response.data) {
+          response.data.forEach(function(experiment) {
+            const option = document.createElement('option');
+            option.value = experiment.id;
+            option.textContent = experiment.design + ' (' + experiment.studyId + ')';
+            experimentSelect.appendChild(option);
+          });
+        }
+      })
+      .apiCall({action: 'experiments.list'});
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = {
+        experimentId: document.getElementById('experimentId').value,
+        variable: document.getElementById('variable').value,
+        value: document.getElementById('value').value,
+        unit: document.getElementById('unit').value,
+        groupName: document.getElementById('groupName').value,
+        replicate: parseInt(document.getElementById('replicate').value),
+        observedAt: document.getElementById('observedAt').value,
+        notes: document.getElementById('notes').value
+      };
+
+      formStatus.textContent = 'Salvando observação...';
+
+      google.script.run
+        .withSuccessHandler(function(response) {
+          if (response.success) {
+            formStatus.textContent = 'Observação salva com sucesso!';
+            setTimeout(() => {
+              window.history.back();
+            }, 1500);
+          } else {
+            formStatus.textContent = 'Erro: ' + response.error;
+          }
+        })
+        .withFailureHandler(function(error) {
+          formStatus.textContent = 'Erro ao salvar: ' + error.message;
+        })
+        .apiCall({action: 'observations.create', data: formData});
+    });
+
+    document.querySelector('[data-action="cancel"]').addEventListener('click', function() {
+      if (confirm('Descartar alterações?')) {
+        window.history.back();
+      }
+    });
+
+    document.querySelector('[data-action="back"]').addEventListener('click', function() {
+      window.history.back();
+    });
+  })();
+</script>

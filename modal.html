@@ -1,0 +1,66 @@
+<!--
+COMPONENTE: modal.html
+PAPEL: Modal genérico.
+
+PRINCIPAIS FUNCIONALIDADES:
+- confirmação, formulários rápidos e detalhes;
+- mantém o estado de UI separado do processamento no Apps Script;
+- não acessa diretamente a planilha: usa client.html e os contratos do Web App.
+
+INTEGRAÇÕES:
+- client.html, form.html;
+- dados esperados: Payloads temporários.
+
+SEGURANÇA E LIMITAÇÕES:
+- nunca renderizar senha, token completo ou stack trace;
+- validação visual não substitui ValidationService no servidor;
+- usar escaping/templating seguro para texto proveniente da planilha;
+- esqueleto preparado para HtmlService e componentes parciais.
+
+STATUS: ESQUELETO DE INTERFACE — completar acessibilidade, testes e estados de erro.
+-->
+<dialog 
+  data-role="modal" 
+  role="dialog" 
+  aria-modal="true"
+  aria-labelledby="modal-title"
+  aria-describedby="modal-description">
+  
+  <div class="modal-header">
+    <h2 id="modal-title" class="modal-title">
+      <!-- Título inserido dinamicamente -->
+    </h2>
+    
+    <button 
+      data-action="close-modal"
+      type="button"
+      class="modal-close"
+      aria-label="Fechar modal"
+      title="Fechar (Esc)">
+      ✖️
+    </button>
+  </div>
+  
+  <div 
+    data-role="modal-content" 
+    id="modal-description"
+    class="modal-body">
+    <!-- Conteúdo inserido dinamicamente -->
+  </div>
+  
+  <div class="modal-footer" role="group" aria-label="Ações do modal">
+    <button 
+      data-action="modal-confirm"
+      type="button"
+      class="btn-primary">
+      Confirmar
+    </button>
+    
+    <button 
+      data-action="modal-cancel"
+      type="button"
+      class="btn-secondary">
+      Cancelar
+    </button>
+  </div>
+</dialog>

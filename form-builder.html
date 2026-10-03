@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Form Builder</title>
+</head>
+<body>
+<script>
+/**
+ * FORM BUILDER
+ * Componente reutilizável para gerar formulários com validação
+ */
+
+class FormBuilder {
+  constructor(config = {}) {
+    this.fields = config.fields || [];
+    this.onSubmit = config.onSubmit || null;
+    this.title = config.title || 'Formulário';
+    this.submitText = config.submitText || 'Enviar';
+    this.cancelText = config.cancelText || 'Cancelar';
+    this.onCancel = config.onCancel || null;
+    this.values = {};
+    this.errors = {};
+    this.isLoading = false;
+  }
+
+  /**
+   * Define valores iniciais
+   */
+  setValues(values) {
+    this.values = { ...values };
+    return this;
+  }
+
+  /**
+   * Adiciona campo
+   */
+  addField(field) {
+    this.fields.push(field);
+    return this;
+  }
+
+  /**
+   * Gera HTML do formulário
+   */
+  render() {
+    const fieldsHTML = this.fields.map(field => this.renderField(field)).join('');
+
+    return `
+      <form class="form-builder" data-submit="handleFormSubmit">
+        <div class="form-title">${this.title}</div>
+
+        ${this.renderErrors()}
+
+        <div class="form-fields">
+          ${fieldsHTML}
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="button button-primary" ${this.isLoading ? 'disabled' : ''}>
+            ${this.isLoading ? '⏳ Processando...' : this.submitText}
+          </button>
+          <button type="button" class="button button-outline" data-click="handleCancel" ${this.isLoading ? 'disabled' : ''}>
+            ${this.cancelText}
+          </button>
+        </div>
+      </form>
+    `;
+  }
+
+  /**
+   * Renderiza campo individual
+   */
+  renderField(field) {
+    const value = this.values[field.name] || '';
+    const error = this.errors[field.name];
+    const errorClass = error ? 'form-group-error' : '';
+    const required = field.required ? '<span class="required">*</span>' : '';
+
+    let inputHTML = '';
+
+    switch (field.type) {
+      case 'text':
+      case 'email':
+      case 'number':
+      case 'date':
+      case 'time':
+        inputHTML = `
+          <input
+            type="${field.type}"
+            name="${field.name}"
+            placeholder="${field.placeholder || ''}"
+            value="${value}"
+            ${field.required ? 'required' : ''}
+            ${field.disabled ? 'disabled' : ''}
+            data-input="handleFieldChange"
+          />
+        `;
+        break;
+
+      case 'textarea':
+        inputHTML = `
+          <textarea
+            name="${field.name}"
+            placeholder="${field.placeholder || ''}"
+            rows="${field.rows || 4}"
+            ${field.required ? 'required' : ''}
+            ${field.disabled ? 'disabled' : ''}
+            data-input="handleFieldChange"
+          >${value}</textarea>
+        `;
+        break;
+
+      case 'select':
+        const options = (field.options || [])
+          .map(opt => `<option value="${opt.value}" ${opt.value === value ? 'selected' : ''}>${opt.label}</option>`)
+          .join('');
+        inputHTML = `
+          <select
+            name="${field.name}"
+            ${field.required ? 'required' : ''}
+            ${field.disabled ? 'disabled' : ''}
+            data-change="handleFieldChange"
+          >
+            <option value="">Selecione...</option>
+            ${options}
+          </select>
+        `;
+        break;
+
+      case 'checkbox':
+        inputHTML = `
+          <input
+            type="checkbox"
+            name="${field.name}"
+            ${value ? 'checked' : ''}
+            ${field.disabled ? 'disabled' : ''}
+            data-change="handleFieldChange"
+          />
+        `;
+        break;
+
+      case 'radio':
+        const radios = (field.options || [])
+          .map(opt => `
+            <label class="radio-label">
+              <input
+                type="radio"
+                name="${field.name}"
+                value="${opt.value}"
+                ${opt.value === value ? 'checked' : ''}
+                ${field.disabled ? 'disabled' : ''}
+                data-change="handleFieldChange"
+              />
+              ${opt.label}
+            </label>
+          `)
+          .join('');
+        inputHTML = `<div class="radio-group">${radios}</div>`;
+        break;
+
+      case 'file':
+        inputHTML = `
+          <input
+            type="file"
+            name="${field.name}"
+            accept="${field.accept || '*'}"
+            ${field.required ? 'required' : ''}
+            ${field.disabled ? 'disabled' : ''}
+            data-change="handleFileChange"
+          />
+        `;
+        break;
+
+      default:
+        inputHTML = `<input type="text" name="${field.name}" value="${value}" />`;
+    }
+
+    return `
+      <div class="form-group ${errorClass}">
+        <label for="${field.name}">
+          ${field.label || field.name}
+          ${required}
+        </label>
+        ${inputHTML}
+        ${error ? `<div class="form-error">${error}</div>` : ''}
+        ${field.help ? `<div class="form-help">${field.help}</div>` : ''}
+      </div>
+    `;
+  }
+
+  /**
+   * Renderiza erros globais
+   */
+  renderErrors() {
+    const globalErrors = this.errors['__global__'] || [];
+    if (globalErrors.length === 0) return '';
+
+    const errorsList = globalErrors.map(err => `<div class="error-item">• ${err}</div>`).join('');
+    return `<div class="form-errors-global">${errorsList}</div>`;
+  }
+
+  /**
+   * Obtém valores do formulário
+   */
+  getValues(form) {
+    const formData = new FormData(form);
+    const values = {};
+
+    for (let [key, value] of formData.entries()) {
+      if (form.elements[key].type === 'checkbox') {
+        values[key] = form.elements[key].checked;
+      } else if (form.elements[key].type === 'file') {
+        values[key] = form.elements[key].files[0] || null;
+      } else {
+        values[key] = value;
+      }
+    }
+
+    return values;
+  }
+
+  /**
+   * Valida formulário
+   */
+  validate(values) {
+    this.errors = {};
+
+    for (const field of this.fields) {
+      const value = values[field.name];
+
+      // Validação obrigatória
+      if (field.required && !value) {
+        this.errors[field.name] = `${field.label || field.name} é obrigatório`;
+        continue;
+      }
+
+      // Validação de email
+      if (field.type === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        this.errors[field.name] = 'Email inválido';
+        continue;
+      }
+
+      // Validação de número
+      if (field.type === 'number' && value && isNaN(value)) {
+        this.errors[field.name] = 'Deve ser um número';
+        continue;
+      }
+
+      // Validação customizada
+      if (field.validate && typeof field.validate === 'function') {
+        const error = field.validate(value);
+        if (error) {
+          this.errors[field.name] = error;
+        }
+      }
+    }
+
+    return Object.keys(this.errors).length === 0;
+  }
+
+  /**
+   * Exibe erro global
+   */
+  setGlobalError(message) {
+    this.errors['__global__'] = [message];
+  }
+
+  /**
+   * Limpa erros
+   */
+  clearErrors() {
+    this.errors = {};
+  }
+
+  /**
+   * Define estado de loading
+   */
+  setLoading(isLoading) {
+    this.isLoading = isLoading;
+  }
+}
+
+/**
+ * Predefined field types
+ */
+const FieldTypes = {
+  text: (name, label, placeholder = '') => ({
+    type: 'text',
+    name,
+    label,
+    placeholder,
+    required: false
+  }),
+
+  email: (name, label = 'Email', placeholder = 'seu@email.com') => ({
+    type: 'email',
+    name,
+    label,
+    placeholder,
+    required: true
+  }),
+
+  password: (name, label = 'Senha', placeholder = '••••••••') => ({
+    type: 'password',
+    name,
+    label,
+    placeholder,
+    required: true
+  }),
+
+  number: (name, label, placeholder = '0') => ({
+    type: 'number',
+    name,
+    label,
+    placeholder,
+    required: false
+  }),
+
+  date: (name, label, required = false) => ({
+    type: 'date',
+    name,
+    label,
+    required
+  }),
+
+  time: (name, label, required = false) => ({
+    type: 'time',
+    name,
+    label,
+    required
+  }),
+
+  textarea: (name, label, placeholder = '', rows = 4) => ({
+    type: 'textarea',
+    name,
+    label,
+    placeholder,
+    rows,
+    required: false
+  }),
+
+  select: (name, label, options = [], required = false) => ({
+    type: 'select',
+    name,
+    label,
+    options,
+    required
+  }),
+
+  checkbox: (name, label, required = false) => ({
+    type: 'checkbox',
+    name,
+    label,
+    required
+  }),
+
+  radio: (name, label, options = [], required = false) => ({
+    type: 'radio',
+    name,
+    label,
+    options,
+    required
+  }),
+
+  file: (name, label, accept = '*', required = false) => ({
+    type: 'file',
+    name,
+    label,
+    accept,
+    required
+  })
+};
+
+</script>
+</body>
+</html>

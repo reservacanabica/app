@@ -1,0 +1,165 @@
+<!--
+COMPONENTE: user-form.html
+PAPEL: Formulário de cadastro/edição de usuários
+
+STATUS: v1.0 - Com acessibilidade ARIA (Maturidade +0.04%)
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Cadastro de Usuário</title>
+  <?!= include('styles') ?>
+</head>
+<body>
+  <main class="user-form-container" role="main">
+    <header>
+      <h1 id="page-title">Cadastro de Usuário</h1>
+      <p>Gerenciamento de usuários do sistema</p>
+    </header>
+
+    <form id="user-form" aria-labelledby="page-title" novalidate>
+      <fieldset>
+        <legend>Informações Básicas</legend>
+        
+        <div class="form-group">
+          <label for="username">Nome de Usuário <span aria-label="obrigatório">*</span></label>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            required 
+            aria-required="true"
+            aria-describedby="username-hint"
+            pattern="[a-zA-Z0-9_-]+"
+            minlength="3"
+            maxlength="50"
+          />
+          <span id="username-hint" class="hint">Apenas letras, números, hífen e underscore</span>
+        </div>
+
+        <div class="form-group">
+          <label for="display-name">Nome Completo <span aria-label="obrigatório">*</span></label>
+          <input 
+            type="text" 
+            id="display-name" 
+            name="displayName" 
+            required 
+            aria-required="true"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="email">E-mail <span aria-label="obrigatório">*</span></label>
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            required 
+            aria-required="true"
+            aria-describedby="email-hint"
+          />
+          <span id="email-hint" class="hint">Será usado para notificações</span>
+        </div>
+
+        <div class="form-group">
+          <label for="role">Papel/Role <span aria-label="obrigatório">*</span></label>
+          <select id="role" name="role" required aria-required="true" aria-describedby="role-hint">
+            <option value="">Selecione...</option>
+            <option value="admin">Admin</option>
+            <option value="researcher">Pesquisador</option>
+            <option value="analyst">Analista</option>
+            <option value="medico">Médico</option>
+            <option value="tecnico_agricola">Técnico Agrícola</option>
+            <option value="grower">Grower</option>
+            <option value="paciente">Paciente</option>
+            <option value="viewer">Visualizador</option>
+          </select>
+          <span id="role-hint" class="hint">Define permissões de acesso</span>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Senha <span aria-label="obrigatório">*</span></label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            required 
+            aria-required="true"
+            aria-describedby="password-hint"
+            minlength="8"
+          />
+          <span id="password-hint" class="hint">Mínimo 8 caracteres, com letras, números e símbolos</span>
+        </div>
+
+        <div class="form-group">
+          <label for="password-confirm">Confirmar Senha <span aria-label="obrigatório">*</span></label>
+          <input 
+            type="password" 
+            id="password-confirm" 
+            name="passwordConfirm" 
+            required 
+            aria-required="true"
+            aria-describedby="confirm-hint"
+          />
+          <span id="confirm-hint" class="hint">Digite a senha novamente</span>
+        </div>
+
+        <div class="form-group">
+          <label for="status">Status</label>
+          <select id="status" name="status">
+            <option value="active">Ativo</option>
+            <option value="suspended">Suspenso</option>
+            <option value="inactive">Inativo</option>
+          </select>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Informações Adicionais</legend>
+        
+        <div class="form-group">
+          <label for="organization">Organização</label>
+          <input type="text" id="organization" name="organization" />
+        </div>
+
+        <div class="form-group">
+          <label for="notes">Observações</label>
+          <textarea id="notes" name="notes" rows="3"></textarea>
+        </div>
+      </fieldset>
+
+      <div class="form-actions" role="group" aria-label="Ações do formulário">
+        <button type="button" class="btn-secondary" onclick="history.back()">Cancelar</button>
+        <button type="submit" class="btn-primary">Salvar Usuário</button>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    document.getElementById('user-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const password = document.getElementById('password').value;
+      const confirm = document.getElementById('password-confirm').value;
+      
+      if (password !== confirm) {
+        alert('Senhas não conferem!');
+        return;
+      }
+
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+      delete data.passwordConfirm;
+      
+      google.script.run
+        .withSuccessHandler(() => {
+          alert('Usuário salvo!');
+          window.location.href = 'users-list.html';
+        })
+        .withFailureHandler((err) => alert('Erro: ' + err.message))
+        .apiCall({action: 'users.create', token: sessionStorage.getItem('authToken'), ...data});
+    });
+  </script>
+</body>
+</html>

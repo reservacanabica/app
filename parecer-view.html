@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('quality-components-css') ?>
+  <?!= include('quality-helpers-js') ?>
+</head>
+<body>
+  <div class="container mt-4">
+    <div class="card">
+      <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Detalhes do Parecer Técnico</h5>
+        <button class="btn btn-sm btn-light" onclick="goBack()">← Voltar</button>
+      </div>
+      <div class="card-body">
+        <!-- Identificação -->
+        <section class="mb-4">
+          <h6 class="border-bottom pb-2">Identificação</h6>
+          <div class="row">
+            <div class="col-md-4">
+              <p><strong>ID Parecer:</strong> <span id="parecer-id">—</span></p>
+            </div>
+            <div class="col-md-4">
+              <p><strong>Receita Vinculada:</strong></p>
+              <div id="parecer-receita">—</div>
+            </div>
+            <div class="col-md-4">
+              <p><strong>Protocolo Vinculado:</strong></p>
+              <div id="parecer-protocolo">—</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Veredicto Final -->
+        <section class="mb-4">
+          <h6 class="border-bottom pb-2">Veredicto</h6>
+          <div class="row align-items-center">
+            <div class="col-md-6">
+              <p><strong>Veredicto Final:</strong></p>
+              <div id="parecer-veredicto" style="font-size: 1.2em;">—</div>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Data da Análise:</strong></p>
+              <p id="parecer-data-analise">—</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Parecer Técnico do Especialista -->
+        <section class="mb-4">
+          <h6 class="border-bottom pb-2">Parecer Técnico do Especialista</h6>
+          <div class="card bg-light">
+            <div class="card-body">
+              <p id="parecer-texto" style="white-space: pre-wrap;">—</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Regras de Compatibilidade -->
+        <section class="mb-4">
+          <h6 class="border-bottom pb-2">Regras de Compatibilidade Avaliadas</h6>
+          <div id="regras-container">
+            <p class="text-muted">Carregando regras...</p>
+          </div>
+        </section>
+
+        <!-- Alertas e Bloqueios -->
+        <section class="mb-4" id="alertas-section" style="display:none;">
+          <h6 class="border-bottom pb-2">Alertas e Bloqueios</h6>
+          <div id="alertas-container">
+            <!-- Será preenchido dinamicamente -->
+          </div>
+        </section>
+
+        <!-- Metadados -->
+        <section class="mb-4">
+          <h6 class="border-bottom pb-2">Metadados</h6>
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>Criado em:</strong> <span id="parecer-created">—</span></p>
+              <p><strong>Criado por:</strong> <span id="parecer-created-by">—</span></p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Atualizado em:</strong> <span id="parecer-updated">—</span></p>
+              <p><strong>Atualizado por:</strong> <span id="parecer-updated-by">—</span></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Ações -->
+        <section>
+          <button id="btn-update-parecer" class="btn btn-warning" onclick="updateParecer()">
+            ✏️ Atualizar Parecer
+          </button>
+          <button id="btn-view-receita" class="btn btn-info" onclick="viewReceita()">
+            📋 Ver Receita
+          </button>
+          <button id="btn-view-protocolo" class="btn btn-info" onclick="viewProtocolo()">
+            📄 Ver Protocolo
+          </button>
+          <button id="btn-delete-parecer" class="btn btn-danger" onclick="deleteParecer()">
+            🗑️ Excluir Parecer
+          </button>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentParecer = null;
+
+    function goBack() {
+      window.history.back();
+    }
+
+    function loadParecerData(parecerId) {
+      setButtonLoading('btn-update-parecer', true);
+      
+      google.script.run
+        .withSuccessHandler(onParecerLoaded)
+        .withFailureHandler(onLoadError)
+        .routeRequest({
+          action: 'getParecer',
+          parecerId: parecerId
+        });
+    }
+
+    function onParecerLoaded(response) {
+      setButtonLoading('btn-update-parecer', false);
+      
+      if (!response.success) {
+        showError(response.message || 'Erro ao carregar parecer');
+        return;
+      }
+      
+      currentParecer = response.data;
+      renderParecer(currentParecer);
+    }
+
+    function renderParecer(parecer) {
+      // Identificação
+      document.getElementById('parecer-id').textContent = parecer.id || '—';
+      
+      // Receita Vinculada
+      const receitaEl = document.getElementById('parecer-receita');
+      if (parecer.idReceita && parecer.nomeReceita) {
+        receitaEl.innerHTML = `<a href="#" onclick="viewReceita(); return false;">${escapeHtml(parecer.nomeReceita)}</a>`;
+      } else {
+        receitaEl.textContent = '—';
+      }
+      
+      // Protocolo Vinculado
+      const protocoloEl = document.getElementById('parecer-protocolo');
+      if (parecer.idProtocolo && parecer.nomeProtocolo) {
+        protocoloEl.innerHTML = `<a href="#" onclick="viewProtocolo(); return false;">${escapeHtml(parecer.nomeProtocolo)}</a>`;
+      } else {
+        protocoloEl.textContent = '—';
+      }
+      
+      // Veredicto
+      document.getElementById('parecer-veredicto').innerHTML = renderStatusBadge(parecer.veredictoFinal);
+      document.getElementById('parecer-data-analise').textContent = formatDateTime(parecer.dataAnalise);
+      
+      // Parecer Técnico
+      document.getElementById('parecer-texto').textContent = parecer.parecerTecnicoEspecialista || 'Nenhum parecer registrado';
+      
+      // Regras
+      const regrasContainer = document.getElementById('regras-container');
+      if (parecer.regrasAvaliadas && parecer.regrasAvaliadas.length > 0) {
+        regrasContainer.innerHTML = renderRegrasList(parecer.regrasAvaliadas);
+      } else {
+        regrasContainer.innerHTML = '<p class="text-muted">Nenhuma regra registrada</p>';
+      }
+      
+      // Alertas e Bloqueios
+      renderAlertasEBloqueios(parecer);
+      
+      // Metadados
+      document.getElementById('parecer-created').textContent = formatDateTime(parecer.createdAt);
+      document.getElementById('parecer-created-by').textContent = parecer.createdBy || '—';
+      document.getElementById('parecer-updated').textContent = formatDateTime(parecer.updatedAt);
+      document.getElementById('parecer-updated-by').textContent = parecer.updatedBy || '—';
+    }
+
+    function renderAlertasEBloqueios(parecer) {
+      const section = document.getElementById('alertas-section');
+      const container = document.getElementById('alertas-container');
+      
+      const alertas = parecer.alertas || [];
+      const bloqueios = parecer.bloqueios || [];
+      
+      if (alertas.length === 0 && bloqueios.length === 0) {
+        section.style.display = 'none';
+        return;
+      }
+      
+      section.style.display = 'block';
+      let html = '';
+      
+      // Bloqueios
+      if (bloqueios.length > 0) {
+        html += '<div class="alert alert-danger"><strong>🚫 Bloqueios:</strong><ul class="mb-0 mt-2">';
+        bloqueios.forEach(bloqueio => {
+          html += `<li>${escapeHtml(bloqueio)}</li>`;
+        });
+        html += '</ul></div>';
+      }
+      
+      // Alertas
+      if (alertas.length > 0) {
+        html += '<div class="alert alert-warning"><strong>⚠️ Alertas:</strong><ul class="mb-0 mt-2">';
+        alertas.forEach(alerta => {
+          html += `<li>${escapeHtml(alerta)}</li>`;
+        });
+        html += '</ul></div>';
+      }
+      
+      container.innerHTML = html;
+    }
+
+    function onLoadError(error) {
+      setButtonLoading('btn-update-parecer', false);
+      showError(error.message || 'Erro ao carregar dados');
+    }
+
+    function updateParecer() {
+      if (!currentParecer) {
+        showError('Nenhum parecer carregado');
+        return;
+      }
+      // Navegar para formulário de workflow
+      window.location.href = '?page=parecer-workflow&id=' + currentParecer.id;
+    }
+
+    function viewReceita() {
+      if (!currentParecer || !currentParecer.idReceita) {
+        showError('Receita não vinculada');
+        return;
+      }
+      window.location.href = '?page=receita-view&id=' + currentParecer.idReceita;
+    }
+
+    function viewProtocolo() {
+      if (!currentParecer || !currentParecer.idProtocolo) {
+        showError('Protocolo não vinculado');
+        return;
+      }
+      window.location.href = '?page=protocolo-view&id=' + currentParecer.idProtocolo;
+    }
+
+    async function deleteParecer() {
+      if (!currentParecer) {
+        showError('Nenhum parecer carregado');
+        return;
+      }
+
+      const ok = await confirmAction('Tem certeza que deseja excluir este parecer? Esta ação não pode ser desfeita.');
+      if (!ok) return;
+      
+      setButtonLoading('btn-delete-parecer', true);
+      
+      google.script.run
+        .withSuccessHandler(onDeleteSuccess)
+        .withFailureHandler(onDeleteError)
+        .routeRequest({
+          action: 'deleteParecer',
+          parecerId: currentParecer.id
+        });
+    }
+
+    function onDeleteSuccess(response) {
+      setButtonLoading('btn-delete-parecer', false);
+      
+      if (response.success) {
+        showSuccess('Parecer excluído com sucesso');
+        setTimeout(() => window.history.back(), 1500);
+      } else {
+        showError(response.message || 'Erro ao excluir parecer');
+      }
+    }
+
+    function onDeleteError(error) {
+      setButtonLoading('btn-delete-parecer', false);
+      showError(error.message || 'Erro ao excluir parecer');
+    }
+
+    // Inicializar ao carregar página
+    window.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const parecerId = urlParams.get('id');
+      
+      if (parecerId) {
+        loadParecerData(parecerId);
+      } else {
+        showError('ID do parecer não fornecido');
+      }
+    });
+  </script>
+</body>
+</html>

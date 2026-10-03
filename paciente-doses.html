@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diário de Doses - Reserva Canábica</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  
+  <!-- Incluir CSS customizado do sistema -->
+  <?!= include('quality-components-css') ?>
+  
+  <style>
+    .slider-thumb::-webkit-slider-thumb {
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #10b981;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .slider-thumb::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #10b981;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      border: none;
+    }
+    .checkbox-adverso {
+      transition: all 0.2s;
+    }
+    .checkbox-adverso:checked {
+      background-color: #ef4444;
+      border-color: #ef4444;
+    }
+    .pulse-warning {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .7; }
+    }
+  </style>
+</head>
+<body class="bg-gray-50" x-data="pacienteDosesForm()">
+  
+  <!-- Header -->
+  <header class="bg-blue-600 text-white shadow-lg">
+    <div class="container mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <button @click="voltarDashboard()" class="p-2 hover:bg-blue-700 rounded-lg transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+          </button>
+          <div>
+            <h1 class="text-2xl font-bold">Diário de Autoaplicação</h1>
+            <p class="text-blue-100 text-sm">Registre suas doses e sintomas diários</p>
+          </div>
+        </div>
+        <div class="text-right">
+          <p class="text-sm font-medium" x-text="dataAtual"></p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 py-8 max-w-4xl">
+    
+    <!-- Success Message -->
+    <div x-show="successMessage" x-transition class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+      <div class="flex items-center">
+        <svg class="w-6 h-6 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <p class="text-green-800 font-medium" x-text="successMessage"></p>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div x-show="errorMessage" x-transition class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+      <div class="flex items-center">
+        <svg class="w-6 h-6 text-red-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+        <p class="text-red-800 font-medium" x-text="errorMessage"></p>
+      </div>
+    </div>
+
+    <!-- Alerta Crítico Tontura Severa -->
+    <div x-show="formData.efeitosAdversos.tontura_severa" x-transition 
+         class="bg-red-600 text-white rounded-lg p-6 mb-6 shadow-2xl pulse-warning">
+      <div class="flex items-start">
+        <svg class="w-8 h-8 mr-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        <div>
+          <h3 class="text-xl font-bold mb-2">⚠️ ATENÇÃO: Tontura Severa Detectada</h3>
+          <p class="text-white text-lg leading-relaxed mb-3">
+            Você relatou <strong>tontura severa</strong>. Este é um efeito adverso importante que requer atenção médica.
+          </p>
+          <div class="bg-red-700 bg-opacity-50 rounded-lg p-4">
+            <p class="font-semibold mb-2">Recomendações Imediatas:</p>
+            <ul class="list-disc list-inside space-y-1 text-sm">
+              <li><strong>Reduza a próxima dose</strong> conforme orientação médica prévia</li>
+              <li>Entre em contato com nossa equipe de suporte clínico</li>
+              <li>Evite atividades que exijam atenção ou coordenação motora</li>
+              <li>Se os sintomas piorarem, procure atendimento médico presencial</li>
+            </ul>
+          </div>
+          <div class="mt-4 flex space-x-3">
+            <a href="tel:08007771234" class="px-4 py-2 bg-white text-red-600 font-semibold rounded-lg hover:bg-red-50 transition">
+              📞 Ligar para Suporte
+            </a>
+            <a href="mailto:suporte@reservacanabica.com.br" class="px-4 py-2 bg-red-700 text-white font-semibold rounded-lg hover:bg-red-800 transition">
+              ✉️ Enviar E-mail
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+      <form @submit.prevent="gravarDose()" class="p-8">
+        
+        <!-- Período do Dia -->
+        <div class="mb-8">
+          <label class="block text-lg font-semibold text-gray-800 mb-4">
+            Período do Dia *
+          </label>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <label class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition"
+                   :class="formData.periodo === 'manha' ? 'border-yellow-500 bg-yellow-50' : 'border-gray-200 hover:border-yellow-300'">
+              <input type="radio" x-model="formData.periodo" value="manha" class="sr-only" required>
+              <div class="flex items-center w-full">
+                <svg class="w-8 h-8 mr-3" :class="formData.periodo === 'manha' ? 'text-yellow-500' : 'text-gray-400'" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                </svg>
+                <div>
+                  <p class="font-semibold text-gray-800">Manhã</p>
+                  <p class="text-xs text-gray-500">6h - 12h</p>
+                </div>
+              </div>
+            </label>
+
+            <label class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition"
+                   :class="formData.periodo === 'tarde' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'">
+              <input type="radio" x-model="formData.periodo" value="tarde" class="sr-only" required>
+              <div class="flex items-center w-full">
+                <svg class="w-8 h-8 mr-3" :class="formData.periodo === 'tarde' ? 'text-orange-500' : 'text-gray-400'" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                </svg>
+                <div>
+                  <p class="font-semibold text-gray-800">Tarde</p>
+                  <p class="text-xs text-gray-500">12h - 18h</p>
+                </div>
+              </div>
+            </label>
+
+            <label class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition"
+                   :class="formData.periodo === 'noite' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'">
+              <input type="radio" x-model="formData.periodo" value="noite" class="sr-only" required>
+              <div class="flex items-center w-full">
+                <svg class="w-8 h-8 mr-3" :class="formData.periodo === 'noite' ? 'text-indigo-500' : 'text-gray-400'" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                </svg>
+                <div>
+                  <p class="font-semibold text-gray-800">Noite</p>
+                  <p class="text-xs text-gray-500">18h - 6h</p>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Quantidade de Gotas -->
+        <div class="mb-8">
+          <label for="inputGotas" class="block text-lg font-semibold text-gray-800 mb-3">
+            Quantidade Aplicada (gotas) *
+          </label>
+          <input 
+            type="number" 
+            id="inputGotas"
+            x-model.number="formData.gotas"
+            min="1"
+            max="50"
+            required
+            placeholder="Ex: 5"
+            class="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <p class="mt-2 text-sm text-gray-500">Siga a posologia prescrita pelo seu médico</p>
+        </div>
+
+        <!-- Escala Analógica Visual de Dor/Sintomas -->
+        <div class="mb-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
+          <label class="block text-lg font-semibold text-gray-800 mb-4">
+            Intensidade dos Sintomas / Dor *
+          </label>
+          <p class="text-sm text-gray-600 mb-4">Arraste o controle para indicar a intensidade atual dos seus sintomas</p>
+          
+          <div class="flex items-center space-x-4 mb-4">
+            <div class="text-6xl" x-text="emojiDor"></div>
+            <div class="flex-1">
+              <input 
+                type="range" 
+                x-model.number="formData.escalaDor"
+                min="0"
+                max="10"
+                step="1"
+                class="slider-thumb w-full h-3 bg-gradient-to-r from-green-400 via-yellow-400 to-red-600 rounded-full appearance-none cursor-pointer">
+              <div class="flex justify-between text-xs text-gray-600 mt-2">
+                <span>0 - Sem dor</span>
+                <span>5 - Moderada</span>
+                <span>10 - Insuportável</span>
+              </div>
+            </div>
+            <div class="text-center">
+              <p class="text-5xl font-bold" :class="corEscalaDor" x-text="formData.escalaDor"></p>
+              <p class="text-xs text-gray-600 mt-1">Nível</p>
+            </div>
+          </div>
+          
+          <p class="text-sm font-medium" :class="corEscalaDor" x-text="descricaoDor"></p>
+        </div>
+
+        <!-- Checkbox Grid de Efeitos Adversos -->
+        <div class="mb-8">
+          <label class="block text-lg font-semibold text-gray-800 mb-4">
+            Efeitos Adversos Observados
+          </label>
+          <p class="text-sm text-gray-600 mb-4">Marque todos os efeitos que você experimentou após a aplicação</p>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            
+            <label class="flex items-center p-3 border-2 rounded-lg cursor-pointer transition hover:bg-gray-50"
+                   :class="formData.efeitosAdversos.sonolencia ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'">
+              <input type="checkbox" x-model="formData.efeitosAdversos.sonolencia" 
+                     class="checkbox-adverso w-5 h-5 text-yellow-500 rounded focus:ring-yellow-500">
+              <span class="ml-3 font-medium text-gray-700">😴 Sonolência</span>
+              <span class="ml-auto text-xs text-gray-500 bg-yellow-100 px-2 py-1 rounded">Leve</span>
+            </label>
+
+            <label class="flex items-center p-3 border-2 rounded-lg cursor-pointer transition hover:bg-gray-50"
+                   :class="formData.efeitosAdversos.boca_seca ? 'border-blue-400 bg-blue-50' : 'border-gray-200'">
+              <input type="checkbox" x-model="formData.efeitosAdversos.boca_seca" 
+                     class="checkbox-adverso w-5 h-5 text-blue-500 rounded focus:ring-blue-500">
+              <span class="ml-3 font-medium text-gray-700">💧 Boca Seca</span>
+              <span class="ml-auto text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded">Leve</span>
+            </label>
+
+            <label class="flex items-center p-3 border-2 rounded-lg cursor-pointer transition hover:bg-gray-50"
+                   :class="formData.efeitosAdversos.tontura_leve ? 'border-orange-400 bg-orange-50' : 'border-gray-200'">
+              <input type="checkbox" x-model="formData.efeitosAdversos.tontura_leve" 
+                     class="checkbox-adverso w-5 h-5 text-orange-500 rounded focus:ring-orange-500">
+              <span class="ml-3 font-medium text-gray-700">🌀 Tontura Leve</span>
+              <span class="ml-auto text-xs text-gray-500 bg-orange-100 px-2 py-1 rounded">Moderado</span>
+            </label>
+
+            <label class="flex items-center p-3 border-2 rounded-lg cursor-pointer transition hover:bg-red-50"
+                   :class="formData.efeitosAdversos.tontura_severa ? 'border-red-500 bg-red-100' : 'border-gray-200'">
+              <input type="checkbox" x-model="formData.efeitosAdversos.tontura_severa" 
+                     class="checkbox-adverso w-5 h-5 text-red-600 rounded focus:ring-red-500">
+              <span class="ml-3 font-bold text-red-700">⚠️ Tontura Severa</span>
+              <span class="ml-auto text-xs text-white bg-red-600 px-2 py-1 rounded font-semibold">CRÍTICO</span>
+            </label>
+
+            <label class="flex items-center p-3 border-2 rounded-lg cursor-pointer transition hover:bg-gray-50"
+                   :class="formData.efeitosAdversos.ansiedade ? 'border-purple-400 bg-purple-50' : 'border-gray-200'">
+              <input type="checkbox" x-model="formData.efeitosAdversos.ansiedade" 
+                     class="checkbox-adverso w-5 h-5 text-purple-500 rounded focus:ring-purple-500">
+              <span class="ml-3 font-medium text-gray-700">😰 Ansiedade</span>
+              <span class="ml-auto text-xs text-gray-500 bg-purple-100 px-2 py-1 rounded">Moderado</span>
+            </label>
+
+            <label class="flex items-center p-3 border-2 rounded-lg cursor-pointer transition hover:bg-gray-50"
+                   :class="formData.efeitosAdversos.nausea ? 'border-green-400 bg-green-50' : 'border-gray-200'">
+              <input type="checkbox" x-model="formData.efeitosAdversos.nausea" 
+                     class="checkbox-adverso w-5 h-5 text-green-500 rounded focus:ring-green-500">
+              <span class="ml-3 font-medium text-gray-700">🤢 Náusea</span>
+              <span class="ml-auto text-xs text-gray-500 bg-green-100 px-2 py-1 rounded">Moderado</span>
+            </label>
+
+          </div>
+        </div>
+
+        <!-- Observações -->
+        <div class="mb-8">
+          <label for="inputObservacoes" class="block text-lg font-semibold text-gray-800 mb-3">
+            Observações Adicionais
+          </label>
+          <textarea 
+            id="inputObservacoes"
+            x-model="formData.observacoes"
+            rows="4"
+            placeholder="Descreva como você se sentiu após a aplicação, mudanças nos sintomas, ou qualquer outra observação relevante..."
+            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"></textarea>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-between pt-6 border-t-2 border-gray-200">
+          <button 
+            type="button"
+            @click="voltarDashboard()"
+            class="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition">
+            Cancelar
+          </button>
+          
+          <button 
+            id="btnGravarDose"
+            type="submit"
+            :disabled="salvando"
+            :class="salvando ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700 transform hover:scale-105'"
+            class="flex items-center space-x-2 px-8 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-lg transition">
+            <svg x-show="salvando" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <svg x-show="!salvando" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <span x-text="salvando ? 'Gravando...' : 'Gravar Dose'"></span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+  </main>
+
+  <!-- Incluir API Client -->
+  <?!= include('api-client') ?>
+
+  <script>
+    function pacienteDosesForm() {
+      return {
+        salvando: false,
+        successMessage: '',
+        errorMessage: '',
+        dataAtual: new Date().toLocaleDateString('pt-BR', { 
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+        }),
+        
+        formData: {
+          periodo: '',
+          gotas: null,
+          escalaDor: 5,
+          efeitosAdversos: {
+            sonolencia: false,
+            boca_seca: false,
+            tontura_leve: false,
+            tontura_severa: false,
+            ansiedade: false,
+            nausea: false
+          },
+          observacoes: ''
+        },
+
+        get emojiDor() {
+          const nivel = this.formData.escalaDor;
+          if (nivel === 0) return '😊';
+          if (nivel <= 2) return '🙂';
+          if (nivel <= 4) return '😐';
+          if (nivel <= 6) return '😟';
+          if (nivel <= 8) return '😣';
+          return '😭';
+        },
+
+        get corEscalaDor() {
+          const nivel = this.formData.escalaDor;
+          if (nivel <= 3) return 'text-green-600';
+          if (nivel <= 6) return 'text-yellow-600';
+          return 'text-red-600';
+        },
+
+        get descricaoDor() {
+          const nivel = this.formData.escalaDor;
+          if (nivel === 0) return 'Sem dor ou sintomas';
+          if (nivel <= 2) return 'Desconforto leve, não interfere nas atividades';
+          if (nivel <= 4) return 'Desconforto moderado, interfere um pouco';
+          if (nivel <= 6) return 'Dor moderada a forte, dificulta atividades';
+          if (nivel <= 8) return 'Dor intensa, limita muito as atividades';
+          return 'Dor insuportável, incapacitante';
+        },
+
+        async gravarDose() {
+          this.salvando = true;
+          this.errorMessage = '';
+          this.successMessage = '';
+          
+          try {
+            // Preparar payload
+            const efeitosArray = Object.keys(this.formData.efeitosAdversos)
+              .filter(key => this.formData.efeitosAdversos[key]);
+            
+            const payload = {
+              periodo: this.formData.periodo,
+              gotas: this.formData.gotas,
+              escala_dor: this.formData.escalaDor,
+              efeitos_adversos: efeitosArray,
+              observacoes: this.formData.observacoes,
+              registrado_em: new Date().toISOString()
+            };
+            
+            const response = await this.apiRequest('dose.create', payload);
+            
+            if (response.success) {
+              this.successMessage = 'Dose registrada com sucesso! ✓';
+              
+              // Se tontura severa, disparar alerta clínico
+              if (this.formData.efeitosAdversos.tontura_severa) {
+                await this.apiRequest('dose.alerta.criar', {
+                  tipo: 'tontura_severa',
+                  dose_id: response.data.id
+                });
+              }
+              
+              // Redirecionar após 2 segundos
+              setTimeout(() => {
+                this.voltarDashboard();
+              }, 2000);
+            } else {
+              throw new Error(response.error?.message || 'Erro ao registrar dose');
+            }
+          } catch (err) {
+            this.errorMessage = err.message || 'Erro ao conectar com servidor';
+            console.error('Erro ao gravar dose:', err);
+          } finally {
+            this.salvando = false;
+          }
+        },
+
+        async apiRequest(action, data) {
+          return new Promise((resolve, reject) => {
+            const token = sessionStorage.getItem('token') || '';
+            
+            google.script.run
+              .withSuccessHandler(resolve)
+              .withFailureHandler(reject)
+              .routeRequest({
+                action: action,
+                token: token,
+                data: data,
+                correlationId: 'dose-' + Date.now()
+              });
+          });
+        },
+
+        voltarDashboard() {
+          window.location.href = '?page=paciente-dashboard';
+        }
+      }
+    }
+  </script>
+
+</body>
+</html>

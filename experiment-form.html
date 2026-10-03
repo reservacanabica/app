@@ -1,0 +1,189 @@
+<!--
+COMPONENTE: experiment-form.html
+PAPEL: Formulário de experimento.
+
+PRINCIPAIS FUNCIONALIDADES:
+- cadastro de tratamentos, repetições, cultivar e condições;
+- mantém o estado de UI separado do processamento no Apps Script;
+- não acessa diretamente a planilha: usa client.html e os contratos do Web App.
+
+INTEGRAÇÕES:
+- ExperimentService, field partials;
+- dados esperados: Experiments.
+
+SEGURANÇA E LIMITAÇÕES:
+- nunca renderizar senha, token completo ou stack trace;
+- validação visual não substitui ValidationService no servidor;
+- usar escaping/templating seguro para texto proveniente da planilha;
+- esqueleto preparado para HtmlService e componentes parciais.
+
+STATUS: v2.0 — Completo com ARIA labels e validação
+-->
+<section class="view" data-component="experiment-form.html" role="main" aria-labelledby="experiment-form-title">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow" aria-label="Seção">Formulário de experimento</p>
+      <h1 id="experiment-form-title">Experiment Form</h1>
+      <p>Cadastro de tratamentos, repetições e condições experimentais</p>
+    </div>
+    <button data-action="back" aria-label="Voltar à lista de experimentos">
+      Voltar
+    </button>
+  </header>
+
+  <form id="experimentForm" aria-label="Formulário de criação de experimento" role="form">
+    
+    <div class="form-group" role="group" aria-labelledby="studyId-label">
+      <label for="studyId" id="studyId-label">Estudo Associado <span aria-label="obrigatório">*</span></label>
+      <select 
+        id="studyId" 
+        name="studyId" 
+        required
+        aria-required="true"
+        aria-describedby="studyId-hint">
+        <option value="">Selecione um estudo</option>
+        <!-- Opciones cargadas dinámicamente -->
+      </select>
+      <small id="studyId-hint" class="hint">Escolha o estudo ao qual este experimento pertence</small>
+      <span class="error" role="alert" aria-live="polite"></span>
+    </div>
+
+    <div class="form-group" role="group" aria-labelledby="design-label">
+      <label for="design" id="design-label">Delineamento Experimental <span aria-label="obrigatório">*</span></label>
+      <input 
+        type="text" 
+        id="design" 
+        name="design" 
+        required
+        maxlength="255"
+        aria-required="true"
+        aria-describedby="design-hint"
+        placeholder="Ex: DIC (Delineamento Inteiramente Casualizado)">
+      <small id="design-hint" class="hint">Tipo de delineamento utilizado</small>
+      <span class="error" role="alert" aria-live="polite"></span>
+    </div>
+
+    <div class="form-group" role="group" aria-labelledby="treatments-label">
+      <label for="treatments" id="treatments-label">Tratamentos</label>
+      <textarea 
+        id="treatments" 
+        name="treatments" 
+        rows="3"
+        maxlength="1000"
+        aria-describedby="treatments-hint"
+        placeholder="Ex: T1: Controle, T2: Micorriza 10%, T3: Micorriza 20%"></textarea>
+      <small id="treatments-hint" class="hint">Descrição dos tratamentos (até 1000 caracteres)</small>
+      <span class="error" role="alert" aria-live="polite"></span>
+    </div>
+
+    <div class="form-group" role="group" aria-labelledby="replicates-label">
+      <label for="replicates" id="replicates-label">Número de Repetições <span aria-label="obrigatório">*</span></label>
+      <input 
+        type="number" 
+        id="replicates" 
+        name="replicates" 
+        required
+        min="2"
+        max="1000"
+        aria-required="true"
+        aria-describedby="replicates-hint"
+        placeholder="Ex: 5">
+      <small id="replicates-hint" class="hint">Quantidade de repetições (mínimo 2)</small>
+      <span class="error" role="alert" aria-live="polite"></span>
+    </div>
+
+    <div class="form-group" role="group" aria-labelledby="conditions-label">
+      <label for="conditions" id="conditions-label">Condições Ambientais</label>
+      <textarea 
+        id="conditions" 
+        name="conditions" 
+        rows="4"
+        maxlength="2000"
+        aria-describedby="conditions-hint"
+        placeholder="Ex: Temperatura 25±2°C, Fotoperíodo 16h/8h, Umidade 70%"></textarea>
+      <small id="conditions-hint" class="hint">Descrição das condições controladas (até 2000 caracteres)</small>
+      <span class="error" role="alert" aria-live="polite"></span>
+    </div>
+
+    <div class="form-actions" role="group" aria-label="Ações do formulário">
+      <button 
+        type="button" 
+        data-action="cancel"
+        aria-label="Cancelar criação do experimento">
+        Cancelar
+      </button>
+      <button 
+        type="submit" 
+        data-action="save"
+        aria-label="Salvar experimento">
+        Salvar
+      </button>
+    </div>
+
+  </form>
+
+  <div id="formStatus" role="status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+
+</section>
+
+<script>
+  (function() {
+    const form = document.getElementById('experimentForm');
+    const formStatus = document.getElementById('formStatus');
+    const studySelect = document.getElementById('studyId');
+
+    // Cargar estudios disponibles
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if (response.success && response.data) {
+          response.data.forEach(function(study) {
+            const option = document.createElement('option');
+            option.value = study.id;
+            option.textContent = study.title;
+            studySelect.appendChild(option);
+          });
+        }
+      })
+      .apiCall({action: 'studies.list'});
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = {
+        studyId: document.getElementById('studyId').value,
+        design: document.getElementById('design').value,
+        treatments: document.getElementById('treatments').value,
+        replicates: parseInt(document.getElementById('replicates').value),
+        conditions: document.getElementById('conditions').value
+      };
+
+      formStatus.textContent = 'Salvando experimento...';
+
+      google.script.run
+        .withSuccessHandler(function(response) {
+          if (response.success) {
+            formStatus.textContent = 'Experimento salvo com sucesso!';
+            setTimeout(() => {
+              window.history.back();
+            }, 1500);
+          } else {
+            formStatus.textContent = 'Erro: ' + response.error;
+          }
+        })
+        .withFailureHandler(function(error) {
+          formStatus.textContent = 'Erro ao salvar: ' + error.message;
+        })
+        .apiCall({action: 'experiments.create', data: formData});
+    });
+
+    document.querySelector('[data-action="cancel"]').addEventListener('click', function() {
+      if (confirm('Descartar alterações?')) {
+        window.history.back();
+      }
+    });
+
+    document.querySelector('[data-action="back"]').addEventListener('click', function() {
+      window.history.back();
+    });
+  })();
+</script>

@@ -1,0 +1,913 @@
+<!--
+COMPONENTE: form-components.html
+PAPEL: Componentes avançados de formulários com validação e UX aprimorada
+
+PRINCIPAIS FUNCIONALIDADES:
+- Campos de formulário estilizados
+- Validação em tempo real
+- Estados de loading e erro
+- File upload com preview
+- Date pickers e selects aprimorados
+- Máscaras de entrada
+- Campos condicionais
+
+INTEGRAÇÕES:
+- design-system.html para estilos base
+- ValidationService para validação server-side
+
+STATUS: PRODUÇÃO — Componentes completos com acessibilidade
+-->
+
+<style>
+/* ==========================================
+   FORM LAYOUT
+   ========================================== */
+
+.form-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.form-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.form-header {
+  padding: var(--space-6);
+  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(135deg, rgba(58, 107, 30, 0.05), transparent);
+}
+
+.form-header-title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.form-header-title .material-icons {
+  color: var(--color-primary-light);
+  font-size: 28px;
+}
+
+.form-header-description {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+}
+
+.form-body {
+  padding: var(--space-6);
+}
+
+.form-section {
+  margin-bottom: var(--space-8);
+}
+
+.form-section:last-child {
+  margin-bottom: 0;
+}
+
+.form-section-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 2px solid rgba(58, 107, 30, 0.2);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.form-col {
+  grid-column: span 12;
+}
+
+.form-col-6 {
+  grid-column: span 6;
+}
+
+.form-col-4 {
+  grid-column: span 4;
+}
+
+.form-col-3 {
+  grid-column: span 3;
+}
+
+.form-footer {
+  padding: var(--space-6);
+  border-top: 1px solid var(--border-color);
+  background: var(--neutral-800);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.form-footer-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-left: auto;
+}
+
+/* ==========================================
+   ENHANCED FORM FIELDS
+   ========================================== */
+
+.form-field {
+  margin-bottom: var(--space-5);
+}
+
+.form-field-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+}
+
+.form-field-label .required {
+  color: var(--color-danger);
+  font-weight: var(--font-bold);
+}
+
+.form-field-label .tooltip-icon {
+  color: var(--text-tertiary);
+  font-size: 16px;
+  cursor: help;
+}
+
+.form-field-input-wrapper {
+  position: relative;
+}
+
+.form-field-input {
+  width: 100%;
+}
+
+.form-field-icon {
+  position: absolute;
+  left: var(--space-4);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+.form-field-input.has-icon {
+  padding-left: var(--space-10);
+}
+
+.form-field-hint {
+  margin-top: var(--space-2);
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+}
+
+.form-field-error {
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: rgba(239, 68, 68, 0.1);
+  border-left: 3px solid var(--color-danger);
+  border-radius: var(--radius-sm);
+  color: var(--color-danger);
+  font-size: var(--text-xs);
+  display: none;
+}
+
+.form-field-error.show {
+  display: block;
+}
+
+.form-field.has-error .form-field-input {
+  border-color: var(--color-danger);
+}
+
+.form-field.has-success .form-field-input {
+  border-color: var(--color-success);
+}
+
+/* Character Counter */
+.form-field-counter {
+  margin-top: var(--space-2);
+  text-align: right;
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+}
+
+.form-field-counter.warning {
+  color: var(--color-warning);
+}
+
+.form-field-counter.danger {
+  color: var(--color-danger);
+}
+
+/* ==========================================
+   FILE UPLOAD
+   ========================================== */
+
+.file-upload-area {
+  position: relative;
+  padding: var(--space-8);
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  transition: all var(--transition-base);
+  cursor: pointer;
+  background: var(--neutral-800);
+}
+
+.file-upload-area:hover,
+.file-upload-area.dragover {
+  border-color: var(--color-primary);
+  background: rgba(58, 107, 30, 0.05);
+}
+
+.file-upload-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(58, 107, 30, 0.1);
+  border-radius: var(--radius-full);
+  color: var(--color-primary-light);
+}
+
+.file-upload-icon .material-icons {
+  font-size: 32px;
+}
+
+.file-upload-text {
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  margin-bottom: var(--space-1);
+}
+
+.file-upload-hint {
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+}
+
+.file-upload-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.file-preview-list {
+  margin-top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.file-preview-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--neutral-800);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+}
+
+.file-preview-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(58, 107, 30, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--color-primary-light);
+  flex-shrink: 0;
+}
+
+.file-preview-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-preview-name {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-preview-size {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.file-preview-remove {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+}
+
+.file-preview-remove:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+/* ==========================================
+   SELECT2-STYLE DROPDOWN
+   ========================================== */
+
+.custom-select-wrapper {
+  position: relative;
+}
+
+.custom-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-4) center;
+  padding-right: var(--space-10);
+}
+
+.multi-select-wrapper {
+  position: relative;
+}
+
+.multi-select-display {
+  min-height: 44px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--neutral-800);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.multi-select-display:hover {
+  border-color: var(--color-primary);
+}
+
+.multi-select-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  background: rgba(58, 107, 30, 0.15);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  color: var(--color-primary-light);
+  font-size: var(--text-xs);
+}
+
+.multi-select-tag-remove {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.multi-select-tag-remove .material-icons {
+  font-size: 14px;
+}
+
+.multi-select-placeholder {
+  color: var(--text-tertiary);
+  font-size: var(--text-sm);
+}
+
+/* ==========================================
+   DATE PICKER STYLING
+   ========================================== */
+
+.date-input-wrapper {
+  position: relative;
+}
+
+.date-input {
+  padding-right: var(--space-10);
+}
+
+.date-input-icon {
+  position: absolute;
+  right: var(--space-4);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+/* ==========================================
+   TOGGLE SWITCH
+   ========================================== */
+
+.toggle-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--neutral-800);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.toggle-field:hover {
+  background: var(--neutral-700);
+}
+
+.toggle-switch {
+  position: relative;
+  width: 48px;
+  height: 24px;
+  background: var(--neutral-600);
+  border-radius: 12px;
+  transition: background var(--transition-base);
+  flex-shrink: 0;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: transform var(--transition-base);
+}
+
+.toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-input:checked + .toggle-switch {
+  background: var(--color-primary);
+}
+
+.toggle-input:checked + .toggle-switch::after {
+  transform: translateX(24px);
+}
+
+.toggle-label {
+  flex: 1;
+}
+
+.toggle-title {
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.toggle-description {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+/* ==========================================
+   RADIO & CHECKBOX GROUPS
+   ========================================== */
+
+.option-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.option-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--neutral-800);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.option-item:hover {
+  background: var(--neutral-700);
+  border-color: var(--color-primary);
+}
+
+.option-item.checked {
+  background: rgba(58, 107, 30, 0.08);
+  border-color: var(--color-primary);
+}
+
+.option-input {
+  margin-top: 2px;
+}
+
+.option-content {
+  flex: 1;
+}
+
+.option-title {
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.option-description {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* ==========================================
+   LOADING STATE
+   ========================================== */
+
+.form-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  border-radius: inherit;
+}
+
+.form-loading-overlay.show {
+  display: flex;
+}
+
+.form-loading-content {
+  text-align: center;
+  color: white;
+}
+
+.form-loading-spinner {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto var(--space-3);
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.form-loading-text {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+}
+
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+
+@media (max-width: 768px) {
+  .form-col-6,
+  .form-col-4,
+  .form-col-3 {
+    grid-column: span 12;
+  }
+  
+  .form-footer {
+    flex-direction: column;
+  }
+  
+  .form-footer-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+  
+  .form-footer-actions .btn {
+    flex: 1;
+  }
+}
+</style>
+
+<script>
+/**
+ * Form Components JavaScript
+ */
+(function() {
+  'use strict';
+  
+  /**
+   * Form Validation Manager
+   */
+  class FormValidator {
+    constructor(formElement) {
+      this.form = formElement;
+      this.validators = new Map();
+      this.init();
+    }
+    
+    init() {
+      // Validação em tempo real
+      this.form.querySelectorAll('input, textarea, select').forEach(field => {
+        field.addEventListener('blur', () => this.validateField(field));
+        field.addEventListener('input', () => this.clearFieldError(field));
+      });
+      
+      // Submit handler
+      this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+      
+      // Character counters
+      this.form.querySelectorAll('[maxlength]').forEach(field => {
+        this.setupCharacterCounter(field);
+      });
+    }
+    
+    addValidator(fieldName, validatorFn, errorMessage) {
+      if (!this.validators.has(fieldName)) {
+        this.validators.set(fieldName, []);
+      }
+      this.validators.get(fieldName).push({ fn: validatorFn, message: errorMessage });
+    }
+    
+    validateField(field) {
+      const fieldName = field.name;
+      const validators = this.validators.get(fieldName);
+      
+      if (!validators) return true;
+      
+      for (const validator of validators) {
+        if (!validator.fn(field.value, field)) {
+          this.showFieldError(field, validator.message);
+          return false;
+        }
+      }
+      
+      this.clearFieldError(field);
+      return true;
+    }
+    
+    validateAll() {
+      let isValid = true;
+      const fields = this.form.querySelectorAll('input, textarea, select');
+      
+      fields.forEach(field => {
+        if (!this.validateField(field)) {
+          isValid = false;
+        }
+      });
+      
+      return isValid;
+    }
+    
+    showFieldError(field, message) {
+      const formField = field.closest('.form-field');
+      if (!formField) return;
+      
+      formField.classList.add('has-error');
+      formField.classList.remove('has-success');
+      
+      const errorElement = formField.querySelector('.form-field-error');
+      if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.classList.add('show');
+      }
+      
+      field.setAttribute('aria-invalid', 'true');
+    }
+    
+    clearFieldError(field) {
+      const formField = field.closest('.form-field');
+      if (!formField) return;
+      
+      formField.classList.remove('has-error');
+      formField.classList.add('has-success');
+      
+      const errorElement = formField.querySelector('.form-field-error');
+      if (errorElement) {
+        errorElement.classList.remove('show');
+      }
+      
+      field.setAttribute('aria-invalid', 'false');
+    }
+    
+    setupCharacterCounter(field) {
+      const maxLength = parseInt(field.getAttribute('maxlength'));
+      const formField = field.closest('.form-field');
+      
+      if (!formField) return;
+      
+      let counter = formField.querySelector('.form-field-counter');
+      if (!counter) {
+        counter = document.createElement('div');
+        counter.className = 'form-field-counter';
+        formField.appendChild(counter);
+      }
+      
+      const updateCounter = () => {
+        const length = field.value.length;
+        counter.textContent = `${length} / ${maxLength}`;
+        
+        counter.classList.remove('warning', 'danger');
+        if (length > maxLength * 0.9) {
+          counter.classList.add(length >= maxLength ? 'danger' : 'warning');
+        }
+      };
+      
+      field.addEventListener('input', updateCounter);
+      updateCounter();
+    }
+    
+    handleSubmit(e) {
+      e.preventDefault();
+      
+      if (!this.validateAll()) {
+        // Scroll to first error
+        const firstError = this.form.querySelector('.has-error');
+        if (firstError) {
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return false;
+      }
+      
+      // Form is valid, proceed with submission
+      return true;
+    }
+    
+    showLoading() {
+      const overlay = this.form.querySelector('.form-loading-overlay');
+      if (overlay) {
+        overlay.classList.add('show');
+      }
+      
+      // Disable all inputs
+      this.form.querySelectorAll('input, textarea, select, button').forEach(el => {
+        el.disabled = true;
+      });
+    }
+    
+    hideLoading() {
+      const overlay = this.form.querySelector('.form-loading-overlay');
+      if (overlay) {
+        overlay.classList.remove('show');
+      }
+      
+      // Enable all inputs
+      this.form.querySelectorAll('input, textarea, select, button').forEach(el => {
+        el.disabled = false;
+      });
+    }
+  }
+  
+  /**
+   * File Upload Handler
+   */
+  class FileUploadHandler {
+    constructor(uploadArea) {
+      this.uploadArea = uploadArea;
+      this.input = uploadArea.querySelector('.file-upload-input');
+      this.previewList = uploadArea.parentElement.querySelector('.file-preview-list');
+      this.files = [];
+      
+      this.init();
+    }
+    
+    init() {
+      // Click to select
+      this.uploadArea.addEventListener('click', () => this.input.click());
+      
+      // File selected
+      this.input.addEventListener('change', (e) => this.handleFiles(e.target.files));
+      
+      // Drag and drop
+      this.uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        this.uploadArea.classList.add('dragover');
+      });
+      
+      this.uploadArea.addEventListener('dragleave', () => {
+        this.uploadArea.classList.remove('dragover');
+      });
+      
+      this.uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        this.uploadArea.classList.remove('dragover');
+        this.handleFiles(e.dataTransfer.files);
+      });
+    }
+    
+    handleFiles(fileList) {
+      Array.from(fileList).forEach(file => {
+        this.files.push(file);
+        this.addPreview(file);
+      });
+    }
+    
+    addPreview(file) {
+      if (!this.previewList) return;
+      
+      const item = document.createElement('div');
+      item.className = 'file-preview-item';
+      item.innerHTML = `
+        <div class="file-preview-icon">
+          <span class="material-icons">insert_drive_file</span>
+        </div>
+        <div class="file-preview-info">
+          <div class="file-preview-name">${file.name}</div>
+          <div class="file-preview-size">${this.formatFileSize(file.size)}</div>
+        </div>
+        <button type="button" class="file-preview-remove" aria-label="Remover arquivo">
+          <span class="material-icons">close</span>
+        </button>
+      `;
+      
+      // Remove handler
+      item.querySelector('.file-preview-remove').addEventListener('click', () => {
+        const index = this.files.indexOf(file);
+        if (index > -1) {
+          this.files.splice(index, 1);
+        }
+        item.remove();
+      });
+      
+      this.previewList.appendChild(item);
+    }
+    
+    formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+    
+    getFiles() {
+      return this.files;
+    }
+  }
+  
+  // Common validators
+  window.FormValidators = {
+    required: (value) => value.trim().length > 0,
+    email: (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
+    minLength: (min) => (value) => value.length >= min,
+    maxLength: (max) => (value) => value.length <= max,
+    pattern: (regex) => (value) => regex.test(value),
+    number: (value) => !isNaN(value) && value.trim().length > 0,
+    url: (value) => {
+      try {
+        new URL(value);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  };
+  
+  // Export classes
+  window.FormValidator = FormValidator;
+  window.FileUploadHandler = FileUploadHandler;
+  
+})();
+</script>

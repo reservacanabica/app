@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Insumos Cadastrados</title>
+  
+  <link rel="stylesheet" href="quality-components.css">
+</head>
+<body>
+  <div class="list-container">
+    <!-- Header -->
+    <div class="list-header">
+      <h2>Insumos Cadastrados</h2>
+      <button onclick="navigateTo('insumo-form')" class="btn-primary">
+        <span>+</span> Novo Insumo
+      </button>
+    </div>
+    
+    <!-- Filters -->
+    <div class="filters">
+      <input
+        type="search"
+        id="searchInput"
+        placeholder="Buscar por nome, fabricante..."
+        style="flex: 1; min-width: 300px;"
+      >
+      
+      <select id="filterTipo">
+        <option value="">Todos os tipos</option>
+        <option value="Nitrato">Nitrato</option>
+        <option value="Fosfato">Fosfato</option>
+        <option value="Sulfato">Sulfato</option>
+        <option value="Cloreto">Cloreto</option>
+        <option value="Quelato">Quelato</option>
+        <option value="Óxido">Óxido</option>
+        <option value="Carbonato">Carbonato</option>
+        <option value="Outro">Outro</option>
+      </select>
+      
+      <select id="filterStatus">
+        <option value="">Todos os status</option>
+        <option value="true">Ativo</option>
+        <option value="false">Inativo</option>
+      </select>
+      
+      <button onclick="applyFilters()" class="btn-secondary">
+        Filtrar
+      </button>
+    </div>
+    
+    <!-- Table -->
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortTable('nome_comercial')" style="cursor: pointer;">
+              Nome Comercial ↕
+            </th>
+            <th onclick="sortTable('tipo_sal')" style="cursor: pointer;">
+              Tipo ↕
+            </th>
+            <th onclick="sortTable('fabricante')" style="cursor: pointer;">
+              Fabricante ↕
+            </th>
+            <th>
+              Pureza (%)
+            </th>
+            <th>
+              Agente Quelante
+            </th>
+            <th onclick="sortTable('ativo')" style="cursor: pointer;">
+              Status ↕
+            </th>
+            <th style="text-align: center;">
+              Ações
+            </th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- Populated via JS -->
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Empty state -->
+    <div id="emptyState" class="empty-state" hidden>
+      <p>Nenhum insumo encontrado</p>
+      <button onclick="navigateTo('insumo-form')" class="btn-primary" style="margin-top: 1rem;">
+        Cadastrar Primeiro Insumo
+      </button>
+    </div>
+    
+    <!-- Stats -->
+    <div id="stats" style="margin-top: 2rem; padding: 1rem; background: var(--bg-secondary); border-radius: 12px;">
+      <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">
+        <strong id="totalCount">0</strong> insumos encontrados
+        (<strong id="activeCount">0</strong> ativos,
+        <strong id="inactiveCount">0</strong> inativos)
+      </p>
+    </div>
+  </div>
+  
+  <script src="quality-helpers.js"></script>
+  <script src="api-client.html"></script>
+  
+  <script>
+    // Estado
+    let allInsumos = [];
+    let filteredInsumos = [];
+    let currentSort = { field: 'nome_comercial', direction: 'asc' };
+    
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+      loadInsumos();
+      
+      // Event listeners para filtros em tempo real
+      document.getElementById('searchInput').addEventListener('input', applyFilters);
+    });
+    
+    /**
+     * Carrega lista de insumos
+     */
+    async function loadInsumos() {
+      try {
+        showLoading(true);
+        
+        allInsumos = await api.insumos.list();
+        filteredInsumos = allInsumos;
+        
+        applyFilters();
+        
+      } catch (error) {
+        handleApiError(error);
+      } finally {
+        showLoading(false);
+      }
+    }
+    
+    /**
+     * Aplica filtros aos dados
+     */
+    function applyFilters() {
+      const searchTerm = document.getElementById('searchInput').value;
+      const filterTipo = document.getElementById('filterTipo').value;
+      const filterStatus = document.getElementById('filterStatus').value;
+      
+      // Começar com todos
+      let result = allInsumos;
+      
+      // Filtro de busca
+      if (searchTerm) {
+        result = filterItems(result, searchTerm, [
+          'nome_comercial',
+          'fabricante',
+          'tipo_sal',
+          'pais_origem'
+        ]);
+      }
+      
+      // Filtro de tipo
+      if (filterTipo) {
+        result = result.filter(i => i.tipo_sal === filterTipo);
+      }
+      
+      // Filtro de status
+      if (filterStatus) {
+        const isActive = filterStatus === 'true';
+        result = result.filter(i => i.ativo === isActive);
+      }
+      
+      filteredInsumos = result;
+      
+      // Aplicar ordenação atual
+      filteredInsumos = sortBy(filteredInsumos, currentSort.field, currentSort.direction);
+      
+      renderTable();
+      updateStats();
+    }
+    
+    /**
+     * Ordena tabela por coluna
+     */
+    function sortTable(field) {
+      if (currentSort.field === field) {
+        // Toggle direction
+        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+      } else {
+        currentSort.field = field;
+        currentSort.direction = 'asc';
+      }
+      
+      filteredInsumos = sortBy(filteredInsumos, currentSort.field, currentSort.direction);
+      renderTable();
+    }
+    
+    /**
+     * Renderiza tabela
+     */
+    function renderTable() {
+      const columns = [
+        {
+          key: 'nome_comercial',
+          render: (value) => `<strong>${value}</strong>`
+        },
+        {
+          key: 'tipo_sal'
+        },
+        {
+          key: 'fabricante'
+        },
+        {
+          key: 'pureza_percentual',
+          render: (value) => value ? formatNumber(value, 1) : '-'
+        },
+        {
+          key: 'agente_quelante',
+          render: (value) => value || '-'
+        },
+        {
+          key: 'ativo',
+          render: (value) => getStatusBadge(value ? 'ATIVO' : 'INATIVO')
+        }
+      ];
+      
+      const actionsRenderer = (item) => `
+        <div style="display: flex; gap: 0.5rem; justify-content: center;">
+          <button onclick="viewInsumo('${item.id}')" class="btn-sm btn-secondary" title="Visualizar">
+            👁️
+          </button>
+          <button onclick="editInsumo('${item.id}')" class="btn-sm btn-primary" title="Editar">
+            ✏️
+          </button>
+          <button onclick="deleteInsumo('${item.id}', '${item.nome_comercial}')" class="btn-sm btn-danger" title="Excluir">
+            🗑️
+          </button>
+        </div>
+      `;
+      
+      window.renderTable(filteredInsumos, columns, actionsRenderer);
+    }
+    
+    /**
+     * Atualiza estatísticas
+     */
+    function updateStats() {
+      const total = filteredInsumos.length;
+      const active = filteredInsumos.filter(i => i.ativo).length;
+      const inactive = total - active;
+      
+      document.getElementById('totalCount').textContent = total;
+      document.getElementById('activeCount').textContent = active;
+      document.getElementById('inactiveCount').textContent = inactive;
+      
+      // Mostrar empty state se necessário
+      document.getElementById('emptyState').hidden = total > 0;
+    }
+    
+    /**
+     * Visualiza insumo
+     */
+    function viewInsumo(id) {
+      navigateTo('insumo-view', { id });
+    }
+    
+    /**
+     * Edita insumo
+     */
+    function editInsumo(id) {
+      navigateTo('insumo-form', { id });
+    }
+    
+    /**
+     * Exclui insumo
+     */
+    async function deleteInsumo(id, nome) {
+      const confirmed = confirm(
+        `Tem certeza que deseja excluir o insumo "${nome}"?\n\n` +
+        `Esta ação não pode ser desfeita.`
+      );
+      
+      if (!confirmed) return;
+      
+      try {
+        showLoading(true);
+        
+        await api.insumos.delete(id);
+        
+        showToast('success', 'Insumo excluído com sucesso!');
+        
+        // Recarregar lista
+        await loadInsumos();
+        
+      } catch (error) {
+        handleApiError(error);
+      } finally {
+        showLoading(false);
+      }
+    }
+  </script>
+</body>
+</html>

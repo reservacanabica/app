@@ -1,0 +1,46 @@
+<!--
+COMPONENTE: pagination.html
+PAPEL: Paginação de listas.
+
+PRINCIPAIS FUNCIONALIDADES:
+- navegação por página e limite;
+- mantém o estado de UI separado do processamento no Apps Script;
+- não acessa diretamente a planilha: usa client.html e os contratos do Web App.
+
+INTEGRAÇÕES:
+- CrudService, client.html;
+- dados esperados: page/pageSize/total.
+
+SEGURANÇA E LIMITAÇÕES:
+- nunca renderizar senha, token completo ou stack trace;
+- validação visual não substitui ValidationService no servidor;
+- usar escaping/templating seguro para texto proveniente da planilha;
+- esqueleto preparado para HtmlService e componentes parciais.
+
+STATUS: ESQUELETO DE INTERFACE — completar acessibilidade, testes e estados de erro.
+-->
+<nav class="pagination" role="navigation" aria-label="Navegação de páginas">
+  <button 
+    data-page="prev" 
+    type="button"
+    aria-label="Ir para página anterior"
+    disabled>
+    ← Anterior
+  </button>
+  
+  <span 
+    data-role="page-label" 
+    aria-live="polite" 
+    aria-atomic="true"
+    role="status">
+    Página 1 de 1
+  </span>
+  
+  <button 
+    data-page="next" 
+    type="button"
+    aria-label="Ir para próxima página"
+    disabled>
+    Próxima →
+  </button>
+</nav>

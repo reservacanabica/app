@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulário de Lote CoA</title>
+  
+  <link rel="stylesheet" href="quality-components.css">
+</head>
+<body>
+  <div class="form-container">
+    <h2 id="formTitle">Novo Certificado de Análise (CoA)</h2>
+    
+    <form id="loteForm">
+      <!-- Seção 1: Identificação do Lote -->
+      <fieldset>
+        <legend>Identificação do Lote</legend>
+        
+        <div class="form-group">
+          <label for="insumo_id">
+            Insumo <span style="color: red;">*</span>
+          </label>
+          <select id="insumo_id" name="insumo_id" required>
+            <option value="">Selecione um insumo...</option>
+            <!-- Populated via JS -->
+          </select>
+          <small class="help-text">
+            Insumo ao qual este lote pertence
+          </small>
+        </div>
+        
+        <div class="form-group">
+          <label for="numero_lote">
+            Número do Lote <span style="color: red;">*</span>
+          </label>
+          <input
+            type="text"
+            id="numero_lote"
+            name="numero_lote"
+            required
+            maxlength="50"
+            placeholder="Ex: LOT202609301"
+          >
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label for="data_fabricacao">
+              Data de Fabricação <span style="color: red;">*</span>
+            </label>
+            <input
+              type="date"
+              id="data_fabricacao"
+              name="data_fabricacao"
+              required
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="data_validade">
+              Data de Validade <span style="color: red;">*</span>
+            </label>
+            <input
+              type="date"
+              id="data_validade"
+              name="data_validade"
+              required
+            >
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="laboratorio_emissor">
+            Laboratório Emissor do CoA <span style="color: red;">*</span>
+          </label>
+          <input
+            type="text"
+            id="laboratorio_emissor"
+            name="laboratorio_emissor"
+            required
+            maxlength="200"
+            placeholder="Ex: SGS Brasil Ltda."
+          >
+        </div>
+      </fieldset>
+      
+      <!-- Seção 2: Metais Pesados -->
+      <fieldset>
+        <legend>Análise de Metais Pesados</legend>
+        
+        <p style="margin-top: 0; color: #6b7280; font-size: 0.875rem;">
+          Informe os teores de metais pesados em partes por milhão (ppm).
+          Use "0" se não detectado (ND) ou "null" se não analisado.
+        </p>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label for="teor_pb_ppm">
+              Chumbo (Pb) em ppm <span style="color: red;">*</span>
+            </label>
+            <input
+              type="number"
+              id="teor_pb_ppm"
+              name="teor_pb_ppm"
+              required
+              step="0.01"
+              min="0"
+              placeholder="Ex: 1.5"
+            >
+            <small class="help-text" style="color: #d97706;">
+              ⚠️ Limite: 2.0 ppm
+            </small>
+          </div>
+          
+          <div class="form-group">
+            <label for="teor_cd_ppm">
+              Cádmio (Cd) em ppm <span style="color: red;">*</span>
+            </label>
+            <input
+              type="number"
+              id="teor_cd_ppm"
+              name="teor_cd_ppm"
+              required
+              step="0.01"
+              min="0"
+              placeholder="Ex: 0.3"
+            >
+            <small class="help-text" style="color: #d97706;">
+              ⚠️ Limite: 0.5 ppm
+            </small>
+          </div>
+          
+          <div class="form-group">
+            <label for="teor_as_ppm">
+              Arsênio (As) em ppm <span style="color: red;">*</span>
+            </label>
+            <input
+              type="number"
+              id="teor_as_ppm"
+              name="teor_as_ppm"
+              required
+              step="0.01"
+              min="0"
+              placeholder="Ex: 0.5"
+            >
+            <small class="help-text" style="color: #d97706;">
+              ⚠️ Limite: 1.0 ppm
+            </small>
+          </div>
+          
+          <div class="form-group">
+            <label for="teor_hg_ppm">
+              Mercúrio (Hg) em ppm <span style="color: red;">*</span>
+            </label>
+            <input
+              type="number"
+              id="teor_hg_ppm"
+              name="teor_hg_ppm"
+              required
+              step="0.01"
+              min="0"
+              placeholder="Ex: 0.05"
+            >
+            <small class="help-text" style="color: #d97706;">
+              ⚠️ Limite: 0.1 ppm
+            </small>
+          </div>
+        </div>
+      </fieldset>
+      
+      <!-- Seção 3: Status -->
+      <fieldset>
+        <legend>Status de Auditoria e Liberação</legend>
+        
+        <div class="form-group">
+          <label for="status_auditoria">
+            Status de Auditoria <span style="color: red;">*</span>
+          </label>
+          <select id="status_auditoria" name="status_auditoria" required>
+            <option value="PENDENTE" selected>Pendente</option>
+            <option value="APROVADO">Aprovado</option>
+            <option value="ALERTA">Alerta</option>
+            <option value="REPROVADO">Reprovado</option>
+            <option value="BLOQUEADO">Bloqueado</option>
+          </select>
+          <small class="help-text">
+            Status após análise técnica do CoA
+          </small>
+        </div>
+        
+        <div class="form-group">
+          <label for="status_liberacao">
+            Status de Liberação <span style="color: red;">*</span>
+          </label>
+          <select id="status_liberacao" name="status_liberacao" required>
+            <option value="PENDENTE" selected>Pendente</option>
+            <option value="LIBERADO">Liberado</option>
+            <option value="QUARENTENA">Quarentena</option>
+            <option value="BLOQUEADO">Bloqueado</option>
+          </select>
+          <small class="help-text">
+            Status de liberação para uso
+          </small>
+        </div>
+      </fieldset>
+      
+      <!-- Seção 4: Documentação -->
+      <fieldset>
+        <legend>Certificado de Análise (PDF)</legend>
+        
+        <div class="form-group">
+          <label for="drive_pdf_coa_url">
+            URL do PDF do CoA (Google Drive)
+          </label>
+          <input
+            type="url"
+            id="drive_pdf_coa_url"
+            name="drive_pdf_coa_url"
+            placeholder="https://drive.google.com/file/d/..."
+          >
+          <small class="help-text">
+            Link do arquivo PDF no Google Drive
+          </small>
+        </div>
+        
+        <!-- TODO: Adicionar upload component quando integrado com Drive -->
+        <div style="padding: 1rem; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px;">
+          <p style="margin: 0; font-size: 0.875rem; color: #92400e;">
+            <strong>ℹ️ Upload de arquivo:</strong>
+            Por enquanto, faça upload manual no Google Drive e cole o link acima.
+            Integração automática em desenvolvimento.
+          </p>
+        </div>
+      </fieldset>
+      
+      <!-- Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" onclick="cancel()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-primary">
+          Salvar CoA
+        </button>
+      </div>
+    </form>
+  </div>
+  
+  <script src="quality-helpers.js"></script>
+  <script src="api-client.html"></script>
+  
+  <script>
+    // Estado
+    const isEditMode = !!getUrlParam('id');
+    const loteId = getUrlParam('id');
+    let insumos = [];
+    
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadInsumos();
+      
+      if (isEditMode) {
+        await loadLote();
+      }
+      
+      // Pre-selecionar insumo se passado por query string
+      const preselectedInsumoId = getUrlParam('insumo_id');
+      if (preselectedInsumoId && !isEditMode) {
+        document.getElementById('insumo_id').value = preselectedInsumoId;
+      }
+    });
+    
+    /**
+     * Carrega lista de insumos para o select
+     */
+    async function loadInsumos() {
+      try {
+        insumos = await api.insumos.list();
+        
+        // Filtrar apenas ativos
+        const insumosAtivos = insumos.filter(i => i.ativo);
+        
+        const select = document.getElementById('insumo_id');
+        
+        insumosAtivos.forEach(insumo => {
+          const option = document.createElement('option');
+          option.value = insumo.id;
+          option.textContent = `${insumo.nome_comercial} - ${insumo.fabricante}`;
+          select.appendChild(option);
+        });
+        
+      } catch (error) {
+        console.error('Erro ao carregar insumos:', error);
+        showToast('warning', 'Não foi possível carregar a lista de insumos');
+      }
+    }
+    
+    /**
+     * Carrega lote existente para edição
+     */
+    async function loadLote() {
+      try {
+        document.getElementById('formTitle').textContent = 'Editar Certificado de Análise (CoA)';
+        showLoading(true);
+        
+        const lote = await api.lotes.get(loteId);
+        
+        setFormData('loteForm', {
+          insumo_id: lote.insumo_id,
+          numero_lote: lote.numero_lote,
+          data_fabricacao: lote.data_fabricacao,
+          data_validade: lote.data_validade,
+          laboratorio_emissor: lote.laboratorio_emissor,
+          teor_pb_ppm: lote.teor_pb_ppm,
+          teor_cd_ppm: lote.teor_cd_ppm,
+          teor_as_ppm: lote.teor_as_ppm,
+          teor_hg_ppm: lote.teor_hg_ppm,
+          status_auditoria: lote.status_auditoria,
+          status_liberacao: lote.status_liberacao,
+          drive_pdf_coa_url: lote.drive_pdf_coa_url
+        });
+        
+      } catch (error) {
+        handleApiError(error);
+        goBack();
+      } finally {
+        showLoading(false);
+      }
+    }
+    
+    /**
+     * Handler de submit
+     */
+    document.getElementById('loteForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!validateForm('loteForm')) {
+        showToast('error', 'Preencha todos os campos obrigatórios');
+        return;
+      }
+      
+      try {
+        showLoading(true);
+        
+        const data = getFormData('loteForm');
+        
+        // Converter campos numéricos
+        data.teor_pb_ppm = parseFloat(data.teor_pb_ppm);
+        data.teor_cd_ppm = parseFloat(data.teor_cd_ppm);
+        data.teor_as_ppm = parseFloat(data.teor_as_ppm);
+        data.teor_hg_ppm = parseFloat(data.teor_hg_ppm);
+        
+        // Validar limites (avisar, mas não bloquear)
+        const warnings = [];
+        if (data.teor_pb_ppm > 2.0) warnings.push('Pb excede 2.0 ppm');
+        if (data.teor_cd_ppm > 0.5) warnings.push('Cd excede 0.5 ppm');
+        if (data.teor_as_ppm > 1.0) warnings.push('As excede 1.0 ppm');
+        if (data.teor_hg_ppm > 0.1) warnings.push('Hg excede 0.1 ppm');
+        
+        if (warnings.length > 0) {
+          const proceed = confirm(
+            'ATENÇÃO: Foram detectados metais pesados acima dos limites:\n\n' +
+            warnings.join('\n') +
+            '\n\nDeseja continuar mesmo assim?'
+          );
+          
+          if (!proceed) {
+            showLoading(false);
+            return;
+          }
+        }
+        
+        let result;
+        if (isEditMode) {
+          result = await api.lotes.update(loteId, data);
+          showToast('success', 'CoA atualizado com sucesso!');
+        } else {
+          result = await api.lotes.create(data);
+          showToast('success', 'CoA criado com sucesso!');
+        }
+        
+        // Redirecionar
+        setTimeout(() => {
+          navigateTo('lote-list');
+        }, 1000);
+        
+      } catch (error) {
+        handleApiError(error);
+      } finally {
+        showLoading(false);
+      }
+    });
+    
+    /**
+     * Cancela e volta
+     */
+    function cancel() {
+      if (confirm('Deseja realmente cancelar? As alterações não salvas serão perdidas.')) {
+        navigateTo('lote-list');
+      }
+    }
+  </script>
+</body>
+</html>

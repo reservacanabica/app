@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Qualidade de Insumos</title>
+  
+  <link rel="stylesheet" href="quality-components.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <h2>Dashboard de Qualidade de Insumos</h2>
+    
+    <!-- Cards Grid -->
+    <div class="cards-grid">
+      <!-- Insumos Ativos -->
+      <div class="card" onclick="navigateTo('insumo-list')" style="cursor: pointer;">
+        <h3>Insumos Ativos</h3>
+        <div class="card-value" id="insumosAtivos">--</div>
+        <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #6b7280;">
+          <span id="insumosInativos">--</span> inativos
+        </p>
+      </div>
+      
+      <!-- Lotes Liberados -->
+      <div class="card card-success" onclick="navigateTo('lote-list')" style="cursor: pointer;">
+        <h3>Lotes Liberados</h3>
+        <div class="card-value" id="lotesLiberados">--</div>
+        <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #065f46;">
+          Prontos para uso
+        </p>
+      </div>
+      
+      <!-- Lotes em Quarentena -->
+      <div class="card card-warning" onclick="navigateTo('lote-list', {filter: 'QUARENTENA'})" style="cursor: pointer;">
+        <h3>Lotes em Quarentena</h3>
+        <div class="card-value" id="lotesQuarentena">--</div>
+        <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #92400e;">
+          Aguardando revisão
+        </p>
+      </div>
+      
+      <!-- Lotes Bloqueados -->
+      <div class="card card-danger">
+        <h3>Lotes Bloqueados</h3>
+        <div class="card-value" id="lotesBloqueados">--</div>
+        <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #991b1b;">
+          Não podem ser usados
+        </p>
+      </div>
+      
+      <!-- Receitas Cadastradas -->
+      <div class="card" onclick="navigateTo('receita-list')" style="cursor: pointer;">
+        <h3>Receitas Cadastradas</h3>
+        <div class="card-value" id="receitasTotal">--</div>
+        <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #6b7280;">
+          Formulações disponíveis
+        </p>
+      </div>
+      
+      <!-- Pareceres Pendentes -->
+      <div class="card card-info">
+        <h3>Pareceres Pendentes</h3>
+        <div class="card-value" id="pareceresPendentes">--</div>
+        <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #1e40af;">
+          Revisão humana
+        </p>
+      </div>
+    </div>
+    
+    <!-- Alertas Section -->
+    <div class="alerts-section">
+      <h3>Alertas de Qualidade</h3>
+      <div id="alertsList">
+        <!-- Populated via JS -->
+      </div>
+      <div id="alertsEmpty" class="empty-state" hidden>
+        <p style="color: #10b981;">✓ Nenhum alerta no momento</p>
+      </div>
+    </div>
+    
+    <!-- Quick Stats Section -->
+    <div style="margin-top: 2rem;">
+      <h3>Estatísticas Rápidas</h3>
+      <div class="info-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+        <div class="info-item">
+          <label>Lotes com Metais Acima do Limite</label>
+          <div class="value" id="lotesMetaisAlerta">--</div>
+        </div>
+        
+        <div class="info-item">
+          <label>Lotes Vencendo em 30 dias</label>
+          <div class="value" id="lotesVencimento30">--</div>
+        </div>
+        
+        <div class="info-item">
+          <label>Taxa de Aprovação (último mês)</label>
+          <div class="value" id="taxaAprovacao">--</div>
+        </div>
+        
+        <div class="info-item">
+          <label>Pareceres Compatíveis</label>
+          <div class="value" id="pareceresCompativeis">--</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Actions Section -->
+    <div style="margin-top: 2rem; padding: 1.5rem; background: var(--bg-secondary); border-radius: 12px;">
+      <h3 style="margin-top: 0;">Ações Rápidas</h3>
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <button onclick="navigateTo('insumo-form')" class="btn-primary">
+          + Novo Insumo
+        </button>
+        <button onclick="navigateTo('lote-form')" class="btn-primary">
+          + Novo CoA
+        </button>
+        <button onclick="navigateTo('receita-form')" class="btn-primary">
+          + Nova Receita
+        </button>
+        <button onclick="navigateTo('protocolo-form')" class="btn-primary">
+          + Novo Protocolo
+        </button>
+        <button onclick="navigateTo('parecer-form')" class="btn-success">
+          <i data-feather="microscope" class="icon icon-sm" aria-hidden="true"></i> Analisar Compatibilidade
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="quality-helpers.js"></script>
+  <script src="api-client.html"></script>
+  
+  <script>
+    // Cache de dados
+    let dashboardData = {
+      insumos: [],
+      lotes: [],
+      receitas: [],
+      protocolos: [],
+      pareceres: []
+    };
+    
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+      loadDashboard();
+      
+      // Auto-refresh a cada 2 minutos
+      setInterval(loadDashboard, 120000);
+    });
+    
+    /**
+     * Carrega todos os dados do dashboard
+     */
+    async function loadDashboard() {
+      try {
+        showLoading(true);
+        
+        // Carregar dados em paralelo
+        const [insumos, lotes, receitas, protocolos, pareceres] = await Promise.all([
+          api.insumos.list().catch(() => []),
+          api.lotes.list().catch(() => []),
+          api.receitas.list().catch(() => []),
+          api.protocolos.list().catch(() => []),
+          api.pareceres.list().catch(() => [])
+        ]);
+        
+        dashboardData = { insumos, lotes, receitas, protocolos, pareceres };
+        
+        renderCards();
+        renderAlerts();
+        renderQuickStats();
+        
+      } catch (error) {
+        console.error('Erro ao carregar dashboard:', error);
+        showToast('error', 'Erro ao carregar dados do dashboard');
+      } finally {
+        showLoading(false);
+      }
+    }
+    
+    /**
+     * Renderiza cards principais
+     */
+    function renderCards() {
+      const { insumos, lotes, receitas, pareceres } = dashboardData;
+      
+      // Insumos
+      const insumosAtivos = insumos.filter(i => i.ativo).length;
+      const insumosInativos = insumos.length - insumosAtivos;
+      document.getElementById('insumosAtivos').textContent = insumosAtivos;
+      document.getElementById('insumosInativos').textContent = insumosInativos;
+      
+      // Lotes por status de liberação
+      const lotesLiberados = lotes.filter(l => l.status_liberacao === 'LIBERADO').length;
+      const lotesQuarentena = lotes.filter(l => l.status_liberacao === 'QUARENTENA').length;
+      const lotesBloqueados = lotes.filter(l => l.status_liberacao === 'BLOQUEADO').length;
+      
+      document.getElementById('lotesLiberados').textContent = lotesLiberados;
+      document.getElementById('lotesQuarentena').textContent = lotesQuarentena;
+      document.getElementById('lotesBloqueados').textContent = lotesBloqueados;
+      
+      // Receitas
+      document.getElementById('receitasTotal').textContent = receitas.length;
+      
+      // Pareceres pendentes de revisão humana
+      const pareceresPendentes = pareceres.filter(p => 
+        p.veredicto === 'REVISAO_HUMANA'
+      ).length;
+      document.getElementById('pareceresPendentes').textContent = pareceresPendentes;
+    }
+    
+    /**
+     * Renderiza alertas
+     */
+    function renderAlerts() {
+      const alertsList = document.getElementById('alertsList');
+      const alertsEmpty = document.getElementById('alertsEmpty');
+      
+      alertsList.innerHTML = '';
+      
+      const alerts = [];
+      const { lotes } = dashboardData;
+      
+      // Alerta 1: Lotes com metais pesados acima do limite
+      const lotesMetaisAlerta = lotes.filter(l => {
+        return l.teor_pb_ppm > 2.0 || 
+               l.teor_cd_ppm > 0.5 || 
+               l.teor_as_ppm > 1.0 || 
+               l.teor_hg_ppm > 0.1;
+      });
+      
+      if (lotesMetaisAlerta.length > 0) {
+        alerts.push({
+          type: 'danger',
+          title: `${lotesMetaisAlerta.length} lote(s) com metais pesados acima do limite`,
+          message: 'Recomenda-se reprovar ou colocar em quarentena.',
+          action: () => navigateTo('lote-list')
+        });
+      }
+      
+      // Alerta 2: Lotes vencendo em 30 dias
+      const hoje = new Date();
+      const lotesVencimento = lotes.filter(l => {
+        const validade = new Date(l.data_validade);
+        const diasRestantes = Math.ceil((validade - hoje) / (1000 * 60 * 60 * 24));
+        return diasRestantes > 0 && diasRestantes < 30;
+      });
+      
+      if (lotesVencimento.length > 0) {
+        alerts.push({
+          type: 'warning',
+          title: `${lotesVencimento.length} lote(s) vencendo em menos de 30 dias`,
+          message: 'Priorize o uso desses lotes ou descarte-os adequadamente.',
+          action: () => navigateTo('lote-list')
+        });
+      }
+      
+      // Alerta 3: Lotes vencidos
+      const lotesVencidos = lotes.filter(l => {
+        const validade = new Date(l.data_validade);
+        return validade < hoje;
+      });
+      
+      if (lotesVencidos.length > 0) {
+        alerts.push({
+          type: 'danger',
+          title: `${lotesVencidos.length} lote(s) vencido(s)`,
+          message: 'Esses lotes devem ser bloqueados e descartados imediatamente.',
+          action: () => navigateTo('lote-list')
+        });
+      }
+      
+      // Alerta 4: Lotes pendentes de auditoria
+      const lotesPendentes = lotes.filter(l => l.status_auditoria === 'PENDENTE');
+      
+      if (lotesPendentes.length > 5) {
+        alerts.push({
+          type: 'info',
+          title: `${lotesPendentes.length} lote(s) pendente(s) de auditoria`,
+          message: 'Revise e aprove/reprove os lotes aguardando análise.',
+          action: () => navigateTo('lote-list')
+        });
+      }
+      
+      // Renderizar alertas
+      if (alerts.length === 0) {
+        alertsEmpty.hidden = false;
+      } else {
+        alertsEmpty.hidden = true;
+        
+        alerts.forEach(alert => {
+          const alertDiv = document.createElement('div');
+          alertDiv.className = `alert-item alert-${alert.type}`;
+          alertDiv.onclick = alert.action;
+          alertDiv.style.cursor = 'pointer';
+          
+          alertDiv.innerHTML = `
+            <div class="alert-title">${alert.title}</div>
+            <div class="alert-message">${alert.message}</div>
+          `;
+          
+          alertsList.appendChild(alertDiv);
+        });
+      }
+    }
+    
+    /**
+     * Renderiza estatísticas rápidas
+     */
+    function renderQuickStats() {
+      const { lotes, pareceres } = dashboardData;
+      
+      // Lotes com metais acima do limite
+      const lotesMetaisAlerta = lotes.filter(l => {
+        return l.teor_pb_ppm > 2.0 || 
+               l.teor_cd_ppm > 0.5 || 
+               l.teor_as_ppm > 1.0 || 
+               l.teor_hg_ppm > 0.1;
+      }).length;
+      document.getElementById('lotesMetaisAlerta').textContent = lotesMetaisAlerta;
+      
+      // Lotes vencendo em 30 dias
+      const hoje = new Date();
+      const lotesVencimento30 = lotes.filter(l => {
+        const validade = new Date(l.data_validade);
+        const diasRestantes = Math.ceil((validade - hoje) / (1000 * 60 * 60 * 24));
+        return diasRestantes > 0 && diasRestantes < 30;
+      }).length;
+      document.getElementById('lotesVencimento30').textContent = lotesVencimento30;
+      
+      // Taxa de aprovação (últimos 30 dias)
+      const dataLimite = new Date();
+      dataLimite.setDate(dataLimite.getDate() - 30);
+      
+      const lotesRecentes = lotes.filter(l => {
+        const dataAuditoria = l.data_auditoria ? new Date(l.data_auditoria) : null;
+        return dataAuditoria && dataAuditoria >= dataLimite;
+      });
+      
+      if (lotesRecentes.length > 0) {
+        const aprovados = lotesRecentes.filter(l => l.status_auditoria === 'APROVADO').length;
+        const taxa = (aprovados / lotesRecentes.length) * 100;
+        document.getElementById('taxaAprovacao').textContent = formatPercent(taxa, 0);
+      } else {
+        document.getElementById('taxaAprovacao').textContent = 'N/A';
+      }
+      
+      // Pareceres compatíveis
+      const pareceresCompativeis = pareceres.filter(p => 
+        p.veredicto === 'COMPATIVEL' || p.veredicto === 'COMPATIVEL_COM_RESSALVAS'
+      ).length;
+      
+      const totalPareceres = pareceres.length;
+      
+      if (totalPareceres > 0) {
+        document.getElementById('pareceresCompativeis').textContent = 
+          `${pareceresCompativeis} / ${totalPareceres}`;
+      } else {
+        document.getElementById('pareceresCompativeis').textContent = '0';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!--
+COMPONENTE: experiment-list.html
+PAPEL: Lista de experimentos.
+
+PRINCIPAIS FUNCIONALIDADES:
+- consulta por estudo, status e delineamento;
+- mantém o estado de UI separado do processamento no Apps Script;
+- não acessa diretamente a planilha: usa client.html e os contratos do Web App.
+
+INTEGRAÇÕES:
+- ExperimentService, table;
+- dados esperados: Experiments.
+
+SEGURANÇA E LIMITAÇÕES:
+- nunca renderizar senha, token completo ou stack trace;
+- validação visual não substitui ValidationService no servidor;
+- usar escaping/templating seguro para texto proveniente da planilha;
+- esqueleto preparado para HtmlService e componentes parciais.
+
+STATUS: ESQUELETO DE INTERFACE — completar acessibilidade, testes e estados de erro.
+-->
+<section class="view" data-component="experiment-list.html"><header class="page-header"><div><p class="eyebrow">Lista de experimentos</p><h1>Experiment List</h1><p>consulta por estudo, status e delineamento.</p></div><button data-action="create">Novo</button></header><?!= include('filters') ?><div data-role="content-mount"><?!= include('table') ?><?!= include('empty-state') ?></div><?!= include('pagination') ?></section>

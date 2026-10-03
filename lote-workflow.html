@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('quality-components-css') ?>
+  <?!= include('quality-helpers-js') ?>
+</head>
+<body>
+  <div class="container mt-4">
+    <div class="card">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Atualizar Status do Lote</h5>
+        <button class="btn btn-sm btn-light" onclick="goBack()">← Voltar</button>
+      </div>
+      <div class="card-body">
+        <!-- Informações do Lote -->
+        <section class="mb-4">
+          <h6 class="border-bottom pb-2">Lote em Análise</h6>
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>ID Lote:</strong> <span id="lote-id">—</span></p>
+              <p><strong>Insumo:</strong> <span id="lote-insumo">—</span></p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Status Atual Auditoria:</strong> <span id="status-atual-auditoria">—</span></p>
+              <p><strong>Status Atual Liberação:</strong> <span id="status-atual-liberacao">—</span></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Formulário de Workflow -->
+        <form id="lote-workflow-form">
+          <!-- Status Auditoria -->
+          <div class="form-group">
+            <label for="statusAuditoria">
+              <strong>Status Auditoria</strong> <span class="text-danger">*</span>
+            </label>
+            <select id="statusAuditoria" name="statusAuditoria" class="form-control" required>
+              <option value="">-- Selecione --</option>
+              <option value="pendente">Pendente</option>
+              <option value="em_analise">Em Análise</option>
+              <option value="aprovado">Aprovado</option>
+              <option value="reprovado">Reprovado</option>
+            </select>
+            <small class="form-text text-muted">
+              Status do processo de auditoria do lote
+            </small>
+          </div>
+
+          <!-- Status Liberação -->
+          <div class="form-group">
+            <label for="statusLiberacao">
+              <strong>Status Liberação</strong> <span class="text-danger">*</span>
+            </label>
+            <select id="statusLiberacao" name="statusLiberacao" class="form-control" required>
+              <option value="">-- Selecione --</option>
+              <option value="liberado">Liberado</option>
+              <option value="bloqueado">Bloqueado</option>
+              <option value="condicional">Condicional</option>
+            </select>
+            <small class="form-text text-muted">
+              Status de liberação do lote para uso
+            </small>
+          </div>
+
+          <!-- Justificativa Técnica -->
+          <div class="form-group">
+            <label for="justificativaTecnica">
+              <strong>Justificativa Técnica</strong> <span class="text-danger">*</span>
+            </label>
+            <textarea 
+              id="justificativaTecnica" 
+              name="justificativaTecnica" 
+              class="form-control" 
+              rows="5" 
+              required
+              minlength="15"
+              placeholder="Descreva a justificativa técnica para a atualização de status (mínimo 15 caracteres)"
+            ></textarea>
+            <small class="form-text text-muted">
+              Mínimo de 15 caracteres. Explique o motivo da alteração de status.
+            </small>
+            <div id="char-count" class="text-muted small mt-1">0 caracteres</div>
+          </div>
+
+          <!-- Alertas de Validação -->
+          <div id="validation-alert" class="alert alert-danger" style="display:none;" role="alert">
+            <!-- Será preenchido dinamicamente -->
+          </div>
+
+          <!-- Botões de Ação -->
+          <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-secondary" onclick="goBack()">
+              Cancelar
+            </button>
+            <button type="submit" id="btn-submit" class="btn btn-success">
+              💾 Salvar Alterações
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentLote = null;
+
+    function goBack() {
+      window.history.back();
+    }
+
+    function loadLoteData(loteId) {
+      google.script.run
+        .withSuccessHandler(onLoteLoaded)
+        .withFailureHandler(onLoadError)
+        .routeRequest({
+          action: 'getLote',
+          loteId: loteId
+        });
+    }
+
+    function onLoteLoaded(response) {
+      if (!response.success) {
+        showError(response.message || 'Erro ao carregar lote');
+        setTimeout(() => goBack(), 2000);
+        return;
+      }
+      
+      currentLote = response.data;
+      renderLoteInfo(currentLote);
+      populateForm(currentLote);
+    }
+
+    function renderLoteInfo(lote) {
+      document.getElementById('lote-id').textContent = lote.idLote || '—';
+      document.getElementById('lote-insumo').textContent = lote.nomeInsumo || '—';
+      document.getElementById('status-atual-auditoria').innerHTML = renderStatusBadge(lote.statusAuditoria);
+      document.getElementById('status-atual-liberacao').innerHTML = renderStatusBadge(lote.statusLiberacao);
+    }
+
+    function populateForm(lote) {
+      // Preencher valores atuais
+      if (lote.statusAuditoria) {
+        document.getElementById('statusAuditoria').value = lote.statusAuditoria;
+      }
+      if (lote.statusLiberacao) {
+        document.getElementById('statusLiberacao').value = lote.statusLiberacao;
+      }
+      if (lote.justificativaTecnica) {
+        document.getElementById('justificativaTecnica').value = lote.justificativaTecnica;
+        updateCharCount();
+      }
+    }
+
+    function onLoadError(error) {
+      showError(error.message || 'Erro ao carregar dados');
+      setTimeout(() => goBack(), 2000);
+    }
+
+    function updateCharCount() {
+      const textarea = document.getElementById('justificativaTecnica');
+      const counter = document.getElementById('char-count');
+      const length = textarea.value.length;
+      counter.textContent = length + ' caracteres';
+      
+      if (length < 15) {
+        counter.classList.add('text-danger');
+        counter.classList.remove('text-success');
+      } else {
+        counter.classList.add('text-success');
+        counter.classList.remove('text-danger');
+      }
+    }
+
+    function validateForm() {
+      const statusAuditoria = document.getElementById('statusAuditoria').value;
+      const statusLiberacao = document.getElementById('statusLiberacao').value;
+      const justificativa = document.getElementById('justificativaTecnica').value.trim();
+      
+      const errors = [];
+      
+      // Validar status auditoria
+      const resultAuditoria = validateRequired(statusAuditoria, 'Status Auditoria');
+      if (!resultAuditoria.valid) {
+        errors.push(resultAuditoria.message);
+      }
+      
+      // Validar status liberação
+      const resultLiberacao = validateRequired(statusLiberacao, 'Status Liberação');
+      if (!resultLiberacao.valid) {
+        errors.push(resultLiberacao.message);
+      }
+      
+      // Validar justificativa técnica
+      const resultJustificativa = validateMinLength(justificativa, 15, 'Justificativa Técnica');
+      if (!resultJustificativa.valid) {
+        errors.push(resultJustificativa.message);
+      }
+      
+      if (errors.length > 0) {
+        showValidationErrors(errors);
+        return false;
+      }
+      
+      hideValidationErrors();
+      return true;
+    }
+
+    function showValidationErrors(errors) {
+      const alertDiv = document.getElementById('validation-alert');
+      let html = '<strong>Erros de validação:</strong><ul class="mb-0 mt-2">';
+      errors.forEach(error => {
+        html += `<li>${escapeHtml(error)}</li>`;
+      });
+      html += '</ul>';
+      alertDiv.innerHTML = html;
+      alertDiv.style.display = 'block';
+      alertDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function hideValidationErrors() {
+      const alertDiv = document.getElementById('validation-alert');
+      alertDiv.style.display = 'none';
+    }
+
+    function handleSubmit(event) {
+      event.preventDefault();
+      
+      if (!validateForm()) {
+        return;
+      }
+      
+      if (!currentLote) {
+        showError('Nenhum lote carregado');
+        return;
+      }
+      
+      const formData = {
+        loteId: currentLote.id,
+        statusAuditoria: document.getElementById('statusAuditoria').value,
+        statusLiberacao: document.getElementById('statusLiberacao').value,
+        justificativaTecnica: document.getElementById('justificativaTecnica').value.trim()
+      };
+      
+      setButtonLoading('btn-submit', true);
+      
+      google.script.run
+        .withSuccessHandler(onSubmitSuccess)
+        .withFailureHandler(onSubmitError)
+        .routeRequest({
+          action: 'updateLoteStatus',
+          data: formData
+        });
+    }
+
+    function onSubmitSuccess(response) {
+      setButtonLoading('btn-submit', false);
+      
+      if (response.success) {
+        showSuccess('Status do lote atualizado com sucesso');
+        setTimeout(() => {
+          window.location.href = '?page=lote-view&id=' + currentLote.id;
+        }, 1500);
+      } else {
+        showError(response.message || 'Erro ao atualizar status');
+      }
+    }
+
+    function onSubmitError(error) {
+      setButtonLoading('btn-submit', false);
+      showError(error.message || 'Erro ao processar solicitação');
+    }
+
+    // Event Listeners
+    document.getElementById('justificativaTecnica').addEventListener('input', updateCharCount);
+    document.getElementById('lote-workflow-form').addEventListener('submit', handleSubmit);
+
+    // Inicializar ao carregar página
+    window.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const loteId = urlParams.get('id');
+      
+      if (loteId) {
+        loadLoteData(loteId);
+      } else {
+        showError('ID do lote não fornecido');
+        setTimeout(() => goBack(), 2000);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Análise de Compatibilidade</title>
+  
+  <link rel="stylesheet" href="quality-components.css">
+</head>
+<body>
+  <div class="form-container">
+    <h2>Análise de Compatibilidade</h2>
+    
+    <p style="color: #6b7280; margin-bottom: 2rem;">
+      Esta ferramenta analisa a compatibilidade entre uma receita de fertirrigação,
+      um protocolo biológico e os lotes de insumos a serem utilizados.
+    </p>
+    
+    <form id="parecerForm">
+      <!-- Seção 1: Receita -->
+      <fieldset>
+        <legend>1. Selecione a Receita de Fertirrigação</legend>
+        
+        <div class="form-group">
+          <label for="receita_id">
+            Receita <span style="color: red;">*</span>
+          </label>
+          <select id="receita_id" name="receita_id" required>
+            <option value="">Selecione uma receita...</option>
+            <!-- Populated via JS -->
+          </select>
+        </div>
+        
+        <!-- Preview da receita -->
+        <div id="receitaPreview" style="display: none; padding: 1rem; background: #f8fafc; border-radius: 6px; margin-top: 1rem;">
+          <strong>Prévia da Receita:</strong>
+          <div style="margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280;" id="receitaDetails">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+      </fieldset>
+      
+      <!-- Seção 2: Protocolo -->
+      <fieldset>
+        <legend>2. Selecione o Protocolo Biológico</legend>
+        
+        <div class="form-group">
+          <label for="protocolo_id">
+            Protocolo <span style="color: red;">*</span>
+          </label>
+          <select id="protocolo_id" name="protocolo_id" required>
+            <option value="">Selecione um protocolo...</option>
+            <!-- Populated via JS -->
+          </select>
+        </div>
+        
+        <!-- Preview do protocolo -->
+        <div id="protocoloPreview" style="display: none; padding: 1rem; background: #f8fafc; border-radius: 6px; margin-top: 1rem;">
+          <strong>Prévia do Protocolo:</strong>
+          <div style="margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280;" id="protocoloDetails">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+      </fieldset>
+      
+      <!-- Seção 3: Lotes -->
+      <fieldset>
+        <legend>3. Selecione os Lotes dos Insumos</legend>
+        
+        <p style="color: #6b7280; font-size: 0.875rem; margin-top: 0;">
+          Selecione os lotes que serão utilizados na preparação da solução.
+          Apenas lotes LIBERADOS são exibidos.
+        </p>
+        
+        <div class="form-group">
+          <label for="lote_ids">
+            Lotes <span style="color: red;">*</span>
+          </label>
+          <div id="lotesCheckboxes" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; padding: 1rem;">
+            <!-- Populated via JS -->
+          </div>
+          <small class="help-text">
+            Selecione pelo menos um lote
+          </small>
+        </div>
+      </fieldset>
+      
+      <!-- Seção 4: Observações -->
+      <fieldset>
+        <legend>4. Observações (Opcional)</legend>
+        
+        <div class="form-group">
+          <label for="observacoes">
+            Observações Adicionais
+          </label>
+          <textarea
+            id="observacoes"
+            name="observacoes"
+            rows="4"
+            placeholder="Observações sobre esta análise, condições especiais, notas do operador..."
+          ></textarea>
+        </div>
+      </fieldset>
+      
+      <!-- Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" onclick="cancel()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-success">
+          🔬 Analisar Compatibilidade
+        </button>
+      </div>
+    </form>
+    
+    <!-- Resultado da Análise (após submit) -->
+    <div id="resultadoAnalise" style="display: none; margin-top: 2rem;">
+      <h3>Resultado da Análise</h3>
+      <div id="resultadoContent">
+        <!-- Populated via JS após análise -->
+      </div>
+    </div>
+  </div>
+  
+  <script src="quality-helpers.js"></script>
+  <script src="api-client.html"></script>
+  
+  <script>
+    // Cache de dados
+    let receitas = [];
+    let protocolos = [];
+    let lotes = [];
+    let insumos = {};
+    
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadData();
+      setupEventListeners();
+    });
+    
+    /**
+     * Carrega dados
+     */
+    async function loadData() {
+      try {
+        showLoading(true);
+        
+        const [receitasData, protocolosData, lotesData, insumosData] = await Promise.all([
+          api.receitas.list(),
+          api.protocolos.list(),
+          api.lotes.list(),
+          api.insumos.list()
+        ]);
+        
+        receitas = receitasData;
+        protocolos = protocolosData;
+        
+        // Filtrar apenas lotes LIBERADOS
+        lotes = lotesData.filter(l => l.status_liberacao === 'LIBERADO');
+        
+        // Cache de insumos
+        insumosData.forEach(i => {
+          insumos[i.id] = i;
+        });
+        
+        populateSelects();
+        
+      } catch (error) {
+        handleApiError(error);
+      } finally {
+        showLoading(false);
+      }
+    }
+    
+    /**
+     * Popula selects e checkboxes
+     */
+    function populateSelects() {
+      // Receitas
+      const receitaSelect = document.getElementById('receita_id');
+      receitas.forEach(r => {
+        const option = document.createElement('option');
+        option.value = r.id;
+        option.textContent = `${r.nome_fase} (${r.fase_cultivo})`;
+        receitaSelect.appendChild(option);
+      });
+      
+      // Protocolos
+      const protocoloSelect = document.getElementById('protocolo_id');
+      protocolos.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p.id;
+        option.textContent = `${p.organismo_alvo} - ${p.tipo_aplicacao} (${p.fase_cultivo})`;
+        protocoloSelect.appendChild(option);
+      });
+      
+      // Lotes (checkboxes agrupados por insumo)
+      const lotesContainer = document.getElementById('lotesCheckboxes');
+      
+      if (lotes.length === 0) {
+        lotesContainer.innerHTML = '<p style="color: #ef4444;">Nenhum lote LIBERADO disponível. Cadastre e aprove lotes primeiro.</p>';
+        return;
+      }
+      
+      // Agrupar por insumo
+      const lotesPorInsumo = groupBy(lotes, 'insumo_id');
+      
+      Object.entries(lotesPorInsumo).forEach(([insumoId, lotesDoInsumo]) => {
+        const insumo = insumos[insumoId];
+        const insumoNome = insumo ? insumo.nome_comercial : 'Insumo desconhecido';
+        
+        const grupoDiv = document.createElement('div');
+        grupoDiv.style.marginBottom = '1rem';
+        
+        const titulo = document.createElement('div');
+        titulo.style.fontWeight = '600';
+        titulo.style.marginBottom = '0.5rem';
+        titulo.style.color = '#374151';
+        titulo.textContent = insumoNome;
+        grupoDiv.appendChild(titulo);
+        
+        lotesDoInsumo.forEach(lote => {
+          const label = document.createElement('label');
+          label.style.display = 'flex';
+          label.style.alignItems = 'center';
+          label.style.gap = '0.5rem';
+          label.style.marginBottom = '0.25rem';
+          label.style.cursor = 'pointer';
+          label.style.paddingLeft = '1rem';
+          
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.name = 'lote_ids';
+          checkbox.value = lote.id;
+          checkbox.style.cursor = 'pointer';
+          
+          const texto = document.createElement('span');
+          texto.textContent = `Lote ${lote.numero_lote} (Val: ${formatDate(lote.data_validade)})`;
+          texto.style.fontSize = '0.875rem';
+          
+          label.appendChild(checkbox);
+          label.appendChild(texto);
+          grupoDiv.appendChild(label);
+        });
+        
+        lotesContainer.appendChild(grupoDiv);
+      });
+    }
+    
+    /**
+     * Setup event listeners
+     */
+    function setupEventListeners() {
+      // Preview de receita ao selecionar
+      document.getElementById('receita_id').addEventListener('change', (e) => {
+        const receitaId = e.target.value;
+        if (receitaId) {
+          const receita = receitas.find(r => r.id === receitaId);
+          if (receita) {
+            document.getElementById('receitaPreview').style.display = 'block';
+            document.getElementById('receitaDetails').innerHTML = `
+              <div><strong>NPK:</strong> N=${receita.n_ppm} | P=${receita.p_ppm} | K=${receita.k_ppm} ppm</div>
+              <div><strong>Ca-Mg:</strong> Ca=${receita.ca_ppm} | Mg=${receita.mg_ppm} ppm</div>
+              <div><strong>pH:</strong> ${receita.ph_solucao} | <strong>EC:</strong> ${receita.ec_final} mS/cm</div>
+            `;
+          }
+        } else {
+          document.getElementById('receitaPreview').style.display = 'none';
+        }
+      });
+      
+      // Preview de protocolo ao selecionar
+      document.getElementById('protocolo_id').addEventListener('change', (e) => {
+        const protocoloId = e.target.value;
+        if (protocoloId) {
+          const protocolo = protocolos.find(p => p.id === protocoloId);
+          if (protocolo) {
+            document.getElementById('protocoloPreview').style.display = 'block';
+            document.getElementById('protocoloDetails').innerHTML = `
+              <div><strong>Organismo:</strong> ${protocolo.organismo_alvo}</div>
+              <div><strong>Aplicação:</strong> ${protocolo.tipo_aplicacao} na fase ${protocolo.fase_cultivo}</div>
+              <div><strong>pH:</strong> ${protocolo.ph_minimo} - ${protocolo.ph_maximo} | <strong>EC máx:</strong> ${protocolo.ec_maximo} mS/cm</div>
+            `;
+          }
+        } else {
+          document.getElementById('protocoloPreview').style.display = 'none';
+        }
+      });
+    }
+    
+    /**
+     * Handler de submit
+     */
+    document.getElementById('parecerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      try {
+        showLoading(true);
+        
+        // Coletar dados
+        const receitaId = document.getElementById('receita_id').value;
+        const protocoloId = document.getElementById('protocolo_id').value;
+        const observacoes = document.getElementById('observacoes').value;
+        
+        // Coletar lotes selecionados
+        const lotesCheckboxes = document.querySelectorAll('input[name="lote_ids"]:checked');
+        const loteIds = Array.from(lotesCheckboxes).map(cb => cb.value);
+        
+        // Validações
+        if (!receitaId) {
+          showToast('error', 'Selecione uma receita');
+          showLoading(false);
+          return;
+        }
+        
+        if (!protocoloId) {
+          showToast('error', 'Selecione um protocolo');
+          showLoading(false);
+          return;
+        }
+        
+        if (loteIds.length === 0) {
+          showToast('error', 'Selecione pelo menos um lote');
+          showLoading(false);
+          return;
+        }
+        
+        // Chamar API de análise
+        const resultado = await api.pareceres.analisar({
+          receita_id: receitaId,
+          protocolo_id: protocoloId,
+          lote_ids: loteIds,
+          observacoes: observacoes || null
+        });
+        
+        // Exibir resultado
+        exibirResultado(resultado);
+        
+        showToast('success', 'Análise concluída!');
+        
+      } catch (error) {
+        handleApiError(error);
+      } finally {
+        showLoading(false);
+      }
+    });
+    
+    /**
+     * Exibe resultado da análise
+     */
+    function exibirResultado(parecer) {
+      const resultadoDiv = document.getElementById('resultadoAnalise');
+      const contentDiv = document.getElementById('resultadoContent');
+      
+      resultadoDiv.style.display = 'block';
+      
+      // Badge do veredicto
+      const verdictoBadge = getStatusBadge(parecer.veredicto);
+      
+      // Conteúdo
+      contentDiv.innerHTML = `
+        <div style="padding: 1.5rem; background: var(--bg-secondary); border-radius: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h4 style="margin: 0;">Veredicto Final</h4>
+            ${verdictoBadge}
+          </div>
+          
+          <div style="margin-bottom: 1rem;">
+            <strong>ID do Parecer:</strong> ${parecer.id}
+          </div>
+          
+          ${parecer.observacoes ? `
+            <div style="padding: 1rem; background: white; border-radius: 6px; margin-top: 1rem;">
+              <strong>Detalhes da Análise:</strong>
+              <pre style="white-space: pre-wrap; margin-top: 0.5rem; font-size: 0.875rem;">${parecer.observacoes}</pre>
+            </div>
+          ` : ''}
+          
+          <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+            <button onclick="navigateTo('parecer-view', {id: '${parecer.id}'})" class="btn-primary">
+              Ver Parecer Completo
+            </button>
+            <button onclick="navigateTo('parecer-list')" class="btn-secondary">
+              Ver Todos os Pareceres
+            </button>
+            <button onclick="location.reload()" class="btn-secondary">
+              Nova Análise
+            </button>
+          </div>
+        </div>
+      `;
+      
+      // Scroll para resultado
+      resultadoDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    /**
+     * Cancela
+     */
+    function cancel() {
+      if (confirm('Deseja realmente cancelar?')) {
+        navigateTo('quality-dashboard');
+      }
+    }
+  </script>
+</body>
+</html>

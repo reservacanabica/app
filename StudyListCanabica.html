@@ -1,0 +1,854 @@
+<!--
+⚠️ ARQUIVO LEGADO — NÃO PRODUTIVO
+Este arquivo não é mais servido por rotas ativas.
+A versão produtiva está em: studies.html (incluído via layout.html)
+Manter apenas como referência histórica ou remover em limpeza futura.
+Data de descontinuação: 2026-01-20
+Motivo: Padronização visual — casca única com gramática consistente
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estudos - Reserva Canabica</title>
+  <?!= include('CannaDesignSystem') ?>
+</head>
+<body>
+  <style id="study-list-layout">
+    .study-list-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: var(--canna-safe-area-top) var(--canna-safe-area-right) var(--canna-safe-area-bottom) var(--canna-safe-area-left);
+    }
+
+    .page-header {
+      margin-bottom: var(--canna-space-8);
+      padding-bottom: var(--canna-space-5);
+      border-bottom: 1px solid var(--canna-border);
+    }
+
+    .page-header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: var(--canna-space-4);
+      margin-bottom: var(--canna-space-5);
+    }
+
+    .page-title-section {
+      flex: 1 1 300px;
+    }
+
+    .page-eyebrow {
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--canna-primary);
+      margin: 0 0 var(--canna-space-2) 0;
+    }
+
+    .page-title {
+      font-size: clamp(1.75rem, 2vw + 1rem, 2.25rem);
+      font-weight: 700;
+      color: var(--canna-text);
+      margin: 0 0 var(--canna-space-2) 0;
+      line-height: 1.2;
+    }
+
+    .page-description {
+      color: var(--canna-text-muted);
+      font-size: 1rem;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .page-actions {
+      display: flex;
+      gap: var(--canna-space-3);
+      flex-wrap: wrap;
+    }
+
+    /* Filters */
+    .filters-section {
+      background: var(--canna-surface);
+      border: 1px solid var(--canna-border);
+      border-radius: var(--canna-radius);
+      padding: var(--canna-space-5);
+      margin-bottom: var(--canna-space-6);
+    }
+
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--canna-space-4);
+      margin-bottom: var(--canna-space-4);
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .filter-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--canna-text-muted);
+    }
+
+    .filter-actions {
+      display: flex;
+      gap: var(--canna-space-2);
+      justify-content: flex-end;
+    }
+
+    /* Table */
+    .table-container {
+      background: var(--canna-surface);
+      border: 1px solid var(--canna-border);
+      border-radius: var(--canna-radius);
+      overflow: hidden;
+      margin-bottom: var(--canna-space-6);
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9375rem;
+    }
+
+    .data-table thead {
+      background: var(--canna-surface-soft);
+      border-bottom: 2px solid var(--canna-border);
+    }
+
+    .data-table th {
+      padding: var(--canna-space-4);
+      text-align: left;
+      font-weight: 600;
+      color: var(--canna-text-muted);
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .data-table td {
+      padding: var(--canna-space-4);
+      border-bottom: 1px solid var(--canna-border-soft);
+      color: var(--canna-text);
+      vertical-align: top;
+    }
+
+    .data-table tbody tr {
+      transition: background 0.2s ease;
+    }
+
+    .data-table tbody tr:hover {
+      background: var(--canna-surface-soft);
+    }
+
+    .data-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .study-title {
+      font-weight: 600;
+      color: var(--canna-text);
+      margin: 0 0 4px 0;
+    }
+
+    .study-id {
+      font-size: 0.8125rem;
+      color: var(--canna-text-muted);
+      margin: 0;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .badge-active {
+      background: var(--canna-success-soft);
+      color: var(--canna-success);
+    }
+
+    .badge-pending {
+      background: var(--canna-warning-soft);
+      color: var(--canna-warning);
+    }
+
+    .badge-completed {
+      background: var(--canna-info-soft);
+      color: var(--canna-info);
+    }
+
+    .badge-archived {
+      background: var(--canna-surface-soft);
+      color: var(--canna-text-muted);
+    }
+
+    .table-actions {
+      display: flex;
+      gap: var(--canna-space-2);
+    }
+
+    .action-btn {
+      background: transparent;
+      border: 1px solid var(--canna-border);
+      padding: 6px 10px;
+      border-radius: var(--canna-radius-sm);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.875rem;
+      color: var(--canna-text-muted);
+    }
+
+    .action-btn:hover {
+      background: var(--canna-primary-soft);
+      border-color: var(--canna-primary);
+      color: var(--canna-primary);
+    }
+
+    /* Pagination */
+    .pagination-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--canna-space-4);
+      padding: var(--canna-space-5);
+      background: var(--canna-surface);
+      border: 1px solid var(--canna-border);
+      border-radius: var(--canna-radius);
+    }
+
+    .pagination-info {
+      color: var(--canna-text-muted);
+      font-size: 0.875rem;
+    }
+
+    .pagination-controls {
+      display: flex;
+      gap: var(--canna-space-2);
+      align-items: center;
+    }
+
+    .pagination-btn {
+      min-width: 40px;
+      height: 40px;
+      padding: 0 var(--canna-space-3);
+      border: 1px solid var(--canna-border);
+      background: var(--canna-surface);
+      color: var(--canna-text);
+      border-radius: var(--canna-radius-sm);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+      background: var(--canna-primary-soft);
+      border-color: var(--canna-primary);
+      color: var(--canna-primary);
+    }
+
+    .pagination-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .pagination-btn.active {
+      background: var(--canna-primary);
+      border-color: var(--canna-primary);
+      color: #fff;
+    }
+
+    /* Empty State */
+    .empty-state-container {
+      text-align: center;
+      padding: 60px var(--canna-space-5);
+      background: var(--canna-surface);
+      border: 1px solid var(--canna-border);
+      border-radius: var(--canna-radius);
+    }
+
+    .empty-state-icon {
+      font-size: 4rem;
+      opacity: 0.3;
+      margin-bottom: var(--canna-space-5);
+    }
+
+    .empty-state-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--canna-text);
+      margin: 0 0 var(--canna-space-2) 0;
+    }
+
+    .empty-state-description {
+      color: var(--canna-text-muted);
+      margin: 0 0 var(--canna-space-6) 0;
+    }
+
+    /* Loading Skeleton */
+    .skeleton-table {
+      padding: var(--canna-space-4);
+    }
+
+    .skeleton-row {
+      display: flex;
+      gap: var(--canna-space-4);
+      margin-bottom: var(--canna-space-4);
+    }
+
+    .skeleton-cell {
+      height: 16px;
+      background: linear-gradient(
+        90deg,
+        var(--canna-surface-soft) 25%,
+        var(--canna-border-soft) 50%,
+        var(--canna-surface-soft) 75%
+      );
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s ease-in-out infinite;
+      border-radius: 6px;
+    }
+
+    @keyframes skeleton-loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .page-header-content {
+        flex-direction: column;
+      }
+
+      .page-actions {
+        width: 100%;
+      }
+
+      .page-actions button {
+        flex: 1;
+      }
+
+      .filters-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .table-container {
+        border: none;
+        border-radius: 0;
+      }
+
+      .data-table {
+        font-size: 0.875rem;
+      }
+
+      .data-table th,
+      .data-table td {
+        padding: var(--canna-space-3) var(--canna-space-2);
+      }
+
+      .pagination-container {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .pagination-controls {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+
+  <div class="study-list-container" role="main" aria-labelledby="page-title">
+    <!-- Header -->
+    <header class="page-header">
+      <div class="page-header-content">
+        <div class="page-title-section">
+          <p class="page-eyebrow">Gestão de Pesquisa</p>
+          <h1 id="page-title" class="page-title"><i data-feather="book-open" class="icon icon-lg" aria-hidden="true"></i> Estudos</h1>
+          <p class="page-description">
+            Gerenciar todos os estudos de cannabis medicinal
+          </p>
+        </div>
+        <div class="page-actions">
+          <button type="button" class="btn btn-primary" onclick="createStudy()">
+            <i data-feather="plus-circle" class="icon icon-sm" aria-hidden="true"></i> Novo Estudo
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="exportStudies()">
+            <i data-feather="download" class="icon icon-sm" aria-hidden="true"></i> Exportar
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Filters -->
+    <section class="filters-section" aria-label="Filtros">
+      <form id="filters-form" onsubmit="return applyFilters(event)">
+        <div class="filters-grid">
+          <div class="filter-group">
+            <label for="filter-search" class="filter-label">Buscar</label>
+            <input
+              type="search"
+              id="filter-search"
+              class="canna-input"
+              placeholder="Título ou ID..."
+              aria-label="Buscar estudos"
+            />
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-status" class="filter-label">Status</label>
+            <select id="filter-status" class="canna-select" aria-label="Filtrar por status">
+              <option value="">Todos</option>
+              <option value="active">Ativo</option>
+              <option value="pending">Pendente</option>
+              <option value="completed">Concluído</option>
+              <option value="archived">Arquivado</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-date-from" class="filter-label">Data Início</label>
+            <input
+              type="date"
+              id="filter-date-from"
+              class="canna-input"
+              aria-label="Data de início"
+            />
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-date-to" class="filter-label">Data Fim</label>
+            <input
+              type="date"
+              id="filter-date-to"
+              class="canna-input"
+              aria-label="Data de término"
+            />
+          </div>
+        </div>
+
+        <div class="filter-actions">
+          <button type="button" class="btn btn-secondary" onclick="clearFilters()">
+            Limpar
+          </button>
+          <button type="submit" class="btn btn-primary">
+            Aplicar Filtros
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Loading State -->
+    <div id="loading-container" role="status" aria-live="polite" hidden>
+      <div class="table-container">
+        <div class="skeleton-table">
+          <div class="skeleton-row">
+            <div class="skeleton-cell" style="flex: 2"></div>
+            <div class="skeleton-cell" style="flex: 1"></div>
+            <div class="skeleton-cell" style="flex: 1"></div>
+            <div class="skeleton-cell" style="flex: 1"></div>
+          </div>
+          <div class="skeleton-row">
+            <div class="skeleton-cell" style="flex: 2"></div>
+            <div class="skeleton-cell" style="flex: 1"></div>
+            <div class="skeleton-cell" style="flex: 1"></div>
+            <div class="skeleton-cell" style="flex: 1"></div>
+          </div>
+          <div class="skeleton-row">
+            <div class="skeleton-cell" style="flex: 2"></div>
+            <div class="skeleton-cell" style="flex: 1"></div>
+            <div class="skeleton-cell" style="flex: 1"></div>
+            <div class="skeleton-cell" style="flex: 1"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div id="table-container" class="table-container" hidden>
+      <div class="table-wrapper">
+        <table class="data-table" role="table">
+          <thead>
+            <tr>
+              <th scope="col">Estudo</th>
+              <th scope="col">Status</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Data</th>
+              <th scope="col">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="studies-tbody">
+            <!-- Rows injected dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="empty-state-container" hidden>
+      <div class="empty-state-icon"><i data-feather="book-open" class="icon icon-xl icon-muted" aria-hidden="true"></i></div>
+      <h2 class="empty-state-title">Nenhum estudo encontrado</h2>
+      <p class="empty-state-description">
+        Comece criando seu primeiro estudo de cannabis medicinal
+      </p>
+      <button type="button" class="btn btn-primary" onclick="createStudy()">
+        <i data-feather="plus-circle" class="icon icon-sm" aria-hidden="true"></i> Criar Primeiro Estudo
+      </button>
+    </div>
+
+    <!-- Pagination -->
+    <div id="pagination-container" class="pagination-container" hidden>
+      <div class="pagination-info">
+        Mostrando <strong id="pagination-showing">0</strong> de <strong id="pagination-total">0</strong> estudos
+      </div>
+      <div class="pagination-controls">
+        <button type="button" class="pagination-btn" id="btn-first" onclick="goToPage(1)" aria-label="Primeira página">
+          <i data-feather="chevrons-left" class="icon icon-sm" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="pagination-btn" id="btn-prev" onclick="goToPage('prev')" aria-label="Página anterior">
+          <i data-feather="chevron-left" class="icon icon-sm" aria-hidden="true"></i>
+        </button>
+        <span id="page-numbers"></span>
+        <button type="button" class="pagination-btn" id="btn-next" onclick="goToPage('next')" aria-label="Próxima página">
+          <i data-feather="chevron-right" class="icon icon-sm" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="pagination-btn" id="btn-last" onclick="goToPage('last')" aria-label="Última página">
+          <i data-feather="chevrons-right" class="icon icon-sm" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <?!= include('CannaJavaScript') ?>
+
+  <script>
+    /**
+     * Study List - Main Logic
+     */
+    (function initStudyList() {
+      'use strict';
+
+      let currentPage = 1;
+      let pageSize = 20;
+      let totalItems = 0;
+      let allStudies = [];
+      let filteredStudies = [];
+
+      const elements = {
+        loading: document.getElementById('loading-container'),
+        table: document.getElementById('table-container'),
+        emptyState: document.getElementById('empty-state'),
+        tbody: document.getElementById('studies-tbody'),
+        pagination: document.getElementById('pagination-container'),
+        paginationShowing: document.getElementById('pagination-showing'),
+        paginationTotal: document.getElementById('pagination-total'),
+        pageNumbers: document.getElementById('page-numbers')
+      };
+
+      // Load studies
+      function loadStudies() {
+        showLoading();
+
+        if (hasGoogleScriptAPI()) {
+          google.script.run
+            .withSuccessHandler(onStudiesLoaded)
+            .withFailureHandler(onStudiesError)
+            .getStudies();
+        } else {
+          // Development mode - mock data
+          setTimeout(() => {
+            onStudiesLoaded(getMockStudies());
+          }, 800);
+        }
+      }
+
+      // Handle studies loaded
+      function onStudiesLoaded(studies) {
+        hideLoading();
+        allStudies = studies || [];
+        filteredStudies = [...allStudies];
+        totalItems = filteredStudies.length;
+        renderStudies();
+      }
+
+      // Handle error
+      function onStudiesError(error) {
+        hideLoading();
+        showEmpty();
+        if (window.Canna && window.Canna.toast) {
+          window.Canna.toast.error('Erro ao carregar estudos: ' + error.message);
+        }
+      }
+
+      // Render studies table
+      function renderStudies() {
+        const start = (currentPage - 1) * pageSize;
+        const end = start + pageSize;
+        const pageStudies = filteredStudies.slice(start, end);
+
+        if (pageStudies.length === 0) {
+          showEmpty();
+          return;
+        }
+
+        elements.tbody.innerHTML = '';
+        pageStudies.forEach(study => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>
+              <p class="study-title">${escapeHtml(study.title)}</p>
+              <p class="study-id">ID: ${escapeHtml(study.id)}</p>
+            </td>
+            <td>
+              <span class="badge badge-${study.status.toLowerCase()}">${escapeHtml(study.status)}</span>
+            </td>
+            <td>${escapeHtml(study.type)}</td>
+            <td>${escapeHtml(study.date)}</td>
+            <td>
+              <div class="table-actions">
+                <button type="button" class="action-btn" onclick="viewStudy('${study.id}')" aria-label="Ver estudo">
+                  <i data-feather="eye" class="icon icon-sm" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="action-btn" onclick="editStudy('${study.id}')" aria-label="Editar estudo">
+                  <i data-feather="edit" class="icon icon-sm" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="action-btn" onclick="deleteStudy('${study.id}')" aria-label="Excluir estudo">
+                  <i data-feather="trash-2" class="icon icon-sm icon-danger" aria-hidden="true"></i>
+                </button>
+              </div>
+            </td>
+          `;
+          elements.tbody.appendChild(tr);
+        });
+
+        showTable();
+        renderPagination();
+      }
+
+      // Render pagination
+      function renderPagination() {
+        const totalPages = Math.ceil(totalItems / pageSize);
+        
+        elements.paginationShowing.textContent = Math.min(totalItems, pageSize);
+        elements.paginationTotal.textContent = totalItems;
+
+        // Disable/enable buttons
+        document.getElementById('btn-first').disabled = currentPage === 1;
+        document.getElementById('btn-prev').disabled = currentPage === 1;
+        document.getElementById('btn-next').disabled = currentPage === totalPages;
+        document.getElementById('btn-last').disabled = currentPage === totalPages;
+
+        // Render page numbers
+        const maxButtons = 5;
+        const half = Math.floor(maxButtons / 2);
+        let startPage = Math.max(1, currentPage - half);
+        let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+        if (endPage - startPage < maxButtons - 1) {
+          startPage = Math.max(1, endPage - maxButtons + 1);
+        }
+
+        elements.pageNumbers.innerHTML = '';
+        for (let i = startPage; i <= endPage; i++) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'pagination-btn' + (i === currentPage ? ' active' : '');
+          btn.textContent = i;
+          btn.onclick = () => goToPage(i);
+          btn.setAttribute('aria-label', `Página ${i}`);
+          btn.setAttribute('aria-current', i === currentPage ? 'page' : 'false');
+          elements.pageNumbers.appendChild(btn);
+        }
+
+        elements.pagination.hidden = false;
+      }
+
+      // Show/hide states
+      function showLoading() {
+        elements.loading.hidden = false;
+        elements.table.hidden = true;
+        elements.emptyState.hidden = true;
+        elements.pagination.hidden = true;
+      }
+
+      function hideLoading() {
+        elements.loading.hidden = true;
+      }
+
+      function showTable() {
+        elements.table.hidden = false;
+        elements.emptyState.hidden = true;
+      }
+
+      function showEmpty() {
+        elements.table.hidden = true;
+        elements.emptyState.hidden = false;
+        elements.pagination.hidden = true;
+      }
+
+      // Pagination navigation
+      window.goToPage = function(page) {
+        const totalPages = Math.ceil(totalItems / pageSize);
+        
+        if (page === 'prev') {
+          currentPage = Math.max(1, currentPage - 1);
+        } else if (page === 'next') {
+          currentPage = Math.min(totalPages, currentPage + 1);
+        } else if (page === 'last') {
+          currentPage = totalPages;
+        } else {
+          currentPage = page;
+        }
+
+        renderStudies();
+      };
+
+      // Apply filters
+      window.applyFilters = function(event) {
+        if (event) event.preventDefault();
+
+        const search = document.getElementById('filter-search').value.toLowerCase();
+        const status = document.getElementById('filter-status').value;
+        const dateFrom = document.getElementById('filter-date-from').value;
+        const dateTo = document.getElementById('filter-date-to').value;
+
+        filteredStudies = allStudies.filter(study => {
+          // Search filter
+          if (search && !study.title.toLowerCase().includes(search) && !study.id.toLowerCase().includes(search)) {
+            return false;
+          }
+
+          // Status filter
+          if (status && study.status.toLowerCase() !== status) {
+            return false;
+          }
+
+          // Date filters
+          if (dateFrom && study.date < dateFrom) {
+            return false;
+          }
+          if (dateTo && study.date > dateTo) {
+            return false;
+          }
+
+          return true;
+        });
+
+        totalItems = filteredStudies.length;
+        currentPage = 1;
+        renderStudies();
+
+        if (window.Canna && window.Canna.toast) {
+          window.Canna.toast.success(`${totalItems} estudos encontrados`);
+        }
+      };
+
+      // Clear filters
+      window.clearFilters = function() {
+        document.getElementById('filters-form').reset();
+        filteredStudies = [...allStudies];
+        totalItems = filteredStudies.length;
+        currentPage = 1;
+        renderStudies();
+
+        if (window.Canna && window.Canna.toast) {
+          window.Canna.toast.info('Filtros limpos');
+        }
+      };
+
+      // Actions
+      window.createStudy = function() {
+        window.location.href = '#novo-estudo';
+      };
+
+      window.viewStudy = function(id) {
+        window.location.href = `#estudo/${id}`;
+      };
+
+      window.editStudy = function(id) {
+        window.location.href = `#estudo/${id}/editar`;
+      };
+
+      window.deleteStudy = function(id) {
+        if (!confirm('Tem certeza que deseja excluir este estudo?')) return;
+
+        if (hasGoogleScriptAPI()) {
+          google.script.run
+            .withSuccessHandler(() => {
+              if (window.Canna && window.Canna.toast) {
+                window.Canna.toast.success('Estudo excluído');
+              }
+              loadStudies();
+            })
+            .withFailureHandler((error) => {
+              if (window.Canna && window.Canna.toast) {
+                window.Canna.toast.error('Erro ao excluir: ' + error.message);
+              }
+            })
+            .deleteStudy(id);
+        }
+      };
+
+      window.exportStudies = function() {
+        if (window.Canna && window.Canna.toast) {
+          window.Canna.toast.info('Exportando estudos...');
+        }
+        // Implement export logic
+      };
+
+      // Utilities
+      function hasGoogleScriptAPI() {
+        return !!(window.google && window.google.script && window.google.script.run);
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      function getMockStudies() {
+        return [
+          { id: 'ST001', title: 'CBD para Ansiedade Generalizada', status: 'Active', type: 'Clínico', date: '2024-01-15' },
+          { id: 'ST002', title: 'THC:CBD em Dor Crônica', status: 'Pending', type: 'Observacional', date: '2024-01-14' },
+          { id: 'ST003', title: 'Terpenos em Inflamação', status: 'Completed', type: 'Experimental', date: '2024-01-12' },
+          { id: 'ST004', title: 'Canabinoides em Epilepsia Refratária', status: 'Active', type: 'Clínico', date: '2024-01-10' },
+          { id: 'ST005', title: 'CBG em Doenças Neurodegenerativas', status: 'Active', type: 'Pré-clínico', date: '2024-01-08' }
+        ];
+      }
+
+      // Initialize
+      function init() {
+        loadStudies();
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+</body>
+</html>

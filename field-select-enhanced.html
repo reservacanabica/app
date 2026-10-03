@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campo Select Aprimorado - WebApp Canabica</title>
+  <style>
+    /* ============================================================
+       CSS TOKENS - Field Select Enhanced
+       ============================================================ */
+    :root {
+      /* Cores base */
+      --color-primary: #4CAF50;
+      --color-primary-light: #43A047;
+      --color-primary-dark: #1B5E20;
+      --color-danger: #C62828;
+      --color-warning: #F57C00;
+      --color-success: #2E7D32;
+      --color-border: #BDBDBD;
+      --color-border-focus: #4CAF50;
+      --color-bg: #FFFFFF;
+      --color-bg-disabled: #F5F5F5;
+      --color-text: #212121;
+      --color-text-muted: #757575;
+      --color-text-disabled: #9E9E9E;
+      
+      /* Espaçamento */
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 12px;
+      --spacing-lg: 16px;
+      
+      /* Tipografia */
+      --font-size-sm: 12px;
+      --font-size-base: 14px;
+      --font-size-lg: 16px;
+      --font-weight-normal: 400;
+      --font-weight-medium: 500;
+      --font-weight-bold: 600;
+      
+      /* Bordas */
+      --border-radius: 6px;
+      --border-width: 1px;
+      
+      /* Sombras */
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 2px 4px rgba(0,0,0,0.1);
+      --shadow-focus: 0 0 0 3px rgba(46,125,50,0.1);
+      
+      /* Transições */
+      --transition-fast: 150ms ease;
+      --transition-base: 200ms ease;
+    }
+
+    /* ============================================================
+       RESET E BASE
+       ============================================================ */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: var(--font-size-base);
+      color: var(--color-text);
+      line-height: 1.5;
+      padding: var(--spacing-lg);
+      background: #FAFAFA;
+    }
+
+    /* ============================================================
+       FIELD GROUP CONTAINER
+       ============================================================ */
+    .field-group {
+      margin-bottom: var(--spacing-lg);
+      max-width: 400px;
+    }
+
+    /* ============================================================
+       LABEL
+       ============================================================ */
+    .field-label {
+      display: block;
+      margin-bottom: var(--spacing-xs);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+      color: var(--color-text);
+      transition: color var(--transition-fast);
+    }
+
+    .field-label .required {
+      color: var(--color-danger);
+      margin-left: 2px;
+    }
+
+    /* ============================================================
+       SELECT WRAPPER
+       ============================================================ */
+    .select-wrapper {
+      position: relative;
+      display: block;
+    }
+
+    .select-wrapper::after {
+      content: '';
+      position: absolute;
+      right: var(--spacing-md);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid var(--color-text-muted);
+      pointer-events: none;
+      transition: all var(--transition-fast);
+    }
+
+    /* ============================================================
+       SELECT INPUT
+       ============================================================ */
+    .field-select {
+      width: 100%;
+      padding: var(--spacing-md);
+      padding-right: calc(var(--spacing-lg) * 2.5);
+      font-size: var(--font-size-base);
+      font-family: inherit;
+      color: var(--color-text);
+      background-color: var(--color-bg);
+      border: var(--border-width) solid var(--color-border);
+      border-radius: var(--border-radius);
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      transition: all var(--transition-base);
+    }
+
+    .field-select:hover:not(:disabled) {
+      border-color: var(--color-primary);
+    }
+
+    .field-select:focus {
+      border-color: var(--color-border-focus);
+      box-shadow: var(--shadow-focus);
+    }
+
+    .field-select:disabled {
+      background-color: var(--color-bg-disabled);
+      color: var(--color-text-disabled);
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    /* Estados de validação */
+    .field-select.error {
+      border-color: var(--color-danger);
+      animation: shake 0.3s ease;
+    }
+
+    .field-select.success {
+      border-color: var(--color-success);
+    }
+
+    .field-select.warning {
+      border-color: var(--color-warning);
+    }
+
+    /* ============================================================
+       HINT TEXT
+       ============================================================ */
+    .field-hint {
+      display: block;
+      margin-top: var(--spacing-xs);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-muted);
+      transition: all var(--transition-fast);
+    }
+
+    .field-hint.error {
+      color: var(--color-danger);
+      font-weight: var(--font-weight-medium);
+    }
+
+    .field-hint.success {
+      color: var(--color-success);
+    }
+
+    .field-hint.warning {
+      color: var(--color-warning);
+    }
+
+    /* ============================================================
+       ICON STATES
+       ============================================================ */
+    .select-wrapper .state-icon {
+      position: absolute;
+      right: calc(var(--spacing-lg) * 2);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+
+    .select-wrapper.has-error .state-icon.error,
+    .select-wrapper.has-success .state-icon.success,
+    .select-wrapper.has-warning .state-icon.warning {
+      opacity: 1;
+    }
+
+    .select-wrapper.has-error::after,
+    .select-wrapper.has-success::after,
+    .select-wrapper.has-warning::after {
+      right: calc(var(--spacing-lg) * 3);
+    }
+
+    /* ============================================================
+       LOADING STATE
+       ============================================================ */
+    .select-wrapper.loading .field-select {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .select-wrapper.loading::after {
+      border: 2px solid var(--color-border);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      animation: spin 0.8s linear infinite;
+    }
+
+    /* ============================================================
+       ANIMATIONS
+       ============================================================ */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+      20%, 40%, 60%, 80% { transform: translateX(4px); }
+    }
+
+    @keyframes spin {
+      to { transform: translateY(-50%) rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .field-hint {
+      animation: fadeIn var(--transition-base);
+    }
+
+    /* ============================================================
+       FOCUS-VISIBLE (Acessibilidade via teclado)
+       ============================================================ */
+    .field-select:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+
+    /* ============================================================
+       OPTGROUP STYLING (navegadores modernos)
+       ============================================================ */
+    .field-select optgroup {
+      font-weight: var(--font-weight-bold);
+      font-style: normal;
+      color: var(--color-text);
+    }
+
+    .field-select option {
+      padding: var(--spacing-sm);
+    }
+
+    /* ============================================================
+       DEMO STYLES
+       ============================================================ */
+    .demo-section {
+      background: white;
+      padding: var(--spacing-lg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .demo-section h2 {
+      margin-bottom: var(--spacing-md);
+      font-size: var(--font-size-lg);
+      color: var(--color-primary);
+    }
+
+    .demo-actions {
+      margin-top: var(--spacing-lg);
+      display: flex;
+      gap: var(--spacing-sm);
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: var(--font-size-sm);
+      border: var(--border-width) solid var(--color-border);
+      border-radius: var(--border-radius);
+      background: white;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .btn:hover {
+      background: var(--color-primary);
+      color: white;
+      border-color: var(--color-primary);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       DEMO: Estados de Validação
+       ============================================================ -->
+  <div class="demo-section">
+    <h2>Estados de Validação</h2>
+
+    <div class="field-group">
+      <label class="field-label" for="select-default">
+        Selecione um estudo <span class="required">*</span>
+      </label>
+      <div class="select-wrapper">
+        <select id="select-default" class="field-select" required>
+          <option value="">-- Selecione --</option>
+          <option value="est-001">EST-001 - Estudo Comparativo Indoor vs Outdoor</option>
+          <option value="est-002">EST-002 - Avaliação de Fertilizantes Orgânicos</option>
+          <option value="est-003">EST-003 - Impacto de Fotoperiodo em Floração</option>
+        </select>
+        <span class="state-icon error">❌</span>
+        <span class="state-icon success">✅</span>
+        <span class="state-icon warning">⚠️</span>
+      </div>
+      <span class="field-hint">Escolha o estudo para vincular o experimento</span>
+    </div>
+
+    <div class="demo-actions">
+      <button class="btn" onclick="setStateDefault()">Resetar</button>
+      <button class="btn" onclick="setStateError()">Erro</button>
+      <button class="btn" onclick="setStateSuccess()">Sucesso</button>
+      <button class="btn" onclick="setStateWarning()">Aviso</button>
+      <button class="btn" onclick="setStateLoading()">Carregando</button>
+      <button class="btn" onclick="setStateDisabled()">Desabilitar</button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       DEMO: Select com Optgroups
+       ============================================================ -->
+  <div class="demo-section">
+    <h2>Select com Agrupamento (Optgroups)</h2>
+
+    <div class="field-group">
+      <label class="field-label" for="select-grouped">
+        Selecione um insumo
+      </label>
+      <div class="select-wrapper">
+        <select id="select-grouped" class="field-select">
+          <option value="">-- Selecione --</option>
+          <optgroup label="Fertilizantes">
+            <option value="fert-001">NPK 20-20-20</option>
+            <option value="fert-002">Fosfato Natural</option>
+            <option value="fert-003">Ácidos Húmicos</option>
+          </optgroup>
+          <optgroup label="Substratos">
+            <option value="sub-001">Turfa Loira</option>
+            <option value="sub-002">Fibra de Coco</option>
+            <option value="sub-003">Perlita Expandida</option>
+          </optgroup>
+          <optgroup label="Bioestimulantes">
+            <option value="bio-001">Extrato de Algas</option>
+            <option value="bio-002">Aminoácidos Livres</option>
+          </optgroup>
+        </select>
+      </div>
+      <span class="field-hint">Insumos organizados por categoria</span>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       DEMO: Select Múltiplo (size)
+       ============================================================ -->
+  <div class="demo-section">
+    <h2>Select Múltiplo</h2>
+
+    <div class="field-group">
+      <label class="field-label" for="select-multiple">
+        Selecione variáveis observadas
+      </label>
+      <div class="select-wrapper">
+        <select id="select-multiple" class="field-select" multiple size="5">
+          <option value="altura">Altura da Planta (cm)</option>
+          <option value="diametro">Diâmetro do Caule (mm)</option>
+          <option value="folhas">Número de Folhas</option>
+          <option value="ramificacoes">Ramificações Secundárias</option>
+          <option value="peso_fresco">Peso Fresco (g)</option>
+          <option value="peso_seco">Peso Seco (g)</option>
+          <option value="ph">pH do Solo</option>
+        </select>
+      </div>
+      <span class="field-hint">Segure Ctrl (Windows) ou Cmd (Mac) para múltipla seleção</span>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       JAVASCRIPT - Controle de Estados
+       ============================================================ -->
+  <script>
+    // Elementos
+    const selectWrapper = document.querySelector('.select-wrapper');
+    const selectInput = document.getElementById('select-default');
+    const fieldHint = document.querySelector('.field-hint');
+
+    // Estado padrão
+    function setStateDefault() {
+      selectWrapper.classList.remove('has-error', 'has-success', 'has-warning', 'loading');
+      selectInput.classList.remove('error', 'success', 'warning');
+      selectInput.disabled = false;
+      fieldHint.textContent = 'Escolha o estudo para vincular o experimento';
+      fieldHint.classList.remove('error', 'success', 'warning');
+    }
+
+    // Estado de erro
+    function setStateError() {
+      selectWrapper.classList.remove('has-success', 'has-warning', 'loading');
+      selectWrapper.classList.add('has-error');
+      selectInput.classList.remove('success', 'warning');
+      selectInput.classList.add('error');
+      selectInput.disabled = false;
+      fieldHint.textContent = 'Este campo é obrigatório';
+      fieldHint.classList.remove('success', 'warning');
+      fieldHint.classList.add('error');
+    }
+
+    // Estado de sucesso
+    function setStateSuccess() {
+      selectWrapper.classList.remove('has-error', 'has-warning', 'loading');
+      selectWrapper.classList.add('has-success');
+      selectInput.classList.remove('error', 'warning');
+      selectInput.classList.add('success');
+      selectInput.disabled = false;
+      fieldHint.textContent = 'Estudo selecionado com sucesso';
+      fieldHint.classList.remove('error', 'warning');
+      fieldHint.classList.add('success');
+    }
+
+    // Estado de aviso
+    function setStateWarning() {
+      selectWrapper.classList.remove('has-error', 'has-success', 'loading');
+      selectWrapper.classList.add('has-warning');
+      selectInput.classList.remove('error', 'success');
+      selectInput.classList.add('warning');
+      selectInput.disabled = false;
+      fieldHint.textContent = 'Este estudo possui experimentos vinculados';
+      fieldHint.classList.remove('error', 'success');
+      fieldHint.classList.add('warning');
+    }
+
+    // Estado de carregamento
+    function setStateLoading() {
+      selectWrapper.classList.remove('has-error', 'has-success', 'has-warning');
+      selectWrapper.classList.add('loading');
+      selectInput.classList.remove('error', 'success', 'warning');
+      selectInput.disabled = true;
+      fieldHint.textContent = 'Carregando estudos disponíveis...';
+      fieldHint.classList.remove('error', 'success', 'warning');
+
+      // Simular carregamento
+      setTimeout(() => {
+        setStateDefault();
+      }, 2000);
+    }
+
+    // Estado desabilitado
+    function setStateDisabled() {
+      selectWrapper.classList.remove('has-error', 'has-success', 'has-warning', 'loading');
+      selectInput.classList.remove('error', 'success', 'warning');
+      selectInput.disabled = true;
+      fieldHint.textContent = 'Campo desabilitado por falta de permissões';
+      fieldHint.classList.remove('error', 'success', 'warning');
+    }
+
+    // Validação onChange
+    selectInput.addEventListener('change', function() {
+      if (this.value === '') {
+        setStateError();
+      } else {
+        setStateSuccess();
+      }
+    });
+
+    // Acessibilidade: anunciar estado para screen readers
+    selectInput.addEventListener('focus', function() {
+      if (this.classList.contains('error')) {
+        this.setAttribute('aria-invalid', 'true');
+        this.setAttribute('aria-describedby', 'error-message');
+      } else {
+        this.removeAttribute('aria-invalid');
+        this.removeAttribute('aria-describedby');
+      }
+    });
+  </script>
+
+</body>
+</html>

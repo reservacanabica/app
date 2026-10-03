@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#4CAF50">
+  <title>Reserva Canabica - Sistema de Pesquisa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  
+  <?!= include("styles"); ?>
+</head>
+<body>
+
+<!-- LOGIN VIEW -->
+<div id="login-view">
+  <?!= include("login"); ?>
+</div>
+
+<!-- ONBOARDING VIEW (MC-3) -->
+<div id="onboarding-comorbidades-container" style="display: none; position: fixed; inset: 0; z-index: 9999; background: #ffffff; overflow-y: auto;">
+  <div style="max-width: 1100px; margin: 0 auto; padding: var(--canna-space-6);">
+    <div id="onboarding-banner-dinamico" style="background: #e8f5e9; border: 1px solid #81c784; padding: var(--canna-space-5); border-radius: var(--canna-space-3); margin-bottom: var(--canna-space-6);">
+      <h2 style="margin: 0 0 var(--canna-space-2) 0; color: #1b5e20;">🩺 Triagem Clínica, Padrão de Solo & Evidências</h2>
+      <p id="onboarding-banner-texto" style="margin: 0; color: #2e7d32; font-size: 14px; line-height: 1.6;">
+        Bem-vindo à Reserva Canábica. Para parametrizar seu acompanhamento clínico com base na literatura médica indexada, selecionar os quimiotipos corretos e determinar o nível de rigor laboratorial (CoA) exigido para a sua segurança, selecione suas comorbidades em foco.
+      </p>
+    </div>
+    <?!= include("comorbidade-form"); ?>
+  </div>
+</div>
+
+<!-- APP VIEW -->
+<div id="app-view" class="app-layout" style="display: none;">
+  <?!= include("layout"); ?>
+</div>
+
+<script>
+<?!= include("api-client"); ?>
+
+(function() {
+  'use strict';
+  
+  class CanabicaApp {
+    constructor() {
+      this.token = localStorage.getItem('canabica_token');
+      this.loginView = document.getElementById('login-view');
+      this.appView = document.getElementById('app-view');
+      this.onboardingView = document.getElementById('onboarding-comorbidades-container');
+      this.init();
+    }
+    
+    init() {
+      console.log('🌿 Canabica initialized');
+      
+      // Check authentication
+      if (this.token) {
+        this.validateToken();
+      } else {
+        this.showLogin();
+      }
+      
+      // Listen for login success
+      window.addEventListener('login-success', (e) => {
+        this.token = e.detail.token;
+        // Sanitize user object before persisting (never store password)
+        const safeUser = {
+          id: e.detail.user.id,
+          username: e.detail.user.username,
+          displayName: e.detail.user.displayName,
+          email: e.detail.user.email,
+          role: e.detail.user.role,
+          permissions: e.detail.user.permissions
+        };
+        localStorage.setItem('canabica_token', this.token);
+        localStorage.setItem('canabica_user', JSON.stringify(safeUser));
+        this.checkOnboarding(safeUser);
+      });
+
+      window.addEventListener('auth-expired', () => {
+        this.logout();
+      });
+      
+      // Listen for comorbidades saved (close onboarding)
+      window.addEventListener('comorbidades-salvas', (e) => {
+        console.log('✅ Comorbidades salvas, finalizando onboarding');
+        this.finalizarOnboarding();
+      });
+    }
+    
+    async validateToken() {
+      try {
+        const response = await api.call('auth.validate', {});
+        if (response && response.valid) {
+          const user = JSON.parse(localStorage.getItem('canabica_user') || '{}');
+          this.checkOnboarding(user);
+        } else {
+          this.logout();
+        }
+      } catch (error) {
+        console.error('Token validation failed:', error);
+        this.logout();
+      }
+    }
+    
+    async checkOnboarding(user) {
+      // Verificar se precisa do onboarding de comorbidades
+      if (user.role === 'paciente' || user.role === 'grower') {
+        console.log('🔍 Verificando se usuário já respondeu comorbidades...');
+        
+        // Ajustar banner conforme role
+        if (user.role === 'grower') {
+          document.getElementById('onboarding-banner-texto').innerHTML = `
+            🌱 <strong>Atenção Cultivador Medicinal:</strong> As comorbidades que você selecionar definirão os limites máximos de metais pesados aceitos no CoA dos seus fertilizantes e a fundamentação em estudos científicos do seu laudo de autocultivo.
+          `;
+        }
+        
+        try {
+          // TODO: Implementar rota 'comorbidade.pendente' no backend
+          // Por enquanto, sempre mostrar onboarding para demonstração
+          const respondeu = false; // await api.call('comorbidade.pendente', {});
+          
+          if (!respondeu) {
+            console.log('⚠️ Usuário ainda não respondeu comorbidades, exibindo onboarding');
+            this.showOnboarding();
+          } else {
+            console.log('✅ Usuário já respondeu comorbidades');
+            this.showApp();
+          }
+        } catch (error) {
+          console.error('Erro ao verificar onboarding:', error);
+          // Em caso de erro, continuar para o app
+          this.showApp();
+        }
+      } else {
+        // Outros roles não precisam de onboarding
+        this.showApp();
+      }
+    }
+    
+    showLogin() {
+      this.loginView.style.display = 'block';
+      this.appView.style.display = 'none';
+      this.onboardingView.style.display = 'none';
+    }
+    
+    showOnboarding() {
+      this.loginView.style.display = 'none';
+      this.appView.style.display = 'none';
+      this.onboardingView.style.display = 'block';
+      console.log('📋 Onboarding exibido');
+    }
+    
+    finalizarOnboarding() {
+      this.onboardingView.style.display = 'none';
+      this.showApp();
+    }
+    
+    showApp() {
+      this.loginView.style.display = 'none';
+      this.onboardingView.style.display = 'none';
+      this.appView.style.display = 'flex';
+      console.log('✅ App loaded');
+    }
+    
+    logout() {
+      this.token = null;
+      localStorage.removeItem('canabica_token');
+      localStorage.removeItem('canabica_user');
+      this.showLogin();
+    }
+  }
+  
+  // Initialize
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      window.canabicaApp = new CanabicaApp();
+    });
+  } else {
+    window.canabicaApp = new CanabicaApp();
+  }
+  
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<!--
+COMPONENTE: frontend-maturity.html
+PAPEL: Interface de avaliação de maturidade e intuitividade do frontend.
+
+PRINCIPAIS FUNCIONALIDADES:
+- exibição visual de scores por categoria UX/UI;
+- análise de acessibilidade, responsividade e usabilidade;
+- lista priorizada de melhorias de interface;
+- roadmap de evolução do frontend;
+- métricas de componentes e padrões.
+
+INTEGRAÇÕES:
+- FrontendMaturityAssessment, Bootstrap, Router;
+
+STATUS: INTERFACE DE MONITORAMENTO — executar periodicamente para evolução contínua.
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Avaliação de Maturidade - Frontend</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      margin: 0;
+      padding: var(--canna-space-5);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      padding: var(--canna-space-10);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    h1 {
+      color: #1a202c;
+      margin: 0;
+      font-size: 32px;
+      display: flex;
+      align-items: center;
+      gap: var(--canna-space-3);
+    }
+    h1::before {
+      content: '🎨';
+      font-size: 40px;
+    }
+    .badge-container {
+      display: flex;
+      gap: 10px /* Intentional: UI element spacing */;
+    }
+    .badge-large {
+      background: #f7fafc;
+      border: 2px solid #e2e8f0;
+      padding: var(--canna-space-2) 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #4a5568;
+    }
+    h2 {
+      color: #2d3748;
+      margin-top: 40px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e2e8f0;
+      font-size: 24px;
+    }
+    .summary-hero {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: var(--canna-space-10);
+      border-radius: 12px;
+      margin: var(--canna-space-8) 0;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .summary-hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      animation: pulse 4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+    .summary-content {
+      position: relative;
+      z-index: 1;
+    }
+    .summary-hero h2 {
+      color: white;
+      border: none;
+      margin: 0;
+      font-size: 72px;
+      font-weight: 800;
+      text-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .summary-hero p {
+      margin: var(--canna-space-4) 0 0 0;
+      font-size: 28px;
+      opacity: 0.95;
+      font-weight: 300;
+    }
+    .summary-hero small {
+      display: block;
+      margin-top: 20px;
+      opacity: 0.85;
+      font-size: 14px;
+    }
+    .summary-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--canna-space-4);
+      margin-top: var(--canna-space-6);
+    }
+    .summary-stat {
+      background: rgba(255,255,255,0.2);
+      padding: var(--canna-space-4);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+    }
+    .summary-stat-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.8;
+      margin-bottom: 5px;
+    }
+    .summary-stat-value {
+      font-size: 32px;
+      font-weight: 700;
+    }
+    .categories {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--canna-space-5);
+      margin: var(--canna-space-8) 0;
+    }
+    .category-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: var(--canna-space-6);
+      text-align: center;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .category-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+    .category-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+      border-color: #667eea;
+    }
+    .category-card:hover::before {
+      transform: scaleX(1);
+    }
+    .category-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+    .category-card h3 {
+      margin: 0 0 12px 0;
+      color: #2d3748;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .score {
+      font-size: 48px;
+      font-weight: 800;
+      margin: var(--canna-space-4) 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .score.excellent { background: linear-gradient(135deg, #10b981 0%, #059669 100%); -webkit-background-clip: text; background-clip: text; }
+    .score.good { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); -webkit-background-clip: text; background-clip: text; }
+    .score.fair { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); -webkit-background-clip: text; background-clip: text; }
+    .score.poor { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); -webkit-background-clip: text; background-clip: text; }
+    .score.critical { background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%); -webkit-background-clip: text; background-clip: text; }
+    .level {
+      display: inline-block;
+      padding: 6px var(--canna-space-3); /* 6px vertical intentional for badge */
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 700;
+      background: #f7fafc;
+      color: #4a5568;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .recommendations {
+      margin: var(--canna-space-8) 0;
+    }
+    .rec-item {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-left: 6px solid #667eea;
+      padding: var(--canna-space-5);
+      margin: var(--canna-space-4) 0;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+    .rec-item:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transform: translateX(4px);
+    }
+    .rec-item.critical {
+      border-left-color: #dc2626;
+      background: #fef2f2;
+    }
+    .rec-item.high {
+      border-left-color: #ea580c;
+      background: #fff7ed;
+    }
+    .rec-item.medium {
+      border-left-color: #f59e0b;
+      background: #fffbeb;
+    }
+    .rec-item.low {
+      border-left-color: #6b7280;
+      background: #f9fafb;
+    }
+    .rec-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--canna-space-3);
+      gap: var(--canna-space-4);
+    }
+    .rec-title {
+      font-weight: 700;
+      font-size: 18px;
+      color: #1a202c;
+      flex: 1;
+    }
+    .rec-badges {
+      display: flex;
+      gap: 6px /* Intentional: badge micro-spacing */;
+      flex-shrink: 0;
+    }
+    .badge {
+      display: inline-block;
+      padding: var(--canna-space-1) 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge.priority-critical { background: #dc2626; color: white; }
+    .badge.priority-high { background: #ea580c; color: white; }
+    .badge.priority-medium { background: #f59e0b; color: white; }
+    .badge.priority-low { background: #6b7280; color: white; }
+    .badge.effort-high { background: #1e293b; color: white; }
+    .badge.effort-medium { background: #475569; color: white; }
+    .badge.effort-low { background: #94a3b8; color: white; }
+    .rec-description {
+      color: #4a5568;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .rec-category {
+      display: inline-block;
+      margin-top: 10px;
+      padding: var(--canna-space-1) 10px;
+      background: #e2e8f0;
+      color: #4a5568;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .roadmap {
+      margin: var(--canna-space-8) 0;
+    }
+    .roadmap-phase {
+      margin: var(--canna-space-6) 0;
+      padding: var(--canna-space-6);
+      background: linear-gradient(135deg, #f7fafc 0%, #ffffff 100%);
+      border-radius: 12px;
+      border: 2px solid #e2e8f0;
+    }
+    .roadmap-phase h3 {
+      margin: 0 0 20px 0;
+      color: #1a202c;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px /* Intentional: UI element spacing */;
+    }
+    .roadmap-phase h3::before {
+      content: '📍';
+      font-size: 24px;
+    }
+    .roadmap-items {
+      display: grid;
+      gap: 10px /* Intentional: UI element spacing */;
+    }
+    .roadmap-item {
+      padding: var(--canna-space-3) 16px;
+      background: white;
+      border-radius: 12px;
+      border-left: 4px solid #667eea;
+      font-size: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+    .roadmap-item:hover {
+      transform: translateX(4px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .roadmap-item-title {
+      font-weight: 600;
+      color: #2d3748;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: var(--canna-space-5);
+      margin: var(--canna-space-8) 0;
+    }
+    .metric-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: var(--canna-space-6);
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      transition: transform 0.2s ease;
+    }
+    .metric-card:hover {
+      transform: translateY(-4px);
+    }
+    .metric-value {
+      font-size: 42px;
+      font-weight: 800;
+      margin: var(--canna-space-3) 0;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .metric-label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.9;
+      font-weight: 600;
+    }
+    .loading {
+      text-align: center;
+      padding: var(--canna-space-20) 20px;
+      color: white;
+    }
+    .loading-spinner {
+      border: 6px solid rgba(255,255,255,0.3);
+      border-top: 6px solid white;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 25px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .btn {
+      display: inline-block;
+      padding: var(--canna-space-3) 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #2d3748;
+    }
+    .btn-secondary:hover {
+      background: #cbd5e0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .error {
+      background: #fef2f2;
+      border: 2px solid #fca5a5;
+      color: #991b1b;
+      padding: var(--canna-space-5);
+      border-radius: 12px;
+      margin: var(--canna-space-5) 0;
+    }
+    .tabs {
+      display: flex;
+      gap: 5px /* Intentional: tab spacing */;
+      border-bottom: 2px solid #e2e8f0;
+      margin: var(--canna-space-8) 0 20px 0;
+    }
+    .tab {
+      padding: var(--canna-space-3) var(--canna-space-6);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+      font-weight: 600;
+      color: #6b7280;
+      border-radius: 12px 12px 0 0;
+    }
+    .tab:hover {
+      color: #667eea;
+      background: #f7fafc;
+    }
+    .tab.active {
+      border-bottom-color: #667eea;
+      color: #667eea;
+      background: #f7fafc;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .empty-state {
+      text-align: center;
+      padding: var(--canna-space-16) var(--canna-space-5);
+      color: #6b7280;
+    }
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+    @media (max-width: 768px) {
+      .container {
+        padding: var(--canna-space-5);
+      }
+      h1 {
+        font-size: 24px;
+      }
+      .summary-hero h2 {
+        font-size: 48px;
+      }
+      .categories {
+        grid-template-columns: 1fr;
+      }
+      .rec-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Avaliação de Maturidade do Frontend</h1>
+      <div class="badge-container">
+        <a href="/exec?page=maturity" class="btn btn-secondary">Backend →</a>
+        <button id="refreshBtn" class="btn">🔄 Atualizar</button>
+      </div>
+    </div>
+    
+    <div id="loading" class="loading">
+      <div class="loading-spinner"></div>
+      <p style="font-size: 18px; font-weight: 600;">Analisando frontend...</p>
+      <p style="opacity: 0.8;">Avaliando UX, acessibilidade, responsividade e mais</p>
+    </div>
+    
+    <div id="content" style="display: none;">
+      <div class="summary-hero">
+        <div class="summary-content">
+          <h2 id="overallScore">-</h2>
+          <p id="overallLevel">-</p>
+          <small id="assessedAt">-</small>
+          <div class="summary-stats">
+            <div class="summary-stat">
+              <div class="summary-stat-label">Componentes</div>
+              <div class="summary-stat-value" id="componentCount">-</div>
+            </div>
+            <div class="summary-stat">
+              <div class="summary-stat-label">Páginas</div>
+              <div class="summary-stat-value" id="pageCount">-</div>
+            </div>
+            <div class="summary-stat">
+              <div class="summary-stat-label">Forms</div>
+              <div class="summary-stat-value" id="formCount">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="tabs">
+        <div class="tab active" data-tab="overview">📊 Visão Geral</div>
+        <div class="tab" data-tab="recommendations">💡 Recomendações</div>
+        <div class="tab" data-tab="roadmap">🗺️ Roadmap</div>
+        <div class="tab" data-tab="metrics">📈 Métricas</div>
+      </div>
+      
+      <!-- Tab: Overview -->
+      <div id="tab-overview" class="tab-content active">
+        <h2>Scores por Categoria</h2>
+        <div id="categories" class="categories"></div>
+      </div>
+      
+      <!-- Tab: Recommendations -->
+      <div id="tab-recommendations" class="tab-content">
+        <h2>Recomendações Priorizadas</h2>
+        <div id="recommendations" class="recommendations"></div>
+      </div>
+      
+      <!-- Tab: Roadmap -->
+      <div id="tab-roadmap" class="tab-content">
+        <h2>Roadmap de Melhorias</h2>
+        <div id="roadmap" class="roadmap"></div>
+      </div>
+      
+      <!-- Tab: Metrics -->
+      <div id="tab-metrics" class="tab-content">
+        <h2>Métricas de Componentes</h2>
+        <div id="metrics" class="metrics"></div>
+      </div>
+    </div>
+    
+    <div id="error" class="error" style="display: none;"></div>
+  </div>
+  
+  <script>
+    // Mapeamento de ícones por categoria
+    const categoryIcons = {
+      'uxDesign': '🎨',
+      'accessibility': '♿',
+      'responsiveness': '📱',
+      'clientPerformance': '⚡',
+      'usability': '🖱️',
+      'visualConsistency': '🎯',
+      'interactivity': '✨',
+      'frontendCodeQuality': '💻'
+    };
+    
+    let maturityData = null;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      setupTabs();
+      setupRefresh();
+      loadMaturityData();
+    });
+    
+    function setupTabs() {
+      document.querySelectorAll('.tab').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          const tabName = this.getAttribute('data-tab');
+          switchTab(tabName);
+        });
+      });
+    }
+    
+    function setupRefresh() {
+      document.getElementById('refreshBtn').addEventListener('click', function() {
+        this.disabled = true;
+        loadMaturityData();
+      });
+    }
+    
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab').forEach(function(t) {
+        t.classList.remove('active');
+      });
+      document.querySelector('[data-tab="' + tabName + '"]').classList.add('active');
+      
+      document.querySelectorAll('.tab-content').forEach(function(c) {
+        c.classList.remove('active');
+      });
+      document.getElementById('tab-' + tabName).classList.add('active');
+    }
+    
+    function loadMaturityData() {
+      google.script.run
+        .withSuccessHandler(onMaturityDataLoaded)
+        .withFailureHandler(onError)
+        .routeRequest({
+          action: 'frontend.maturity.assess',
+          token: getSessionToken()
+        });
+    }
+    
+    function onMaturityDataLoaded(response) {
+      if (!response.success) {
+        onError(response.error || 'Erro ao carregar dados');
+        return;
+      }
+      
+      maturityData = response.data;
+      renderMaturityReport();
+      
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+      document.getElementById('refreshBtn').disabled = false;
+    }
+    
+    function onError(error) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error').style.display = 'block';
+      document.getElementById('error').textContent = 'Erro: ' + (error.message || error);
+      document.getElementById('refreshBtn').disabled = false;
+    }
+    
+    function renderMaturityReport() {
+      renderSummary();
+      renderCategories();
+      renderRecommendations();
+      renderRoadmap();
+      renderMetrics();
+    }
+    
+    function renderSummary() {
+      const summary = maturityData.summary;
+      
+      document.getElementById('overallScore').textContent = summary.overallScore + '/100';
+      document.getElementById('overallLevel').textContent = summary.overallLevel.name + ' - ' + summary.overallLevel.description;
+      document.getElementById('assessedAt').textContent = 'Avaliado em: ' + formatDateTime(summary.assessedAt);
+      
+      if (summary.componentInventory) {
+        document.getElementById('componentCount').textContent = summary.componentInventory.TOTAL || 0;
+        document.getElementById('pageCount').textContent = summary.componentInventory.PAGES || 0;
+        document.getElementById('formCount').textContent = summary.componentInventory.FORMS || 0;
+      }
+    }
+    
+    function renderCategories() {
+      const container = document.getElementById('categories');
+      container.innerHTML = '';
+      
+      Object.keys(maturityData.categoryScores).forEach(function(key) {
+        const cat = maturityData.categoryScores[key];
+        const card = createCategoryCard(key, cat);
+        container.appendChild(card);
+      });
+    }
+    
+    function createCategoryCard(key, category) {
+      const div = document.createElement('div');
+      div.className = 'category-card';
+      
+      const scoreClass = getScoreClass(category.score);
+      const icon = categoryIcons[key] || '📦';
+      
+      div.innerHTML = 
+        '<div class="category-icon">' + icon + '</div>' +
+        '<h3>' + category.category + '</h3>' +
+        '<div class="score ' + scoreClass + '">' + category.score + '</div>' +
+        '<div class="level">' + category.level.name + '</div>';
+      
+      return div;
+    }
+    
+    function renderRecommendations() {
+      const container = document.getElementById('recommendations');
+      container.innerHTML = '';
+      
+      if (!maturityData.prioritizedRecommendations || maturityData.prioritizedRecommendations.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🎉</div><p>Nenhuma recomendação! Frontend está perfeito.</p></div>';
+        return;
+      }
+      
+      maturityData.prioritizedRecommendations.forEach(function(rec) {
+        const item = createRecommendationItem(rec);
+        container.appendChild(item);
+      });
+    }
+    
+    function createRecommendationItem(rec) {
+      const div = document.createElement('div');
+      div.className = 'rec-item ' + rec.priority.toLowerCase();
+      
+      div.innerHTML = 
+        '<div class="rec-header">' +
+          '<div class="rec-title">' + rec.title + '</div>' +
+          '<div class="rec-badges">' +
+            '<span class="badge priority-' + rec.priority.toLowerCase() + '">' + rec.priority + '</span>' +
+            '<span class="badge effort-' + rec.effort.toLowerCase() + '">' + rec.effort + ' esforço</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="rec-description">' + rec.description + '</div>' +
+        '<span class="rec-category">' + (categoryIcons[rec.category] || '📦') + ' ' + rec.category + '</span>';
+      
+      return div;
+    }
+    
+    function renderRoadmap() {
+      const container = document.getElementById('roadmap');
+      container.innerHTML = '';
+      
+      const roadmap = maturityData.roadmap;
+      const phaseOrder = ['immediate', 'shortTerm', 'mediumTerm', 'longTerm'];
+      
+      phaseOrder.forEach(function(phaseKey) {
+        const phase = roadmap[phaseKey];
+        if (phase && phase.items && phase.items.length > 0) {
+          const phaseDiv = createRoadmapPhase(phase);
+          container.appendChild(phaseDiv);
+        }
+      });
+    }
+    
+    function createRoadmapPhase(phase) {
+      const div = document.createElement('div');
+      div.className = 'roadmap-phase';
+      
+      let html = '<h3>' + phase.name + '</h3><div class="roadmap-items">';
+      
+      phase.items.forEach(function(item) {
+        html += '<div class="roadmap-item">' +
+          '<span class="roadmap-item-title">' + (categoryIcons[item.category] || '📦') + ' ' + item.title + '</span>' +
+          '<span class="badge priority-' + item.priority.toLowerCase() + '">' + item.priority + '</span>' +
+          '</div>';
+      });
+      
+      html += '</div>';
+      div.innerHTML = html;
+      return div;
+    }
+    
+    function renderMetrics() {
+      const container = document.getElementById('metrics');
+      container.innerHTML = '';
+      
+      const metrics = maturityData.componentMetrics;
+      
+      if (!metrics) {
+        container.innerHTML = '<p class="empty-state">Métricas não disponíveis</p>';
+        return;
+      }
+      
+      container.appendChild(createMetricCard('Total de Componentes', metrics.totalComponents || 0, '📦'));
+      container.appendChild(createMetricCard('Páginas', metrics.pages || 0, '📄'));
+      container.appendChild(createMetricCard('Componentes Parciais', metrics.partials || 0, '🧩'));
+      container.appendChild(createMetricCard('Listas', metrics.lists || 0, '📋'));
+      container.appendChild(createMetricCard('Formulários', metrics.forms || 0, '📝'));
+      container.appendChild(createMetricCard('Campos', metrics.fields || 0, '🔤'));
+      container.appendChild(createMetricCard('Componentes Reutilizáveis', metrics.reusableComponents || 0, '♻️'));
+    }
+    
+    function createMetricCard(label, value, icon) {
+      const div = document.createElement('div');
+      div.className = 'metric-card';
+      div.innerHTML = 
+        '<div class="metric-label">' + (icon || '') + ' ' + label + '</div>' +
+        '<div class="metric-value">' + value + '</div>';
+      return div;
+    }
+    
+    function getScoreClass(score) {
+      if (score >= 90) return 'excellent';
+      if (score >= 70) return 'good';
+      if (score >= 50) return 'fair';
+      if (score >= 30) return 'poor';
+      return 'critical';
+    }
+    
+    function formatDateTime(isoString) {
+      const date = new Date(isoString);
+      return date.toLocaleDateString('pt-BR') + ' às ' + date.toLocaleTimeString('pt-BR');
+    }
+    
+    function getSessionToken() {
+      return localStorage.getItem('sheetCrudToken') || sessionStorage.getItem('sheetCrudToken') || '';
+    }
+  </script>
+</body>
+</html>

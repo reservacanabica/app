@@ -1,0 +1,22 @@
+<!--
+COMPONENTE: field-date.html
+PAPEL: Campo de data.
+
+PRINCIPAIS FUNCIONALIDADES:
+- entrada ISO e timezone apresentado;
+- mantém o estado de UI separado do processamento no Apps Script;
+- não acessa diretamente a planilha: usa client.html e os contratos do Web App.
+
+INTEGRAÇÕES:
+- DateService via API;
+- dados esperados: Timestamp.
+
+SEGURANÇA E LIMITAÇÕES:
+- nunca renderizar senha, token completo ou stack trace;
+- validação visual não substitui ValidationService no servidor;
+- usar escaping/templating seguro para texto proveniente da planilha;
+- esqueleto preparado para HtmlService e componentes parciais.
+
+STATUS: ESQUELETO DE INTERFACE — completar acessibilidade, testes e estados de erro.
+-->
+<label data-field-type="date"><span data-role="label"></span><input data-role="input" type="datetime-local"><small>Salvar como ISO-8601 no servidor.</small></label>

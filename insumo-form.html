@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulário de Insumo</title>
+  
+  <link rel="stylesheet" href="quality-components.css">
+</head>
+<body>
+  <div class="form-container">
+    <h2 id="formTitle">Novo Insumo</h2>
+    
+    <form id="insumoForm">
+      <!-- Seção 1: Identificação -->
+      <fieldset>
+        <legend>Identificação</legend>
+        
+        <div class="form-group">
+          <label for="nome_comercial">
+            Nome Comercial <span style="color: red;">*</span>
+          </label>
+          <input
+            type="text"
+            id="nome_comercial"
+            name="nome_comercial"
+            required
+            maxlength="200"
+            placeholder="Ex: Nitrato de Cálcio Técnico"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="tipo_sal">
+            Tipo de Sal <span style="color: red;">*</span>
+          </label>
+          <select id="tipo_sal" name="tipo_sal" required>
+            <option value="">Selecione...</option>
+            <option value="Nitrato">Nitrato</option>
+            <option value="Fosfato">Fosfato</option>
+            <option value="Sulfato">Sulfato</option>
+            <option value="Cloreto">Cloreto</option>
+            <option value="Quelato">Quelato</option>
+            <option value="Óxido">Óxido</option>
+            <option value="Carbonato">Carbonato</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="fabricante">
+            Fabricante <span style="color: red;">*</span>
+          </label>
+          <input
+            type="text"
+            id="fabricante"
+            name="fabricante"
+            required
+            maxlength="200"
+            placeholder="Ex: Yara International"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="pais_origem">
+            País de Origem
+          </label>
+          <input
+            type="text"
+            id="pais_origem"
+            name="pais_origem"
+            maxlength="100"
+            placeholder="Ex: Noruega"
+          >
+        </div>
+      </fieldset>
+      
+      <!-- Seção 2: Registro Regulatório -->
+      <fieldset>
+        <legend>Registro Regulatório (MAPA)</legend>
+        
+        <div class="form-group">
+          <label for="registro_mapa_estabelecimento">
+            Registro MAPA Estabelecimento
+          </label>
+          <input
+            type="text"
+            id="registro_mapa_estabelecimento"
+            name="registro_mapa_estabelecimento"
+            maxlength="50"
+            placeholder="Ex: SP-12345"
+          >
+          <small class="help-text">
+            Registro do estabelecimento fabricante no MAPA
+          </small>
+        </div>
+        
+        <div class="form-group">
+          <label for="registro_mapa_produto">
+            Registro MAPA Produto
+          </label>
+          <input
+            type="text"
+            id="registro_mapa_produto"
+            name="registro_mapa_produto"
+            maxlength="50"
+            placeholder="Ex: RJ-67890"
+          >
+          <small class="help-text">
+            Registro do produto no MAPA
+          </small>
+        </div>
+      </fieldset>
+      
+      <!-- Seção 3: Especificações Técnicas -->
+      <fieldset>
+        <legend>Especificações Técnicas</legend>
+        
+        <div class="form-group">
+          <label for="agente_quelante">
+            Agente Quelante
+          </label>
+          <select id="agente_quelante" name="agente_quelante">
+            <option value="">Nenhum (não é quelato)</option>
+            <option value="EDTA">EDTA</option>
+            <option value="DTPA">DTPA</option>
+            <option value="EDDHA">EDDHA</option>
+          </select>
+          <small class="help-text">
+            Aplicável apenas para micronutrientes quelatados
+          </small>
+        </div>
+        
+        <div class="form-group">
+          <label for="solubilidade_g_l_20c">
+            Solubilidade a 20°C (g/L)
+          </label>
+          <input
+            type="number"
+            id="solubilidade_g_l_20c"
+            name="solubilidade_g_l_20c"
+            step="0.1"
+            min="0"
+            placeholder="Ex: 1200"
+          >
+          <small class="help-text">
+            Solubilidade em água a 20°C
+          </small>
+        </div>
+        
+        <div class="form-group">
+          <label for="pureza_percentual">
+            Pureza (%) <span style="color: red;">*</span>
+          </label>
+          <input
+            type="number"
+            id="pureza_percentual"
+            name="pureza_percentual"
+            required
+            step="0.1"
+            min="0"
+            max="100"
+            placeholder="Ex: 99.5"
+          >
+          <small class="help-text">
+            Pureza declarada pelo fabricante (0-100%)
+          </small>
+        </div>
+      </fieldset>
+      
+      <!-- Seção 4: Documentação -->
+      <fieldset>
+        <legend>Documentação</legend>
+        
+        <div class="form-group">
+          <label for="drive_ficha_tecnica_url">
+            URL da Ficha Técnica (Google Drive)
+          </label>
+          <input
+            type="url"
+            id="drive_ficha_tecnica_url"
+            name="drive_ficha_tecnica_url"
+            placeholder="https://drive.google.com/file/d/..."
+          >
+          <small class="help-text">
+            Link do arquivo da ficha técnica no Google Drive
+          </small>
+        </div>
+      </fieldset>
+      
+      <!-- Seção 5: Status -->
+      <fieldset>
+        <legend>Status</legend>
+        
+        <div class="radio-group">
+          <label>
+            <input
+              type="radio"
+              name="ativo"
+              value="true"
+              checked
+            >
+            Ativo (disponível para uso)
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="ativo"
+              value="false"
+            >
+            Inativo (descontinuado)
+          </label>
+        </div>
+      </fieldset>
+      
+      <!-- Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" onclick="cancel()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-primary">
+          Salvar Insumo
+        </button>
+      </div>
+    </form>
+  </div>
+  
+  <script src="quality-helpers.js"></script>
+  <script src="api-client.html"></script>
+  
+  <script>
+    // Estado do formulário
+    const isEditMode = !!getUrlParam('id');
+    const insumoId = getUrlParam('id');
+    
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+      if (isEditMode) {
+        loadInsumo();
+      }
+    });
+    
+    /**
+     * Carrega insumo existente para edição
+     */
+    async function loadInsumo() {
+      try {
+        document.getElementById('formTitle').textContent = 'Editar Insumo';
+        showLoading(true);
+        
+        const insumo = await api.insumos.get(insumoId);
+        
+        // Preencher form
+        setFormData('insumoForm', {
+          nome_comercial: insumo.nome_comercial,
+          tipo_sal: insumo.tipo_sal,
+          fabricante: insumo.fabricante,
+          pais_origem: insumo.pais_origem,
+          registro_mapa_estabelecimento: insumo.registro_mapa_estabelecimento,
+          registro_mapa_produto: insumo.registro_mapa_produto,
+          agente_quelante: insumo.agente_quelante || '',
+          solubilidade_g_l_20c: insumo.solubilidade_g_l_20c,
+          pureza_percentual: insumo.pureza_percentual,
+          drive_ficha_tecnica_url: insumo.drive_ficha_tecnica_url,
+          ativo: String(insumo.ativo)
+        });
+        
+      } catch (error) {
+        handleApiError(error);
+        goBack();
+      } finally {
+        showLoading(false);
+      }
+    }
+    
+    /**
+     * Handler de submit do formulário
+     */
+    document.getElementById('insumoForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!validateForm('insumoForm')) {
+        showToast('error', 'Preencha todos os campos obrigatórios');
+        return;
+      }
+      
+      try {
+        showLoading(true);
+        
+        const data = getFormData('insumoForm');
+        
+        // Converter campos
+        data.ativo = data.ativo === 'true';
+        data.solubilidade_g_l_20c = data.solubilidade_g_l_20c ? 
+          parseFloat(data.solubilidade_g_l_20c) : null;
+        data.pureza_percentual = parseFloat(data.pureza_percentual);
+        
+        // Limpar agente_quelante se vazio
+        if (!data.agente_quelante) {
+          data.agente_quelante = null;
+        }
+        
+        let result;
+        if (isEditMode) {
+          result = await api.insumos.update(insumoId, data);
+          showToast('success', 'Insumo atualizado com sucesso!');
+        } else {
+          result = await api.insumos.create(data);
+          showToast('success', 'Insumo criado com sucesso!');
+        }
+        
+        // Redirecionar para lista após pequeno delay
+        setTimeout(() => {
+          navigateTo('insumo-list');
+        }, 1000);
+        
+      } catch (error) {
+        handleApiError(error);
+      } finally {
+        showLoading(false);
+      }
+    });
+    
+    /**
+     * Cancela edição e volta para lista
+     */
+    function cancel() {
+      if (confirm('Deseja realmente cancelar? As alterações não salvas serão perdidas.')) {
+        navigateTo('insumo-list');
+      }
+    }
+  </script>
+</body>
+</html>

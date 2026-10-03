@@ -1,0 +1,63 @@
+<!--
+COMPONENTE: filters.html
+PAPEL: Filtros de listas.
+
+PRINCIPAIS FUNCIONALIDADES:
+- filtros por texto, status, data, entidade e taxonomia;
+- mantém o estado de UI separado do processamento no Apps Script;
+- não acessa diretamente a planilha: usa client.html e os contratos do Web App.
+
+INTEGRAÇÕES:
+- CrudService, client.html;
+- dados esperados: Query params.
+
+SEGURANÇA E LIMITAÇÕES:
+- nunca renderizar senha, token completo ou stack trace;
+- validação visual não substitui ValidationService no servidor;
+- usar escaping/templating seguro para texto proveniente da planilha;
+- esqueleto preparado para HtmlService e componentes parciais.
+
+STATUS: ESQUELETO DE INTERFACE — completar acessibilidade, testes e estados de erro.
+-->
+<form 
+  class="filters" 
+  data-role="filters" 
+  role="search" 
+  aria-label="Filtros de pesquisa">
+  
+  <div class="filter-group">
+    <label for="filter-search" class="sr-only">Buscar por texto</label>
+    <input 
+      id="filter-search"
+      name="q" 
+      type="search"
+      placeholder="Buscar"
+      aria-label="Campo de busca textual"
+      autocomplete="off">
+  </div>
+  
+  <div class="filter-group">
+    <label for="filter-status">Status:</label>
+    <select 
+      id="filter-status"
+      name="status"
+      aria-label="Filtrar por status">
+      <option value="">Todos os status</option>
+      <option value="DRAFT">Rascunho</option>
+      <option value="ACTIVE">Ativo</option>
+      <option value="ARCHIVED">Arquivado</option>
+    </select>
+  </div>
+  
+  <button 
+    type="submit" 
+    aria-label="Aplicar filtros de pesquisa">
+    🔍 Filtrar
+  </button>
+  
+  <button 
+    type="reset" 
+    aria-label="Limpar todos os filtros">
+    ✖️ Limpar
+  </button>
+</form>

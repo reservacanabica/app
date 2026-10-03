@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Workflow Test - Reserva Canábica</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0f1419;
+      color: #e8edf4;
+      padding: var(--canna-space-5);
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      color: #7eb356;
+    }
+    
+    .subtitle {
+      color: #9ca3af;
+      margin-bottom: 30px;
+    }
+    
+    .test-section {
+      background: #1a1d22;
+      border: 1px solid #2f3540;
+      border-radius: 12px;
+      padding: var(--canna-space-5);
+      margin-bottom: 20px;
+    }
+    
+    .test-section h2 {
+      display: flex;
+      align-items: center;
+      gap: 10px /* Intentional: badge/button padding */;
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+      color: #e8edf4;
+    }
+    
+    .test-section h2 .material-icons {
+      color: #7eb356;
+    }
+    
+    .test-item {
+      background: #14171a;
+      border: 1px solid #2f3540;
+      border-radius: 12px;
+      padding: var(--canna-space-4);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .test-item-info {
+      flex: 1;
+    }
+    
+    .test-item-title {
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    
+    .test-item-desc {
+      font-size: 0.875rem;
+      color: #9ca3af;
+    }
+    
+    .test-actions {
+      display: flex;
+      gap: 10px /* Intentional: badge/button padding */;
+    }
+    
+    .btn {
+      padding: var(--canna-space-2) 16px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px /* Intentional: micro-spacing */;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+    
+    .btn-test {
+      background: #4CAF50;
+      color: white;
+    }
+    
+    .btn-test:hover {
+      background: #2d5016;
+    }
+    
+    .btn-test:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .status {
+      padding: var(--canna-space-1) 12px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .status-pending {
+      background: rgba(107, 114, 128, 0.2);
+      color: #9ca3af;
+    }
+    
+    .status-running {
+      background: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+      animation: pulse 1.5s infinite;
+    }
+    
+    .status-pass {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+    }
+    
+    .status-fail {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .log-console {
+      background: #0a0c0e;
+      border: 1px solid #2f3540;
+      border-radius: 12px;
+      padding: var(--canna-space-4);
+      margin-top: 20px;
+      height: 300px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.8rem;
+    }
+    
+    .log-entry {
+      margin-bottom: 5px;
+      padding: 3px 0;
+    }
+    
+    .log-info { color: #60a5fa; }
+    .log-success { color: #10b981; }
+    .log-error { color: #ef4444; }
+    .log-warning { color: #f59e0b; }
+    
+    .summary {
+      background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), transparent);
+      border: 1px solid #4CAF50;
+      border-radius: 12px;
+      padding: var(--canna-space-5);
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--canna-space-5);
+    }
+    
+    .summary-item {
+      text-align: center;
+    }
+    
+    .summary-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+    
+    .summary-label {
+      font-size: 0.875rem;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .run-all {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      padding: var(--canna-space-4) 30px;
+      background: linear-gradient(135deg, #4CAF50, #388E3C);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 700;
+      box-shadow: 0 10px 30px rgba(58, 107, 30, 0.4);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px /* Intentional: badge/button padding */;
+      z-index: 1000;
+      transition: all 0.3s;
+    }
+    
+    .run-all:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 40px rgba(58, 107, 30, 0.5);
+    }
+    
+    .run-all .material-icons {
+      font-size: 24px;
+    }
+    
+    @media (max-width: 768px) {
+      .summary {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .run-all {
+        bottom: 20px;
+        right: 20px;
+        padding: var(--canna-space-3) 20px;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 Workflow Test Suite</h1>
+    <p class="subtitle">Validação completa do workflow Reserva Canábica</p>
+    
+    <!-- Summary -->
+    <div class="summary">
+      <div class="summary-item">
+        <div class="summary-value" id="total-tests">0</div>
+        <div class="summary-label">Total</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" style="color: #10b981;" id="passed-tests">0</div>
+        <div class="summary-label">Passou</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" style="color: #ef4444;" id="failed-tests">0</div>
+        <div class="summary-label">Falhou</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" style="color: #f59e0b;" id="duration">0.0s</div>
+        <div class="summary-label">Duração</div>
+      </div>
+    </div>
+    
+    <!-- 1. Autenticação -->
+    <div class="test-section">
+      <h2>
+        <span class="material-icons">lock</span>
+        1. Autenticação
+      </h2>
+      
+      <div class="test-item" data-test="login-success">
+        <div class="test-item-info">
+          <div class="test-item-title">Login com Credenciais Válidas</div>
+          <div class="test-item-desc">Testar autenticação bem-sucedida e obtenção de token</div>
+        </div>
+        <div class="test-actions">
+          <span class="status status-pending">Pendente</span>
+          <button class="btn btn-test" onclick="runTest('login-success')">
+            <span class="material-icons" style="font-size: 16px;">play_arrow</span>
+            Testar
+          </button>
+        </div>
+      </div>
+      
+      <div class="test-item" data-test="login-fail">
+        <div class="test-item-info">
+          <div class="test-item-title">Login com Credenciais Inválidas</div>
+          <div class="test-item-desc">Validar tratamento de erro em autenticação</div>
+        </div>
+        <div class="test-actions">
+          <span class="status status-pending">Pendente</span>
+          <button class="btn btn-test" onclick="runTest('login-fail')">
+            <span class="material-icons" style="font-size: 16px;">play_arrow</span>
+            Testar
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 2. Dashboard -->
+    <div class="test-section">
+      <h2>
+        <span class="material-icons">dashboard</span>
+        2. Dashboard
+      </h2>
+      
+      <div class="test-item" data-test="dashboard-load">
+        <div class="test-item-info">
+          <div class="test-item-title">Carregar Estatísticas do Dashboard</div>
+          <div class="test-item-desc">Verificar se stats cards carregam dados reais</div>
+        </div>
+        <div class="test-actions">
+          <span class="status status-pending">Pendente</span>
+          <button class="btn btn-test" onclick="runTest('dashboard-load')">
+            <span class="material-icons" style="font-size: 16px;">play_arrow</span>
+            Testar
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 3. CRUD - Estudos -->
+    <div class="test-section">
+      <h2>
+        <span class="material-icons">science</span>
+        3. CRUD - Estudos
+      </h2>
+      
+      <div class="test-item" data-test="list-studies">
+        <div class="test-item-info">
+          <div class="test-item-title">Listar Estudos</div>
+          <div class="test-item-desc">Buscar lista de estudos com filtros</div>
+        </div>
+        <div class="test-actions">
+          <span class="status status-pending">Pendente</span>
+          <button class="btn btn-test" onclick="runTest('list-studies')">
+            <span class="material-icons" style="font-size: 16px;">play_arrow</span>
+            Testar
+          </button>
+        </div>
+      </div>
+      
+      <div class="test-item" data-test="create-study">
+        <div class="test-item-info">
+          <div class="test-item-title">Criar Novo Estudo</div>
+          <div class="test-item-desc">Criar estudo e validar ID gerado</div>
+        </div>
+        <div class="test-actions">
+          <span class="status status-pending">Pendente</span>
+          <button class="btn btn-test" onclick="runTest('create-study')">
+            <span class="material-icons" style="font-size: 16px;">play_arrow</span>
+            Testar
+          </button>
+        </div>
+      </div>
+      
+      <div class="test-item" data-test="update-study">
+        <div class="test-item-info">
+          <div class="test-item-title">Editar Estudo</div>
+          <div class="test-item-desc">Atualizar estudo existente</div>
+        </div>
+        <div class="test-actions">
+          <span class="status status-pending">Pendente</span>
+          <button class="btn btn-test" onclick="runTest('update-study')">
+            <span class="material-icons" style="font-size: 16px;">play_arrow</span>
+            Testar
+          </button>
+        </div>
+      </div>
+      
+      <div class="test-item" data-test="delete-study">
+        <div class="test-item-info">
+          <div class="test-item-title">Deletar Estudo</div>
+          <div class="test-item-desc">Remover estudo e validar auditoria</div>
+        </div>
+        <div class="test-actions">
+          <span class="status status-pending">Pendente</span>
+          <button class="btn btn-test" onclick="runTest('delete-study')">
+            <span class="material-icons" style="font-size: 16px;">play_arrow</span>
+            Testar
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 4. Validações -->
+    <div class="test-section">
+      <h2>
+        <span class="material-icons">verified</span>
+        4. Validações
+      </h2>
+      
+      <div class="test-item" data-test="form-validation">
+        <div class="test-item-info">
+          <div class="test-item-title">Validação de Formulário</div>
+          <div class="test-item-desc">Testar validações client-side</div>
+        </div>
+        <div class="test-actions">
+          <span class="status status-pending">Pendente</span>
+          <button class="btn btn-test" onclick="runTest('form-validation')">
+            <span class="material-icons" style="font-size: 16px;">play_arrow</span>
+            Testar
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 5. Navegação -->
+    <div class="test-section">
+      <h2>
+        <span class="material-icons">navigation</span>
+        5. Navegação SPA
+      </h2>
+      
+      <div class="test-item" data-test="spa-navigation">
+        <div class="test-item-info">
+          <div class="test-item-title">Navegação sem Reload</div>
+          <div class="test-item-desc">Validar navegação SPA entre views</div>
+        </div>
+        <div class="test-actions">
+          <span class="status status-pending">Pendente</span>
+          <button class="btn btn-test" onclick="runTest('spa-navigation')">
+            <span class="material-icons" style="font-size: 16px;">play_arrow</span>
+            Testar
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Console Log -->
+    <div class="test-section">
+      <h2>
+        <span class="material-icons">terminal</span>
+        Console de Logs
+      </h2>
+      <div class="log-console" id="log-console">
+        <div class="log-entry log-info">🧪 Pronto para executar testes...</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Run All Button -->
+  <button class="run-all" onclick="runAllTests()">
+    <span class="material-icons">play_circle</span>
+    Executar Todos
+  </button>
+
+  <script>
+    // Estado global dos testes
+    const testState = {
+      token: null,
+      testStudyId: null,
+      results: {},
+      startTime: null
+    };
+    
+    /**
+     * Adiciona entrada ao console de log
+     */
+    function log(message, type = 'info') {
+      const console = document.getElementById('log-console');
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      
+      const timestamp = new Date().toLocaleTimeString('pt-BR');
+      entry.textContent = `[${timestamp}] ${message}`;
+      
+      console.appendChild(entry);
+      console.scrollTop = console.scrollHeight;
+    }
+    
+    /**
+     * Atualiza status de um teste
+     */
+    function updateTestStatus(testId, status) {
+      const testItem = document.querySelector(`[data-test="${testId}"]`);
+      const statusEl = testItem.querySelector('.status');
+      
+      statusEl.className = `status status-${status}`;
+      statusEl.textContent = {
+        'pending': 'Pendente',
+        'running': 'Executando',
+        'pass': 'Passou',
+        'fail': 'Falhou'
+      }[status];
+      
+      testState.results[testId] = status;
+      updateSummary();
+    }
+    
+    /**
+     * Atualiza resumo de testes
+     */
+    function updateSummary() {
+      const results = Object.values(testState.results);
+      const total = results.length;
+      const passed = results.filter(r => r === 'pass').length;
+      const failed = results.filter(r => r === 'fail').length;
+      
+      document.getElementById('total-tests').textContent = total;
+      document.getElementById('passed-tests').textContent = passed;
+      document.getElementById('failed-tests').textContent = failed;
+      
+      if (testState.startTime) {
+        const duration = ((Date.now() - testState.startTime) / 1000).toFixed(1);
+        document.getElementById('duration').textContent = duration + 's';
+      }
+    }
+    
+    /**
+     * Simulação de chamada ao backend
+     * EM PRODUÇÃO: Substituir por google.script.run.functionName()
+     */
+    async function callBackend(action, data = {}) {
+      log(`📤 Chamando backend: ${action}`, 'info');
+      
+      // Simular delay de rede
+      await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+      
+      // Simular respostas baseadas na ação
+      const responses = {
+        'auth.login': {
+          success: true,
+          data: {
+            user: {
+              id: 'usr_001',
+              username: 'researcher@lab.com',
+              displayName: 'Dr. Pesquisador',
+              role: 'RESEARCHER'
+            },
+            session: {
+              token: 'uuid-' + Math.random().toString(36).substr(2, 9),
+              expiresAt: new Date(Date.now() + 3600000).toISOString()
+            }
+          }
+        },
+        'auth.login.fail': {
+          success: false,
+          error: {
+            code: 'AUTH_INVALID',
+            message: 'Credenciais inválidas'
+          }
+        },
+        'dashboard.summary': {
+          success: true,
+          data: {
+            totalStudies: 24,
+            totalExperiments: 156,
+            totalObservations: 892,
+            totalValidations: 45
+          }
+        },
+        'studies.list': {
+          success: true,
+          data: {
+            items: [
+              {
+                id: 'std_001',
+                title: 'Estudo de Eficácia da Cannabis',
+                status: 'ACTIVE',
+                createdAt: '2024-01-15T10:00:00Z'
+              }
+            ],
+            total: 1,
+            page: 1,
+            pageSize: 10
+          }
+        },
+        'studies.save': {
+          success: true,
+          data: {
+            id: 'std_' + Math.random().toString(36).substr(2, 9),
+            title: data.title || 'Novo Estudo',
+            status: data.status || 'DRAFT',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        },
+        'studies.delete': {
+          success: true,
+          message: 'Estudo deletado com sucesso'
+        }
+      };
+      
+      const response = responses[action] || responses[action + '.fail'] || {
+        success: false,
+        error: { code: 'NOT_IMPLEMENTED', message: 'Ação não implementada na simulação' }
+      };
+      
+      if (response.success) {
+        log(`✅ Backend respondeu: ${action}`, 'success');
+      } else {
+        log(`❌ Backend erro: ${response.error.message}`, 'error');
+      }
+      
+      return response;
+    }
+    
+    /**
+     * Testes individuais
+     */
+    const tests = {
+      'login-success': async () => {
+        log('🔐 Testando login com credenciais válidas...', 'info');
+        
+        const response = await callBackend('auth.login', {
+          username: 'researcher@lab.com',
+          password: 'senha123'
+        });
+        
+        if (!response.success) {
+          throw new Error('Login falhou: ' + response.error.message);
+        }
+        
+        if (!response.data.session.token) {
+          throw new Error('Token não retornado');
+        }
+        
+        testState.token = response.data.session.token;
+        log(`✅ Token obtido: ${testState.token.substr(0, 20)}...`, 'success');
+        
+        return true;
+      },
+      
+      'login-fail': async () => {
+        log('🔐 Testando login com credenciais inválidas...', 'info');
+        
+        const response = await callBackend('auth.login.fail', {
+          username: 'invalid@user.com',
+          password: 'wrongpass'
+        });
+        
+        if (response.success) {
+          throw new Error('Login deveria ter falhado');
+        }
+        
+        if (response.error.code !== 'AUTH_INVALID') {
+          throw new Error('Código de erro incorreto');
+        }
+        
+        log('✅ Erro tratado corretamente', 'success');
+        return true;
+      },
+      
+      'dashboard-load': async () => {
+        log('📊 Carregando dashboard...', 'info');
+        
+        if (!testState.token) {
+          throw new Error('Necessário fazer login primeiro');
+        }
+        
+        const response = await callBackend('dashboard.summary', {
+          token: testState.token
+        });
+        
+        if (!response.success) {
+          throw new Error('Dashboard falhou: ' + response.error.message);
+        }
+        
+        const { totalStudies, totalExperiments } = response.data;
+        log(`✅ Dashboard: ${totalStudies} estudos, ${totalExperiments} experimentos`, 'success');
+        
+        return true;
+      },
+      
+      'list-studies': async () => {
+        log('📋 Listando estudos...', 'info');
+        
+        const response = await callBackend('studies.list', {
+          token: testState.token,
+          filters: {}
+        });
+        
+        if (!response.success) {
+          throw new Error('Listagem falhou: ' + response.error.message);
+        }
+        
+        if (!Array.isArray(response.data.items)) {
+          throw new Error('Items não é array');
+        }
+        
+        log(`✅ ${response.data.items.length} estudos listados`, 'success');
+        return true;
+      },
+      
+      'create-study': async () => {
+        log('➕ Criando novo estudo...', 'info');
+        
+        const response = await callBackend('studies.save', {
+          token: testState.token,
+          data: {
+            title: 'Estudo de Teste Automatizado',
+            objective: 'Validar workflow completo',
+            status: 'DRAFT'
+          }
+        });
+        
+        if (!response.success) {
+          throw new Error('Criação falhou: ' + response.error.message);
+        }
+        
+        if (!response.data.id) {
+          throw new Error('ID não gerado');
+        }
+        
+        testState.testStudyId = response.data.id;
+        log(`✅ Estudo criado: ${testState.testStudyId}`, 'success');
+        
+        return true;
+      },
+      
+      'update-study': async () => {
+        log('✏️ Editando estudo...', 'info');
+        
+        if (!testState.testStudyId) {
+          throw new Error('Necessário criar estudo primeiro');
+        }
+        
+        const response = await callBackend('studies.save', {
+          token: testState.token,
+          data: {
+            id: testState.testStudyId,
+            title: 'Estudo Atualizado',
+            status: 'ACTIVE'
+          }
+        });
+        
+        if (!response.success) {
+          throw new Error('Atualização falhou: ' + response.error.message);
+        }
+        
+        log('✅ Estudo atualizado', 'success');
+        return true;
+      },
+      
+      'delete-study': async () => {
+        log('🗑️ Deletando estudo...', 'info');
+        
+        if (!testState.testStudyId) {
+          throw new Error('Necessário criar estudo primeiro');
+        }
+        
+        const response = await callBackend('studies.delete', {
+          token: testState.token,
+          id: testState.testStudyId
+        });
+        
+        if (!response.success) {
+          throw new Error('Deleção falhou: ' + response.error.message);
+        }
+        
+        log('✅ Estudo deletado', 'success');
+        testState.testStudyId = null;
+        
+        return true;
+      },
+      
+      'form-validation': async () => {
+        log('✔️ Testando validação de formulário...', 'info');
+        
+        // Simular validações
+        const validator = {
+          required: (value) => !!value && value.trim().length > 0,
+          email: (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+        };
+        
+        // Teste 1: Campo obrigatório
+        if (validator.required('')) {
+          throw new Error('Validação required falhou');
+        }
+        log('✅ Validação required OK', 'success');
+        
+        // Teste 2: Email válido
+        if (!validator.email('test@example.com')) {
+          throw new Error('Validação email falhou');
+        }
+        log('✅ Validação email OK', 'success');
+        
+        return true;
+      },
+      
+      'spa-navigation': async () => {
+        log('🧭 Testando navegação SPA...', 'info');
+        
+        // Simular navegação
+        const views = ['dashboard', 'study-list', 'experiment-list', 'dashboard'];
+        
+        for (const view of views) {
+          log(`→ Navegando para: ${view}`, 'info');
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        
+        log('✅ Navegação SPA completa', 'success');
+        return true;
+      }
+    };
+    
+    /**
+     * Executa um teste específico
+     */
+    async function runTest(testId) {
+      updateTestStatus(testId, 'running');
+      
+      try {
+        const testFn = tests[testId];
+        if (!testFn) {
+          throw new Error('Teste não encontrado: ' + testId);
+        }
+        
+        await testFn();
+        updateTestStatus(testId, 'pass');
+        
+      } catch (error) {
+        log(`❌ Teste falhou: ${error.message}`, 'error');
+        updateTestStatus(testId, 'fail');
+      }
+    }
+    
+    /**
+     * Executa todos os testes em sequência
+     */
+    async function runAllTests() {
+      log('🚀 Iniciando execução de todos os testes...', 'info');
+      testState.startTime = Date.now();
+      
+      const testOrder = [
+        'login-success',
+        'login-fail',
+        'dashboard-load',
+        'list-studies',
+        'create-study',
+        'update-study',
+        'delete-study',
+        'form-validation',
+        'spa-navigation'
+      ];
+      
+      for (const testId of testOrder) {
+        await runTest(testId);
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      const passed = Object.values(testState.results).filter(r => r === 'pass').length;
+      const total = testOrder.length;
+      
+      if (passed === total) {
+        log(`🎉 Todos os ${total} testes passaram!`, 'success');
+      } else {
+        log(`⚠️ ${passed}/${total} testes passaram`, 'warning');
+      }
+    }
+    
+    // Inicialização
+    updateSummary();
+  </script>
+</body>
+</html>

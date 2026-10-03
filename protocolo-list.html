@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Protocolos Biológicos</title>
+  
+  <link rel="stylesheet" href="quality-components.css">
+</head>
+<body>
+  <div class="list-container">
+    <!-- Header -->
+    <div class="list-header">
+      <h2>Protocolos Biológicos</h2>
+      <button onclick="navigateTo('protocolo-form')" class="btn-primary">
+        <span>+</span> Novo Protocolo
+      </button>
+    </div>
+    
+    <!-- Filters -->
+    <div class="filters">
+      <input
+        type="search"
+        id="searchInput"
+        placeholder="Buscar por organismo..."
+        style="flex: 1; min-width: 300px;"
+      >
+      
+      <select id="filterFase">
+        <option value="">Todas as fases</option>
+        <option value="PROPAGACAO">Propagação</option>
+        <option value="VEGETATIVA">Vegetativa</option>
+        <option value="FLORACAO">Floração</option>
+      </select>
+      
+      <select id="filterTipo">
+        <option value="">Todos os tipos</option>
+        <option value="FOLIAR">Foliar</option>
+        <option value="SOLO">Solo</option>
+        <option value="INOCULACAO">Inoculação</option>
+      </select>
+      
+      <button onclick="applyFilters()" class="btn-secondary">
+        Filtrar
+      </button>
+    </div>
+    
+    <!-- Table -->
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortTable('organismo_alvo')" style="cursor: pointer;">
+              Organismo Alvo ↕
+            </th>
+            <th onclick="sortTable('tipo_aplicacao')" style="cursor: pointer;">
+              Tipo Aplicação ↕
+            </th>
+            <th onclick="sortTable('fase_cultivo')" style="cursor: pointer;">
+              Fase ↕
+            </th>
+            <th>
+              pH Range
+            </th>
+            <th>
+              EC Máx
+            </th>
+            <th>
+              Incompatibilidades
+            </th>
+            <th style="text-align: center;">
+              Ações
+            </th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- Populated via JS -->
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Empty state -->
+    <div id="emptyState" class="empty-state" hidden>
+      <p>Nenhum protocolo encontrado</p>
+      <button onclick="navigateTo('protocolo-form')" class="btn-primary" style="margin-top: 1rem;">
+        Cadastrar Primeiro Protocolo
+      </button>
+    </div>
+    
+    <!-- Stats -->
+    <div id="stats" style="margin-top: 2rem;">
+      <p style="margin: 0; font-size: 0.875rem; color: #6b7280; padding: 1rem; background: var(--bg-secondary); border-radius: 12px;">
+        <strong id="totalCount">0</strong> protocolos cadastrados
+      </p>
+    </div>
+  </div>
+  
+  <script src="quality-helpers.js"></script>
+  <script src="api-client.html"></script>
+  
+  <script>
+    // Estado
+    let allProtocolos = [];
+    let filteredProtocolos = [];
+    let currentSort = { field: 'organismo_alvo', direction: 'asc' };
+    
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+      loadProtocolos();
+      
+      document.getElementById('searchInput').addEventListener('input', applyFilters);
+    });
+    
+    /**
+     * Carrega protocolos
+     */
+    async function loadProtocolos() {
+      try {
+        showLoading(true);
+        
+        allProtocolos = await api.protocolos.list();
+        filteredProtocolos = allProtocolos;
+        
+        applyFilters();
+        
+      } catch (error) {
+        handleApiError(error);
+      } finally {
+        showLoading(false);
+      }
+    }
+    
+    /**
+     * Aplica filtros
+     */
+    function applyFilters() {
+      const searchTerm = document.getElementById('searchInput').value;
+      const filterFase = document.getElementById('filterFase').value;
+      const filterTipo = document.getElementById('filterTipo').value;
+      
+      let result = allProtocolos;
+      
+      // Filtro de busca
+      if (searchTerm) {
+        result = filterItems(result, searchTerm, ['organismo_alvo']);
+      }
+      
+      // Filtro de fase
+      if (filterFase) {
+        result = result.filter(p => p.fase_cultivo === filterFase);
+      }
+      
+      // Filtro de tipo
+      if (filterTipo) {
+        result = result.filter(p => p.tipo_aplicacao === filterTipo);
+      }
+      
+      filteredProtocolos = result;
+      
+      // Ordenação
+      filteredProtocolos = sortBy(filteredProtocolos, currentSort.field, currentSort.direction);
+      
+      renderTable();
+      updateStats();
+    }
+    
+    /**
+     * Ordena tabela
+     */
+    function sortTable(field) {
+      if (currentSort.field === field) {
+        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+      } else {
+        currentSort.field = field;
+        currentSort.direction = 'asc';
+      }
+      
+      filteredProtocolos = sortBy(filteredProtocolos, currentSort.field, currentSort.direction);
+      renderTable();
+    }
+    
+    /**
+     * Renderiza tabela
+     */
+    function renderTable() {
+      const columns = [
+        {
+          key: 'organismo_alvo',
+          render: (value) => `<strong>${value}</strong>`
+        },
+        {
+          key: 'tipo_aplicacao',
+          render: (value) => {
+            const badges = {
+              'FOLIAR': '<span class="badge badge-info">Foliar</span>',
+              'SOLO': '<span class="badge badge-success">Solo</span>',
+              'INOCULACAO': '<span class="badge badge-warning">Inoculação</span>'
+            };
+            return badges[value] || value;
+          }
+        },
+        {
+          key: 'fase_cultivo',
+          render: (value) => {
+            const fases = {
+              'PROPAGACAO': 'Propagação',
+              'VEGETATIVA': 'Vegetativa',
+              'FLORACAO': 'Floração'
+            };
+            return fases[value] || value;
+          }
+        },
+        {
+          key: 'ph_range',
+          render: (_, item) => {
+            return `<span style="font-family: monospace; font-size: 0.875rem;">${formatNumber(item.ph_minimo, 1)} - ${formatNumber(item.ph_maximo, 1)}</span>`;
+          }
+        },
+        {
+          key: 'ec_maximo',
+          render: (value) => `${formatNumber(value, 1)} mS/cm`
+        },
+        {
+          key: 'quelatos_incompativeis',
+          render: (value) => {
+            if (!value || value.length === 0) {
+              return '<span style="color: #10b981;">Nenhuma</span>';
+            }
+            return `<span style="color: #f59e0b;" title="${value.join(', ')}">${value.length} quelato(s)</span>`;
+          }
+        }
+      ];
+      
+      const actionsRenderer = (item) => `
+        <div style="display: flex; gap: 0.5rem; justify-content: center;">
+          <button onclick="viewProtocolo('${item.id}')" class="btn-sm btn-secondary" title="Visualizar">
+            👁️
+          </button>
+          <button onclick="editProtocolo('${item.id}')" class="btn-sm btn-primary" title="Editar">
+            ✏️
+          </button>
+          <button onclick="usarProtocolo('${item.id}')" class="btn-sm btn-success" title="Usar em Análise">
+            🔬
+          </button>
+          <button onclick="deleteProtocolo('${item.id}', '${item.organismo_alvo}')" class="btn-sm btn-danger" title="Excluir">
+            🗑️
+          </button>
+        </div>
+      `;
+      
+      window.renderTable(filteredProtocolos, columns, actionsRenderer);
+    }
+    
+    /**
+     * Atualiza estatísticas
+     */
+    function updateStats() {
+      const total = filteredProtocolos.length;
+      document.getElementById('totalCount').textContent = total;
+      document.getElementById('emptyState').hidden = total > 0;
+    }
+    
+    /**
+     * Visualiza protocolo
+     */
+    function viewProtocolo(id) {
+      navigateTo('protocolo-view', { id });
+    }
+    
+    /**
+     * Edita protocolo
+     */
+    function editProtocolo(id) {
+      navigateTo('protocolo-form', { id });
+    }
+    
+    /**
+     * Usa protocolo em análise
+     */
+    function usarProtocolo(id) {
+      navigateTo('parecer-form', { protocolo_id: id });
+    }
+    
+    /**
+     * Exclui protocolo
+     */
+    async function deleteProtocolo(id, nome) {
+      const confirmed = confirm(
+        `Tem certeza que deseja excluir o protocolo "${nome}"?\n\n` +
+        `Esta ação não pode ser desfeita.`
+      );
+      
+      if (!confirmed) return;
+      
+      try {
+        showLoading(true);
+        
+        await api.protocolos.delete(id);
+        
+        showToast('success', 'Protocolo excluído com sucesso!');
+        
+        await loadProtocolos();
+        
+      } catch (error) {
+        handleApiError(error);
+      } finally {
+        showLoading(false);
+      }
+    }
+  </script>
+</body>
+</html>

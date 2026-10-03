@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exemplo de Página Padronizada</title>
+  
+  <style>
+    /* Import Design Tokens */
+    :root {
+      --color-primary: #4CAF50;
+      --color-primary-light: #4caf50;
+      --color-primary-dark: #1b5e20;
+      --color-primary-bg: #e8f5e9;
+      --color-success: #4caf50;
+      --color-warning: #ff9800;
+      --color-error: #f44336;
+      --color-info: #2196f3;
+      --color-text-primary: #212121;
+      --color-text-secondary: #757575;
+      --color-text-disabled: #bdbdbd;
+      --color-border: #e0e0e0;
+      --color-bg-page: #fafafa;
+      --color-bg-card: #ffffff;
+      --color-bg-hover: #f5f5f5;
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      --space-2xl: 48px;
+      --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      --font-size-xs: 0.75rem;
+      --font-size-sm: 0.875rem;
+      --font-size-base: 1rem;
+      --font-size-lg: 1.125rem;
+      --font-size-xl: 1.25rem;
+      --font-size-2xl: 1.5rem;
+      --font-size-3xl: 2rem;
+      --font-weight-normal: 400;
+      --font-weight-medium: 500;
+      --font-weight-semibold: 600;
+      --font-weight-bold: 700;
+      --line-height-tight: 1.25;
+      --line-height-base: 1.5;
+      --line-height-relaxed: 1.75;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-full: 9999px;
+      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+      --z-base: 1;
+      --z-dropdown: 100;
+      --z-sticky: 200;
+      --z-modal-backdrop: 900;
+      --z-modal: 1000;
+      --z-toast: 1100;
+      --z-tooltip: 1200;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: var(--font-family);
+      font-size: var(--font-size-base);
+      line-height: var(--line-height-base);
+      color: var(--color-text-primary);
+      background-color: var(--color-bg-page);
+      padding: var(--canna-space-6);
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    /* Import Component Styles - Simplified for example */
+    .card {
+      background-color: var(--color-bg-card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      margin-bottom: var(--canna-space-6);
+    }
+    
+    .card-header {
+      padding: var(--canna-space-4) var(--canna-space-6);
+      border-bottom: 1px solid var(--color-border);
+    }
+    
+    .card-title {
+      font-size: var(--font-size-xl);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-text-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--canna-space-2);
+    }
+    
+    .card-subtitle {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+      margin-top: var(--canna-space-1);
+    }
+    
+    .card-body {
+      padding: var(--canna-space-6);
+    }
+    
+    .card-footer {
+      padding: var(--canna-space-4) var(--canna-space-6);
+      border-top: 1px solid var(--color-border);
+      background-color: var(--color-bg-page);
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--canna-space-2);
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--canna-space-2);
+      padding: var(--canna-space-2) var(--canna-space-4);
+      font-size: var(--font-size-base);
+      font-weight: var(--font-weight-medium);
+      line-height: var(--line-height-tight);
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-base);
+      text-decoration: none;
+      white-space: nowrap;
+      user-select: none;
+    }
+    
+    .btn-primary {
+      background-color: var(--color-primary);
+      color: white;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--color-primary-dark);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+      background-color: white;
+      color: var(--color-primary);
+      border-color: var(--color-primary);
+    }
+    
+    .btn-secondary:hover {
+      background-color: var(--color-primary-bg);
+    }
+    
+    .form-group {
+      margin-bottom: var(--canna-space-6);
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: var(--canna-space-2);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+      color: var(--color-text-primary);
+    }
+    
+    .form-label-required::after {
+      content: " *";
+      color: var(--color-error);
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: var(--canna-space-2) var(--canna-space-4);
+      font-size: var(--font-size-base);
+      line-height: var(--line-height-base);
+      color: var(--color-text-primary);
+      background-color: white;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      transition: all var(--transition-fast);
+    }
+    
+    .form-control:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-bg);
+    }
+    
+    .form-hint {
+      display: block;
+      margin-top: var(--canna-space-1);
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+    }
+    
+    .alert {
+      display: flex;
+      gap: var(--canna-space-4);
+      padding: var(--canna-space-4) var(--canna-space-6);
+      border-radius: var(--radius-md);
+      border-left: 4px solid;
+      margin-bottom: var(--canna-space-6);
+    }
+    
+    .alert-icon {
+      flex-shrink: 0;
+      font-size: var(--font-size-xl);
+    }
+    
+    .alert-content {
+      flex: 1;
+    }
+    
+    .alert-title {
+      font-weight: var(--font-weight-semibold);
+      margin-bottom: var(--canna-space-1);
+    }
+    
+    .alert-info {
+      background-color: #e3f2fd;
+      border-left-color: var(--color-info);
+      color: #1565c0;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--canna-space-6);
+      margin-bottom: var(--canna-space-6);
+    }
+    
+    .stat-card {
+      background-color: var(--color-bg-card);
+      border-radius: var(--radius-lg);
+      padding: var(--canna-space-6);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--color-border);
+    }
+    
+    .stat-label {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+      margin-bottom: var(--canna-space-1);
+    }
+    
+    .stat-value {
+      font-size: var(--font-size-2xl);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-primary);
+    }
+  </style>
+</head>
+<body>
+  
+  <div class="container">
+    
+    <!-- Page Title -->
+    <h1 style="font-size: var(--font-size-3xl); margin-bottom: var(--canna-space-8); color: var(--color-text-primary);">
+      📋 Exemplo de Página Padronizada
+    </h1>
+    
+    <!-- Info Alert -->
+    <div class="alert alert-info">
+      <div class="alert-icon">ℹ️</div>
+      <div class="alert-content">
+        <div class="alert-title">Exemplo de Implementação</div>
+        <div class="alert-message">
+          Esta página demonstra o uso dos componentes padronizados do design system.
+        </div>
+      </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total de Pacientes</div>
+        <div class="stat-value">1,234</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Comorbidades Ativas</div>
+        <div class="stat-value">46</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Estudos Cadastrados</div>
+        <div class="stat-value">892</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">CoA Validados</div>
+        <div class="stat-value">3,456</div>
+      </div>
+    </div>
+    
+    <!-- Form Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <span>✏️</span>
+          <span>Formulário de Cadastro</span>
+        </div>
+        <div class="card-subtitle">Preencha os campos abaixo para cadastrar um novo registro</div>
+      </div>
+      
+      <div class="card-body">
+        <form id="exampleForm">
+          
+          <div class="form-group">
+            <label for="nome" class="form-label form-label-required">Nome Completo</label>
+            <input 
+              type="text" 
+              id="nome" 
+              class="form-control" 
+              placeholder="Digite seu nome completo"
+              required
+            >
+            <span class="form-hint">Este campo é obrigatório</span>
+          </div>
+          
+          <div class="form-group">
+            <label for="email" class="form-label form-label-required">Email</label>
+            <input 
+              type="email" 
+              id="email" 
+              class="form-control" 
+              placeholder="seu.email@exemplo.com"
+              required
+            >
+            <span class="form-hint">Utilize um email válido</span>
+          </div>
+          
+          <div class="form-group">
+            <label for="tipo" class="form-label">Tipo de Usuário</label>
+            <select id="tipo" class="form-control">
+              <option value="">Selecione...</option>
+              <option value="MEDICO">Médico</option>
+              <option value="PACIENTE">Paciente</option>
+              <option value="CULTIVADOR">Cultivador</option>
+              <option value="PESQUISADOR">Pesquisador</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="observacoes" class="form-label">Observações</label>
+            <textarea 
+              id="observacoes" 
+              class="form-control" 
+              rows="4"
+              placeholder="Adicione observações adicionais..."
+            ></textarea>
+            <span class="form-hint">Campo opcional</span>
+          </div>
+          
+        </form>
+      </div>
+      
+      <div class="card-footer">
+        <button type="button" class="btn btn-secondary" onclick="resetForm()">
+          <span>↺</span>
+          <span>Limpar</span>
+        </button>
+        <button type="submit" class="btn btn-primary" onclick="handleSubmit(event)">
+          <span>✓</span>
+          <span>Salvar Registro</span>
+        </button>
+      </div>
+      
+    </div>
+    
+    <!-- Action Buttons Demo -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <span>🎯</span>
+          <span>Demonstração de Componentes</span>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        <p style="margin-bottom: var(--canna-space-4); color: var(--color-text-secondary);">
+          Clique nos botões abaixo para testar os componentes JavaScript (requer ui-components.js):
+        </p>
+        
+        <div style="display: flex; flex-wrap: wrap; gap: var(--canna-space-2);">
+          <button class="btn btn-primary" onclick="testToastSuccess()">
+            Toast Success
+          </button>
+          <button class="btn btn-primary" onclick="testToastWarning()">
+            Toast Warning
+          </button>
+          <button class="btn btn-primary" onclick="testToastError()">
+            Toast Error
+          </button>
+          <button class="btn btn-primary" onclick="testLoading()">
+            Loading Overlay
+          </button>
+          <button class="btn btn-primary" onclick="testModal()">
+            Modal Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+  
+  <!-- Include UI Components Script -->
+  <script src="ui-components.js"></script>
+  
+  <script>
+    // Form Handlers
+    function resetForm() {
+      document.getElementById('exampleForm').reset();
+      console.log('Form reset');
+    }
+    
+    function handleSubmit(event) {
+      event.preventDefault();
+      
+      const nome = document.getElementById('nome').value;
+      const email = document.getElementById('email').value;
+      
+      if (!nome || !email) {
+        alert('Preencha todos os campos obrigatórios');
+        return;
+      }
+      
+      console.log('Form submitted:', { nome, email });
+      alert('Registro salvo com sucesso!\n\nEm produção, use UI.Toast.success()');
+    }
+    
+    // Component Test Functions (require ui-components.js)
+    function testToastSuccess() {
+      if (typeof UI !== 'undefined') {
+        UI.Toast.success('Sucesso!', 'Operação concluída com sucesso');
+      } else {
+        alert('UI.Toast.success() - Requer ui-components.js');
+      }
+    }
+    
+    function testToastWarning() {
+      if (typeof UI !== 'undefined') {
+        UI.Toast.warning('Atenção', 'Verifique as informações antes de continuar');
+      } else {
+        alert('UI.Toast.warning() - Requer ui-components.js');
+      }
+    }
+    
+    function testToastError() {
+      if (typeof UI !== 'undefined') {
+        UI.Toast.error('Erro', 'Não foi possível completar a operação');
+      } else {
+        alert('UI.Toast.error() - Requer ui-components.js');
+      }
+    }
+    
+    function testLoading() {
+      if (typeof UI !== 'undefined') {
+        UI.Loading.show('Processando dados...');
+        setTimeout(() => {
+          UI.Loading.hide();
+          UI.Toast.success('Concluído', 'Dados processados com sucesso');
+        }, 2000);
+      } else {
+        alert('UI.Loading - Requer ui-components.js');
+      }
+    }
+    
+    function testModal() {
+      if (typeof UI !== 'undefined') {
+        UI.Modal.confirm({
+          title: 'Confirmar Ação',
+          message: 'Você tem certeza que deseja executar esta ação?',
+          confirmText: 'Sim, confirmar',
+          cancelText: 'Cancelar',
+          onConfirm: () => {
+            UI.Toast.success('Confirmado', 'Ação executada com sucesso');
+          },
+          onCancel: () => {
+            UI.Toast.info('Cancelado', 'Operação cancelada pelo usuário');
+          }
+        });
+      } else {
+        if (confirm('UI.Modal.confirm() - Requer ui-components.js\n\nDeseja ver a simulação?')) {
+          alert('Confirmado!');
+        } else {
+          alert('Cancelado!');
+        }
+      }
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('Página carregada com design system padronizado');
+      
+      // Se UI.Toast estiver disponível
+      if (typeof UI !== 'undefined') {
+        UI.Toast.info('Bem-vindo', 'Sistema carregado com sucesso');
+      }
+    });
+  </script>
+  
+</body>
+</html>

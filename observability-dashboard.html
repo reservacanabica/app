@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Observabilidade - Canabica WebApp</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: var(--canna-space-5);
+    }
+
+    /* Header */
+    header {
+      background: #1e293b;
+      padding: var(--canna-space-5);
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #f1f5f9;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    .last-update {
+      float: right;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    /* Health Status */
+    .health-banner {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      padding: var(--canna-space-8);
+      border-radius: 12px;
+      margin-bottom: var(--canna-space-8);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .health-status {
+      display: flex;
+      align-items: center;
+      gap: var(--canna-space-5);
+      margin-bottom: 20px;
+    }
+
+    .status-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+
+    .status-healthy { background: #10b981; }
+    .status-degraded { background: #f59e0b; }
+    .status-unhealthy { background: #ef4444; }
+
+    .health-info h2 {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+
+    .health-score {
+      font-size: 42px;
+      font-weight: 700;
+      color: #10b981;
+      margin-bottom: 10px;
+    }
+
+    .health-components {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: var(--canna-space-4);
+    }
+
+    .component-status {
+      background: rgba(255, 255, 255, 0.05);
+      padding: var(--canna-space-3);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px; /* Intentional: badge horizontal spacing */
+    }
+
+    .component-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .indicator-healthy { background: #10b981; }
+    .indicator-degraded { background: #f59e0b; }
+    .indicator-unhealthy { background: #ef4444; }
+
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--canna-space-5);
+      margin-bottom: 30px;
+    }
+
+    .metric-card {
+      background: #1e293b;
+      padding: var(--canna-space-6);
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .metric-title {
+      font-size: 14px;
+      color: #94a3b8;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .metric-icon {
+      font-size: 24px;
+    }
+
+    .metric-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: #f1f5f9;
+      margin-bottom: 8px;
+    }
+
+    .metric-change {
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: var(--canna-space-1);
+    }
+
+    .metric-change.positive { color: #10b981; }
+    .metric-change.negative { color: #ef4444; }
+    .metric-change.neutral { color: #94a3b8; }
+
+    .metric-details {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .metric-detail-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    /* Charts */
+    .chart-container {
+      background: #1e293b;
+      padding: var(--canna-space-6);
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .chart-header {
+      margin-bottom: 20px;
+    }
+
+    .chart-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .chart-subtitle {
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    /* Mini bar chart */
+    .mini-bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: var(--canna-space-1);
+      height: 60px;
+    }
+
+    .bar {
+      flex: 1;
+      background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+      border-radius: 6px 6px 0 0;
+      transition: all 0.3s;
+    }
+
+    .bar:hover {
+      background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+    }
+
+    /* Alerts */
+    .alerts-section {
+      background: #1e293b;
+      padding: var(--canna-space-6);
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .alert-item {
+      background: rgba(255, 255, 255, 0.03);
+      padding: var(--canna-space-4);
+      border-radius: 12px;
+      margin-bottom: 12px;
+      border-left: 4px solid;
+    }
+
+    .alert-critical { border-color: #ef4444; }
+    .alert-error { border-color: #f97316; }
+    .alert-warning { border-color: #f59e0b; }
+    .alert-info { border-color: #3b82f6; }
+
+    .alert-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .alert-severity {
+      font-size: 11px;
+      padding: var(--canna-space-1) 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .alert-timestamp {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .alert-message {
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .alert-details {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    /* SLA Compliance */
+    .sla-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--canna-space-5);
+    }
+
+    .sla-card {
+      background: rgba(255, 255, 255, 0.03);
+      padding: var(--canna-space-5);
+      border-radius: 12px;
+    }
+
+    .sla-title {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .sla-value {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .sla-target {
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .sla-compliant { color: #10b981; }
+    .sla-non-compliant { color: #ef4444; }
+
+    .progress-bar {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+      transition: width 0.3s;
+    }
+
+    .progress-fill.warning {
+      background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+    }
+
+    .progress-fill.danger {
+      background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    /* Loading */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--canna-space-16);
+    }
+
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top: 3px solid #3b82f6;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Buttons */
+    .btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px var(--canna-space-5); /* Intentional: button padding 10px vertical */
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: #475569;
+    }
+
+    .btn-secondary:hover {
+      background: #334155;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px; /* Intentional: button group spacing */
+      margin-top: var(--canna-space-5);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .health-components {
+        grid-template-columns: 1fr;
+      }
+
+      .sla-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .last-update {
+        float: none;
+        display: block;
+        margin-top: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🔍 Dashboard de Observabilidade</h1>
+      <span class="last-update" id="lastUpdate">Carregando...</span>
+      <p class="subtitle">Monitoramento em tempo real do Sistema Canabica WebApp</p>
+    </header>
+
+    <!-- Health Status Banner -->
+    <div class="health-banner">
+      <div class="health-status">
+        <div class="status-icon status-healthy" id="statusIcon">✓</div>
+        <div class="health-info">
+          <h2 id="healthStatus">Sistema Saudável</h2>
+          <div class="health-score">
+            <span id="healthScore">--</span>
+            <span style="font-size: 24px; color: #94a3b8;">/100</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="health-components" id="healthComponents">
+        <!-- Components populated by JS -->
+      </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="metrics-grid" id="metricsGrid">
+      <!-- Metrics populated by JS -->
+    </div>
+
+    <!-- SLA Compliance -->
+    <div class="chart-container">
+      <div class="chart-header">
+        <h3 class="chart-title">📊 Conformidade com SLAs</h3>
+        <p class="chart-subtitle">Indicadores de nível de serviço</p>
+      </div>
+
+      <div class="sla-grid" id="slaGrid">
+        <!-- SLA cards populated by JS -->
+      </div>
+    </div>
+
+    <!-- Performance Chart -->
+    <div class="chart-container">
+      <div class="chart-header">
+        <h3 class="chart-title">📈 Performance (últimas 24h)</h3>
+        <p class="chart-subtitle">Tempo médio de resposta da API</p>
+      </div>
+
+      <div class="mini-bar-chart" id="performanceChart">
+        <!-- Chart populated by JS -->
+      </div>
+    </div>
+
+    <!-- Recent Alerts -->
+    <div class="alerts-section">
+      <div class="chart-header">
+        <h3 class="chart-title">🔔 Alertas Recentes</h3>
+        <p class="chart-subtitle">Últimas 24 horas</p>
+      </div>
+
+      <div id="alertsList">
+        <!-- Alerts populated by JS -->
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn" onclick="refreshDashboard()">🔄 Atualizar</button>
+      <button class="btn btn-secondary" onclick="downloadReport()">📥 Baixar Relatório</button>
+    </div>
+  </div>
+
+  <script>
+    // ===========================
+    // CONFIGURATION
+    // ===========================
+
+    const API_URL = 'YOUR_WEB_APP_URL/exec'; // Replace with actual URL
+    const AUTO_REFRESH_INTERVAL = 60000; // 60 seconds
+
+    // ===========================
+    // STATE
+    // ===========================
+
+    let dashboardData = null;
+    let autoRefreshTimer = null;
+
+    // ===========================
+    // INITIALIZATION
+    // ===========================
+
+    document.addEventListener('DOMContentLoaded', function() {
+      loadDashboard();
+      startAutoRefresh();
+    });
+
+    // ===========================
+    // DATA LOADING
+    // ===========================
+
+    async function loadDashboard() {
+      try {
+        showLoading();
+
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            action: 'observability.dashboard',
+            token: getSessionToken()
+          })
+        });
+
+        const result = await response.json();
+
+        if (!result.ok) {
+          throw new Error(result.error.message);
+        }
+
+        dashboardData = result.data.dashboard;
+        renderDashboard(dashboardData);
+
+      } catch (error) {
+        console.error('Erro ao carregar dashboard:', error);
+        showError(error.message);
+      }
+    }
+
+    // ===========================
+    // RENDERING
+    // ===========================
+
+    function renderDashboard(data) {
+      updateLastUpdate();
+      renderHealthStatus(data.health);
+      renderMetrics(data.metrics.current);
+      renderSLACompliance(data.sla);
+      renderPerformanceChart(data.metrics.aggregated24h);
+      renderAlerts(data.alerts.recent);
+    }
+
+    function renderHealthStatus(health) {
+      const statusIcon = document.getElementById('statusIcon');
+      const healthStatus = document.getElementById('healthStatus');
+      const healthScore = document.getElementById('healthScore');
+      const healthComponents = document.getElementById('healthComponents');
+
+      // Status icon and color
+      statusIcon.className = 'status-icon';
+      if (health.status === 'HEALTHY') {
+        statusIcon.classList.add('status-healthy');
+        statusIcon.textContent = '✓';
+        healthStatus.textContent = 'Sistema Saudável';
+      } else if (health.status === 'DEGRADED') {
+        statusIcon.classList.add('status-degraded');
+        statusIcon.textContent = '⚠';
+        healthStatus.textContent = 'Sistema Degradado';
+      } else {
+        statusIcon.classList.add('status-unhealthy');
+        statusIcon.textContent = '✕';
+        healthStatus.textContent = 'Sistema Não Saudável';
+      }
+
+      // Health score
+      healthScore.textContent = health.score;
+      healthScore.style.color = health.score >= 80 ? '#10b981' : health.score >= 50 ? '#f59e0b' : '#ef4444';
+
+      // Components
+      healthComponents.innerHTML = '';
+      Object.keys(health.components).forEach(function(key) {
+        const component = health.components[key];
+        const div = document.createElement('div');
+        div.className = 'component-status';
+
+        const indicator = document.createElement('div');
+        indicator.className = 'component-indicator';
+        if (component.status === 'HEALTHY') {
+          indicator.classList.add('indicator-healthy');
+        } else if (component.status === 'DEGRADED') {
+          indicator.classList.add('indicator-degraded');
+        } else {
+          indicator.classList.add('indicator-unhealthy');
+        }
+
+        const label = document.createElement('span');
+        label.textContent = formatComponentName(key);
+        label.style.fontSize = '13px';
+
+        div.appendChild(indicator);
+        div.appendChild(label);
+        healthComponents.appendChild(div);
+      });
+    }
+
+    function renderMetrics(metrics) {
+      const grid = document.getElementById('metricsGrid');
+      grid.innerHTML = '';
+
+      const metricCards = [
+        {
+          title: 'Requisições API',
+          icon: '📡',
+          value: formatNumber(metrics.api.totalRequests),
+          change: '+12%',
+          changeType: 'positive',
+          details: [
+            { label: 'Sucesso', value: metrics.api.successCount },
+            { label: 'Erros', value: metrics.api.errorCount },
+            { label: 'Taxa de erro', value: metrics.api.errorRate.toFixed(2) + '%' }
+          ]
+        },
+        {
+          title: 'Cache Hit Rate',
+          icon: '⚡',
+          value: metrics.cache.hitRate.toFixed(1) + '%',
+          change: metrics.cache.hitRate >= 70 ? 'Ótimo' : 'Melhorar',
+          changeType: metrics.cache.hitRate >= 70 ? 'positive' : 'negative',
+          details: [
+            { label: 'Hits', value: formatNumber(metrics.cache.hits) },
+            { label: 'Misses', value: formatNumber(metrics.cache.misses) },
+            { label: 'Tamanho', value: formatNumber(metrics.cache.size) + ' items' }
+          ]
+        },
+        {
+          title: 'Latência P95',
+          icon: '⏱️',
+          value: metrics.api.p95Duration + 'ms',
+          change: metrics.api.p95Duration < 2000 ? 'Normal' : 'Alto',
+          changeType: metrics.api.p95Duration < 2000 ? 'positive' : 'negative',
+          details: [
+            { label: 'Média', value: Math.round(metrics.api.avgDuration) + 'ms' },
+            { label: 'P99', value: (metrics.api.p99Duration || 0) + 'ms' },
+            { label: 'Lentas', value: metrics.api.slowQueries || 0 }
+          ]
+        },
+        {
+          title: 'Sessões Ativas',
+          icon: '👥',
+          value: formatNumber(metrics.sessions.activeSessions),
+          change: metrics.sessions.totalSessions + ' total',
+          changeType: 'neutral',
+          details: [
+            { label: 'Expiradas', value: metrics.sessions.expiredSessions },
+            { label: 'Revogadas', value: metrics.sessions.revokedSessions },
+            { label: 'Total', value: metrics.sessions.totalSessions }
+          ]
+        },
+        {
+          title: 'Feature Flags',
+          icon: '🚩',
+          value: formatNumber(metrics.features.totalFlags),
+          change: metrics.features.enabledFlags + ' ativas',
+          changeType: 'neutral',
+          details: [
+            { label: 'Habilitadas', value: metrics.features.enabledFlags },
+            { label: 'Avaliações', value: formatNumber(metrics.features.evaluations) },
+            { label: 'Tempo avg', value: (metrics.features.avgEvaluationTime || 0).toFixed(1) + 'ms' }
+          ]
+        },
+        {
+          title: 'Backups',
+          icon: '💾',
+          value: formatNumber(metrics.backups.totalBackups),
+          change: metrics.backups.successfulBackups + ' sucesso',
+          changeType: 'positive',
+          details: [
+            { label: 'Sucesso', value: metrics.backups.successfulBackups },
+            { label: 'Falhas', value: metrics.backups.failedBackups },
+            { label: 'Tamanho', value: metrics.backups.totalSizeMB.toFixed(2) + ' MB' }
+          ]
+        },
+        {
+          title: 'Database',
+          icon: '🗄️',
+          value: formatNumber(metrics.database.totalSheets) + ' abas',
+          change: formatNumber(metrics.database.totalRows) + ' linhas',
+          changeType: 'neutral',
+          details: [
+            { label: 'Linhas', value: formatNumber(metrics.database.totalRows) },
+            { label: 'Células', value: formatNumber(metrics.database.totalCells) },
+            { label: 'Query time', value: metrics.database.queryTime + 'ms' }
+          ]
+        },
+        {
+          title: 'Uptime',
+          icon: '⏰',
+          value: formatUptime(metrics.system.uptime),
+          change: 'Desde última reinicialização',
+          changeType: 'neutral',
+          details: [
+            { label: 'CPU', value: metrics.system.cpuUsage.toFixed(1) + '%' },
+            { label: 'Memória', value: metrics.system.memoryUsage.toFixed(1) + '%' }
+          ]
+        }
+      ];
+
+      metricCards.forEach(function(card) {
+        grid.appendChild(createMetricCard(card));
+      });
+    }
+
+    function createMetricCard(card) {
+      const div = document.createElement('div');
+      div.className = 'metric-card';
+
+      div.innerHTML = `
+        <div class="metric-header">
+          <div class="metric-title">${card.title}</div>
+          <div class="metric-icon">${card.icon}</div>
+        </div>
+        <div class="metric-value">${card.value}</div>
+        <div class="metric-change ${card.changeType}">${card.change}</div>
+        <div class="metric-details">
+          ${card.details.map(function(detail) {
+            return `
+              <div class="metric-detail-row">
+                <span>${detail.label}:</span>
+                <strong>${detail.value}</strong>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+
+      return div;
+    }
+
+    function renderSLACompliance(sla) {
+      const grid = document.getElementById('slaGrid');
+      grid.innerHTML = '';
+
+      const slaCards = [
+        {
+          title: 'Disponibilidade API',
+          actual: sla.apiAvailability.actual,
+          target: sla.apiAvailability.target,
+          compliant: sla.apiAvailability.compliant,
+          unit: '%'
+        },
+        {
+          title: 'Latência P95',
+          actual: sla.apiLatencyP95.actual,
+          target: sla.apiLatencyP95.target,
+          compliant: sla.apiLatencyP95.compliant,
+          unit: 'ms',
+          inverse: true
+        },
+        {
+          title: 'Taxa de Erro',
+          actual: sla.errorRate.actual,
+          target: sla.errorRate.target,
+          compliant: sla.errorRate.compliant,
+          unit: '%',
+          inverse: true
+        },
+        {
+          title: 'Cache Hit Rate',
+          actual: sla.cacheHitRate.actual,
+          target: sla.cacheHitRate.target,
+          compliant: sla.cacheHitRate.compliant,
+          unit: '%'
+        }
+      ];
+
+      slaCards.forEach(function(card) {
+        grid.appendChild(createSLACard(card));
+      });
+    }
+
+    function createSLACard(card) {
+      const div = document.createElement('div');
+      div.className = 'sla-card';
+
+      const valueClass = card.compliant ? 'sla-compliant' : 'sla-non-compliant';
+      const progressClass = card.compliant ? '' : card.actual < card.target * 0.9 ? 'danger' : 'warning';
+
+      const percentage = card.inverse 
+        ? Math.min(100, (card.target / card.actual) * 100)
+        : Math.min(100, (card.actual / card.target) * 100);
+
+      div.innerHTML = `
+        <div class="sla-title">${card.title}</div>
+        <div class="sla-value ${valueClass}">
+          ${card.actual.toFixed(card.unit === 'ms' ? 0 : 2)}${card.unit}
+        </div>
+        <div class="sla-target">
+          Alvo: ${card.target.toFixed(card.unit === 'ms' ? 0 : 2)}${card.unit}
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill ${progressClass}" style="width: ${percentage}%"></div>
+        </div>
+      `;
+
+      return div;
+    }
+
+    function renderPerformanceChart(aggregated) {
+      const chart = document.getElementById('performanceChart');
+      chart.innerHTML = '';
+
+      // Simulated data points for 24h (24 bars)
+      const dataPoints = 24;
+      const baseValue = aggregated.metrics ? aggregated.metrics.api.avgDuration : 500;
+
+      for (let i = 0; i < dataPoints; i++) {
+        const value = baseValue + (Math.random() * 400 - 200);
+        const height = Math.max(10, Math.min(100, (value / 2000) * 100));
+
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.height = height + '%';
+        bar.title = Math.round(value) + 'ms';
+
+        chart.appendChild(bar);
+      }
+    }
+
+    function renderAlerts(alerts) {
+      const list = document.getElementById('alertsList');
+      list.innerHTML = '';
+
+      if (!alerts || alerts.length === 0) {
+        list.innerHTML = '<p style="color: #94a3b8; text-align: center; padding: var(--canna-space-10);">✓ Nenhum alerta nas últimas 24 horas</p>';
+        return;
+      }
+
+      alerts.forEach(function(alert) {
+        list.appendChild(createAlertItem(alert));
+      });
+    }
+
+    function createAlertItem(alert) {
+      const div = document.createElement('div');
+      div.className = 'alert-item alert-' + alert.severity.toLowerCase();
+
+      const severityColors = {
+        CRITICAL: '#ef4444',
+        ERROR: '#f97316',
+        WARNING: '#f59e0b',
+        INFO: '#3b82f6'
+      };
+
+      div.innerHTML = `
+        <div class="alert-header">
+          <span class="alert-severity" style="background: ${severityColors[alert.severity]};">
+            ${alert.severity}
+          </span>
+          <span class="alert-timestamp">${formatTimestamp(alert.timestamp)}</span>
+        </div>
+        <div class="alert-message">${alert.message}</div>
+        <div class="alert-details">
+          Métrica: ${alert.metrics} | Threshold: ${alert.threshold} | Valor: ${alert.actualValue}
+        </div>
+      `;
+
+      return div;
+    }
+
+    // ===========================
+    // UTILITIES
+    // ===========================
+
+    function formatNumber(num) {
+      if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+      }
+      if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
+      }
+      return num.toString();
+    }
+
+    function formatUptime(ms) {
+      const seconds = Math.floor(ms / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+
+      if (days > 0) return days + 'd ' + (hours % 24) + 'h';
+      if (hours > 0) return hours + 'h ' + (minutes % 60) + 'm';
+      if (minutes > 0) return minutes + 'm';
+      return seconds + 's';
+    }
+
+    function formatTimestamp(iso) {
+      const date = new Date(iso);
+      const now = new Date();
+      const diff = now - date;
+
+      const minutes = Math.floor(diff / 60000);
+      if (minutes < 60) return minutes + ' minutos atrás';
+
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return hours + ' horas atrás';
+
+      const days = Math.floor(hours / 24);
+      return days + ' dias atrás';
+    }
+
+    function formatComponentName(key) {
+      const names = {
+        database: 'Database',
+        api: 'API',
+        cache: 'Cache',
+        backups: 'Backups',
+        sessions: 'Sessões'
+      };
+      return names[key] || key;
+    }
+
+    function updateLastUpdate() {
+      document.getElementById('lastUpdate').textContent = 
+        'Última atualização: ' + new Date().toLocaleTimeString('pt-BR');
+    }
+
+    function showLoading() {
+      // Could implement loading state
+    }
+
+    function showError(message) {
+      if (typeof UI !== 'undefined') UI.Toast.error('Erro', message);
+      else console.error('Erro: ' + message);
+    }
+
+    function getSessionToken() {
+      // Get from localStorage or cookie
+      return localStorage.getItem('session_token') || '';
+    }
+
+    // ===========================
+    // ACTIONS
+    // ===========================
+
+    function refreshDashboard() {
+      loadDashboard();
+    }
+
+    function downloadReport() {
+      if (!dashboardData) return;
+
+      const report = {
+        timestamp: new Date().toISOString(),
+        health: dashboardData.health,
+        metrics: dashboardData.metrics.current,
+        sla: dashboardData.sla,
+        alerts: dashboardData.alerts
+      };
+
+      const blob = new Blob([JSON.stringify(report, null, 2)], {
+        type: 'application/json'
+      });
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'observability-report-' + Date.now() + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function startAutoRefresh() {
+      if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+      }
+
+      autoRefreshTimer = setInterval(function() {
+        loadDashboard();
+      }, AUTO_REFRESH_INTERVAL);
+    }
+  </script>
+</body>
+</html>

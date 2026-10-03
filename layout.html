@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canabica Layout</title>
+  <?!= include("styles.html"); ?>
+</head>
+<body>
+
+<div id="app-root" class="app-container">
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="navbar-content">
+      <div class="navbar-brand">
+        <h1>🌿 Reserva Canabica</h1>
+      </div>
+      <div class="navbar-actions">
+        <span id="user-email" class="user-email"></span>
+        <button id="logout-btn" class="button button-secondary">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <div class="main-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <ul>
+          <li>
+            <a href="#dashboard" class="sidebar-link active" data-page="dashboard">
+              <i class="material-icons">dashboard</i>
+              Dashboard
+            </a>
+          </li>
+          <li>
+            <a href="#comorbidades" class="sidebar-link" data-page="comorbidades">
+              <i class="material-icons">favorite</i>
+              Condições, Cultivo & CoA
+            </a>
+          </li>
+          <li>
+            <a href="#studies" class="sidebar-link" data-page="studies">
+              <i class="material-icons">library_books</i>
+              Estudos
+            </a>
+          </li>
+          <li>
+            <a href="#experiments" class="sidebar-link" data-page="experiments">
+              <i class="material-icons">science</i>
+              Experimentos
+            </a>
+          </li>
+          <li>
+            <a href="#observations" class="sidebar-link" data-page="observations">
+              <i class="material-icons">note</i>
+              Observações
+            </a>
+          </li>
+          <li>
+            <a href="#references" class="sidebar-link" data-page="references">
+              <i class="material-icons">book</i>
+              Referências
+            </a>
+          </li>
+          <li>
+            <a href="#evidence" class="sidebar-link" data-page="evidence">
+              <i class="material-icons">biotech</i>
+              Evidências
+            </a>
+          </li>
+          <li>
+            <a href="#validations" class="sidebar-link" data-page="validations">
+              <i class="material-icons">check_circle</i>
+              Validações
+            </a>
+          </li>
+          <li>
+            <a href="#import" class="sidebar-link" data-page="import">
+              <i class="material-icons">upload</i>
+              Importar
+            </a>
+          </li>
+          <li>
+            <a href="#export" class="sidebar-link" data-page="export">
+              <i class="material-icons">download</i>
+              Exportar
+            </a>
+          </li>
+          <li class="sidebar-divider"></li>
+          <li>
+            <a href="#colab" class="sidebar-link" data-page="colab">
+              <i class="material-icons">code</i>
+              Colab
+            </a>
+          </li>
+          <li>
+            <a href="#settings" class="sidebar-link" data-page="settings">
+              <i class="material-icons">settings</i>
+              Configurações
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Content Area -->
+    <main class="content-area">
+      <div id="page-container" class="page-container">
+        <!-- Pages will be injected here -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>Reserva Canabica v2.0 | Sistema de Pesquisa Científica</p>
+  </footer>
+</div>
+
+<style>
+/* LAYOUT STRUCTURE */
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: var(--bg-secondary);
+}
+
+/* NAVBAR */
+.navbar {
+  background-color: var(--primary);
+  color: white;
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-md);
+  z-index: 100;
+}
+
+.navbar-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 var(--spacing-md);
+}
+
+.navbar-brand h1 {
+  font-size: 1.5rem;
+  margin: 0;
+  font-weight: 700;
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.user-email {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.navbar-actions .button-outline {
+  color: white;
+  border-color: white;
+}
+
+.navbar-actions .button-outline:hover {
+  background-color: white;
+  color: var(--primary);
+}
+
+/* MAIN CONTAINER */
+.main-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 280px;
+  background-color: var(--bg-primary);
+  border-right: 1px solid var(--border-color);
+  overflow-y: auto;
+}
+
+.sidebar-nav {
+  padding: var(--spacing-lg) 0;
+}
+
+.sidebar-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-nav li {
+  margin: 0;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: all var(--transition);
+  border-left: 3px solid transparent;
+}
+
+.sidebar-link .material-icons {
+  font-size: 20px;
+}
+
+.sidebar-link:hover {
+  background-color: var(--bg-secondary);
+  color: var(--primary);
+}
+
+.sidebar-link.active {
+  background-color: rgba(46, 204, 113, 0.1);
+  color: var(--primary);
+  border-left-color: var(--primary);
+  font-weight: 600;
+}
+
+.sidebar-divider {
+  height: 1px;
+  background-color: var(--border-color);
+  margin: var(--spacing-md) 0;
+}
+
+/* CONTENT AREA */
+.content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.page-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-lg);
+}
+
+/* FOOTER */
+.footer {
+  background-color: var(--bg-tertiary);
+  border-top: 1px solid var(--border-color);
+  padding: var(--spacing-md);
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+/* RESPONSIVO */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 220px;
+  }
+
+  .sidebar-link {
+    padding: var(--spacing-md);
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: -280px;
+    top: 0;
+    height: 100vh;
+    z-index: 99;
+    transition: left var(--transition);
+  }
+
+  .sidebar.active {
+    left: 0;
+  }
+
+  .navbar-content {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .main-container {
+    flex-direction: column;
+  }
+
+  .content-area {
+    flex: 1;
+  }
+}
+</style>
+
+<script>
+// Layout controller
+class LayoutController {
+  constructor() {
+    this.currentPage = 'dashboard';
+    this.setupEventListeners();
+  }
+
+  setupEventListeners() {
+    // Sidebar links
+    document.querySelectorAll('.sidebar-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const page = link.getAttribute('data-page');
+        this.navigateTo(page);
+      });
+    });
+
+    // Logout button
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      this.logout();
+    });
+
+    // Load user email
+    const token = localStorage.getItem('canabica_token');
+    if (!token) {
+      window.dispatchEvent(new CustomEvent('auth-expired'));
+      return;
+    }
+
+    this.loadUserInfo();
+  }
+
+  navigateTo(page) {
+    this.currentPage = page;
+
+    // Update sidebar active state
+    document.querySelectorAll('.sidebar-link').forEach(link => {
+      link.classList.remove('active');
+    });
+    document.querySelector(`[data-page="${page}"]`).classList.add('active');
+
+    // Load page
+    this.loadPage(page);
+  }
+
+  loadPage(page) {
+    const container = document.getElementById('page-container');
+
+    // Show loading
+    container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--space-xl,32px);gap:var(--space-md,16px);"><div class="spinner spinner-lg"></div><p class="loading-text">Carregando...</p></div>';
+
+    // Load page content dynamically
+    const pageMap = {
+      dashboard: 'dashboard.html',
+      studies: 'studies.html',
+      experiments: 'experiments.html',
+      observations: 'observations.html',
+      references: 'references.html',
+      evidence: 'evidence.html',
+      validations: 'validations.html',
+      import: 'import.html',
+      export: 'export.html',
+      colab: 'colab.html',
+      settings: 'settings.html'
+    };
+
+    const pagePath = pageMap[page];
+    if (!pagePath) {
+      container.innerHTML = '<div class="container"><h2>404</h2><p>Página não encontrada</p></div>';
+      return;
+    }
+
+    // Fetch and inject page
+    fetch(pagePath)
+      .then(response => {
+        if (!response.ok) throw new Error('Page not found');
+        return response.text();
+      })
+      .then(html => {
+        container.innerHTML = html;
+        // Re-attach event listeners for loaded content
+        this.attachPageEventListeners();
+      })
+      .catch(error => {
+        console.error('Error loading page:', error);
+        container.innerHTML = '<div class="container"><div class="alert alert-danger">Erro ao carregar página. Tente novamente.</div></div>';
+      });
+  }
+
+  attachPageEventListeners() {
+    // Generic event attachment for loaded content
+    document.querySelectorAll('[data-click]').forEach(el => {
+      const methodName = el.getAttribute('data-click');
+      if (typeof window[methodName] === 'function') {
+        el.addEventListener('click', () => window[methodName]());
+      }
+    });
+  }
+
+  loadUserInfo() {
+    // Placeholder — seria obtido do token
+    document.getElementById('user-email').textContent = localStorage.getItem('canabica_user') || 'user@example.com';
+  }
+
+  logout() {
+    localStorage.removeItem('canabica_token');
+    localStorage.removeItem('canabica_user');
+    window.dispatchEvent(new CustomEvent('auth-expired'));
+  }
+}
+
+// Initialize layout
+document.addEventListener('DOMContentLoaded', () => {
+  new LayoutController();
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2d5016">
+  <meta name="description" content="Acesso seguro à plataforma Reserva Canábica - Sistema de gestão científica.">
+  <title>Reserva Canábica — Acesso Científico</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #2d5016;
+      --primary-strong: #234010;
+      --primary-soft: #4CAF50;
+      --surface: #1f2329;
+      --background: #14171a;
+      --border: #2f3540;
+      --text: #e8edf4;
+      --muted: #adb5c2;
+      --success: #5fb878;
+      --warning: #f7a34b;
+      --danger: #d14545;
+      --accent: #7eb356;
+    }
+    
+    * { 
+      box-sizing: border-box; 
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--text);
+      background: var(--background);
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    button, input, select, textarea { 
+      font: inherit; 
+    }
+    
+    /* Layout principal em duas colunas */
+    .login-shell {
+      display: grid;
+      min-height: 100vh;
+      grid-template-columns: minmax(380px, 0.95fr) minmax(500px, 1.05fr);
+      max-width: 100vw;
+      overflow: hidden;
+    }
+    
+    /* Lado esquerdo: contexto e branding */
+    .login-context {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: clamp(36px, 6vw, 80px);
+      color: #fff;
+      background:
+        linear-gradient(160deg, rgba(45, 80, 22, 0.96), rgba(58, 107, 30, 0.88)),
+        radial-gradient(circle at 75% 15%, #7eb356, transparent 45%);
+      overflow: hidden;
+    }
+    
+    /* Elementos decorativos de fundo */
+    .login-context::before,
+    .login-context::after {
+      position: absolute;
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      border-radius: 50%;
+      content: "";
+      pointer-events: none;
+    }
+    
+    .login-context::before { 
+      width: 440px; 
+      height: 440px; 
+      right: -240px; 
+      top: -130px; 
+    }
+    
+    .login-context::after { 
+      width: 290px; 
+      height: 290px; 
+      left: -160px; 
+      bottom: -110px; 
+    }
+    
+    .login-brand,
+    .login-pitch,
+    .login-context-footer { 
+      position: relative; 
+      z-index: 1; 
+    }
+    
+    /* Branding */
+    .login-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+    }
+    
+    .login-brand-mark {
+      display: grid;
+      width: 52px;
+      height: 52px;
+      place-items: center;
+      color: var(--primary);
+      background: var(--surface);
+      border-radius: 15px;
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.2);
+      font-size: 26px;
+    }
+    
+    .login-brand strong,
+    .login-brand small { 
+      display: block; 
+    }
+    
+    .login-brand strong { 
+      font-size: 1.12rem; 
+      letter-spacing: 0.08em;
+      font-weight: 800;
+    }
+    
+    .login-brand small { 
+      margin-top: 4px; 
+      color: rgba(255, 255, 255, 0.76); 
+      font-size: 0.74rem; 
+      font-weight: 500;
+    }
+    
+    /* Pitch principal */
+    .login-pitch { 
+      max-width: 600px; 
+      margin-block: 70px; 
+    }
+    
+    .login-pitch span {
+      display: block;
+      margin-bottom: 16px;
+      color: #b8d99d;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+    
+    .login-pitch h1 {
+      max-width: 560px;
+      margin: 0;
+      font-size: clamp(2.4rem, 5.2vw, 4.8rem);
+      letter-spacing: -0.06em;
+      line-height: 1;
+      font-weight: 800;
+    }
+    
+    .login-pitch p {
+      max-width: 540px;
+      margin: 26px 0 0;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 1.05rem;
+      line-height: 1.8;
+      font-weight: 400;
+    }
+    
+    /* Features grid */
+    .login-features {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 13px;
+      margin-top: 40px;
+    }
+    
+    .login-feature {
+      padding: 17px;
+      background: rgba(255, 255, 255, 0.09);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 15px;
+      backdrop-filter: blur(12px);
+      transition: all 0.3s ease;
+    }
+    
+    .login-feature:hover {
+      background: rgba(255, 255, 255, 0.13);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    .login-feature i { 
+      color: #b8d99d; 
+      font-size: 22px; 
+    }
+    
+    .login-feature strong,
+    .login-feature small { 
+      display: block; 
+    }
+    
+    .login-feature strong { 
+      margin-top: 13px; 
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    
+    .login-feature small { 
+      margin-top: 6px; 
+      color: rgba(255, 255, 255, 0.68); 
+      font-size: 0.68rem; 
+      line-height: 1.5; 
+    }
+    
+    .login-context-footer { 
+      color: rgba(255, 255, 255, 0.6); 
+      font-size: 0.7rem; 
+    }
+    
+    /* Lado direito: formulário de login */
+    .login-form-side {
+      display: grid;
+      place-items: center;
+      padding: 36px;
+      background:
+        radial-gradient(circle at 88% 8%, rgba(126, 179, 86, 0.09), transparent 28rem),
+        var(--background);
+    }
+    
+    .login-form-wrap { 
+      width: min(450px, 100%); 
+    }
+    
+    .login-form-wrap > span {
+      color: var(--accent);
+      font-size: 0.77rem;
+      font-weight: 700;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+    
+    .login-form-wrap h2 {
+      margin: 11px 0 0;
+      font-size: clamp(1.9rem, 4.2vw, 2.6rem);
+      letter-spacing: -0.045em;
+      font-weight: 800;
+    }
+    
+    .login-form-wrap > p { 
+      margin: 12px 0 34px; 
+      color: var(--muted); 
+      line-height: 1.65;
+      font-size: 0.95rem;
+    }
+    
+    /* Campos do formulário */
+    .login-field { 
+      margin-bottom: 20px; 
+    }
+    
+    .login-field label {
+      display: block;
+      margin-bottom: 9px;
+      color: var(--text);
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    
+    .login-field label abbr {
+      color: var(--danger);
+      text-decoration: none;
+      margin-left: 3px;
+    }
+    
+    .login-input-wrap { 
+      position: relative; 
+    }
+    
+    .login-input-wrap input {
+      width: 100%;
+      height: 54px;
+      padding: 0 48px 0 17px;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      outline: 0;
+      font-size: 16px;
+      box-sizing: border-box;
+      transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    }
+    
+    .login-input-wrap input:focus {
+      border-color: var(--primary-soft);
+      background: rgba(45, 80, 22, 0.08);
+      box-shadow: 0 0 0 4px rgba(126, 179, 86, 0.12);
+    }
+    
+    .login-input-wrap input::placeholder {
+      color: rgba(173, 181, 194, 0.6);
+    }
+    
+    .login-input-wrap input[aria-invalid="true"] {
+      border-color: var(--danger);
+    }
+    
+    /* Toggle de senha */
+    .password-toggle {
+      position: absolute;
+      top: 50%;
+      right: 9px;
+      display: grid;
+      width: 40px;
+      height: 40px;
+      place-items: center;
+      color: var(--muted);
+      background: transparent;
+      border: 0;
+      border-radius: 12px;
+      cursor: pointer;
+      transform: translateY(-50%);
+      transition: all 0.2s ease;
+    }
+    
+    .password-toggle:hover { 
+      color: var(--accent); 
+      background: rgba(126, 179, 86, 0.12);
+    }
+    
+    .password-toggle:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+    
+    .password-toggle[aria-pressed="true"] { 
+      color: var(--accent); 
+    }
+    
+    /* Mensagens de erro */
+    .error-message {
+      min-height: 24px;
+      margin-top: 8px;
+      padding: 8px 12px;
+      color: var(--danger);
+      background: rgba(209, 69, 69, 0.1);
+      border-left: 3px solid var(--danger);
+      border-radius: 12px;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      display: none;
+    }
+    
+    .error-message[aria-live]:not([hidden]) {
+      display: block;
+    }
+    
+    .hint {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.74rem;
+      line-height: 1.4;
+    }
+    
+    /* Botão de submit */
+    .login-submit {
+      display: flex;
+      width: 100%;
+      height: 54px;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 28px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary-soft), var(--primary));
+      border: 0;
+      border-radius: 16px;
+      box-shadow: 0 14px 28px rgba(45, 80, 22, 0.22);
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 1rem;
+      transition: all 0.25s ease;
+    }
+    
+    .login-submit:hover { 
+      background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+      box-shadow: 0 18px 34px rgba(45, 80, 22, 0.3);
+      transform: translateY(-1px);
+    }
+    
+    .login-submit:active {
+      transform: translateY(0);
+    }
+    
+    .login-submit:disabled { 
+      cursor: not-allowed; 
+      opacity: 0.65;
+      transform: none;
+    }
+    
+    .login-submit:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 3px;
+    }
+    
+    .login-submit .material-icons {
+      font-size: 20px;
+    }
+    
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Security badge */
+    .login-security {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 0.7rem;
+    }
+    
+    .login-security i { 
+      color: var(--success); 
+      font-size: 17px; 
+    }
+    
+    /* Links auxiliares */
+    .auth-links {
+      margin-top: 24px;
+      text-align: center;
+    }
+    
+    .auth-links a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: color 0.2s ease;
+    }
+    
+    .auth-links a:hover {
+      color: var(--primary-soft);
+      text-decoration: underline;
+    }
+    
+    /* Screen reader only */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .login-shell { 
+        grid-template-columns: 1fr; 
+      }
+      
+      .login-context { 
+        min-height: auto; 
+        padding: 32px; 
+      }
+      
+      .login-pitch { 
+        margin: 60px 0 24px; 
+      }
+      
+      .login-pitch h1 { 
+        font-size: clamp(2.2rem, 9.5vw, 3.8rem); 
+      }
+      
+      .login-features {
+        grid-template-columns: 1fr;
+      }
+      
+      .login-context-footer { 
+        display: none; 
+      }
+      
+      .login-form-side { 
+        min-height: 60vh; 
+        padding: 38px 24px; 
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .login-features {
+        display: none;
+      }
+      
+      .login-pitch p {
+        font-size: 0.95rem;
+      }
+      
+      .login-form-side {
+        padding: 28px 20px;
+      }
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+      .login-input-wrap input,
+      .password-toggle,
+      .login-submit,
+      .login-feature {
+        transition-duration: .01ms;
+      }
+      
+      .spinner {
+        animation: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-shell">
+    <!-- Lado esquerdo: Contexto e branding -->
+    <aside class="login-context" role="complementary" aria-label="Informações sobre a plataforma">
+      <div class="login-brand">
+        <div class="login-brand-mark" aria-hidden="true">
+          <span class="material-icons">eco</span>
+        </div>
+        <div>
+          <strong>RESERVA CANÁBICA</strong>
+          <small>Plataforma Científica</small>
+        </div>
+      </div>
+      
+      <section class="login-pitch">
+        <span>Sistema de Gestão Científica</span>
+        <h1>Pesquisa baseada em evidências</h1>
+        <p>
+          Plataforma integrada para gestão de estudos, experimentos e validações científicas 
+          com rastreabilidade completa e análise de dados.
+        </p>
+        
+        <div class="login-features">
+          <article class="login-feature">
+            <i class="material-icons" aria-hidden="true">science</i>
+            <strong>Estudos Científicos</strong>
+            <small>Gestão completa do ciclo de pesquisa</small>
+          </article>
+          
+          <article class="login-feature">
+            <i class="material-icons" aria-hidden="true">assessment</i>
+            <strong>Análise de Dados</strong>
+            <small>Visualização e validação estatística</small>
+          </article>
+          
+          <article class="login-feature">
+            <i class="material-icons" aria-hidden="true">verified</i>
+            <strong>Rastreabilidade</strong>
+            <small>Auditoria completa de operações</small>
+          </article>
+        </div>
+      </section>
+      
+      <footer class="login-context-footer">
+        © 2024 Reserva Canábica · Sistema de pesquisa científica
+      </footer>
+    </aside>
+    
+    <!-- Lado direito: Formulário de login -->
+    <main class="login-form-side" role="main">
+      <div class="login-form-wrap">
+        <span>Bem-vindo</span>
+        <h2 id="login-title">Acesse sua conta</h2>
+        <p>Entre com suas credenciais para acessar a plataforma científica.</p>
+        
+        <form 
+          id="login-form" 
+          novalidate
+          aria-labelledby="login-title">
+          
+          <!-- Campo Usuário -->
+          <div class="login-field">
+            <label for="username-input">
+              Nome de usuário
+              <abbr title="obrigatório" aria-label="campo obrigatório">*</abbr>
+            </label>
+            <div class="login-input-wrap">
+              <input 
+                id="username-input"
+                name="username" 
+                type="text"
+                autocomplete="username" 
+                required
+                aria-required="true"
+                aria-invalid="false"
+                aria-describedby="username-hint username-error"
+                placeholder="Digite seu nome de usuário">
+            </div>
+            <div id="username-hint" class="hint">
+              Use o nome de usuário fornecido pelo administrador
+            </div>
+            <div 
+              id="username-error" 
+              class="error-message" 
+              role="alert" 
+              aria-live="assertive"
+              hidden>
+            </div>
+          </div>
+          
+          <!-- Campo Senha -->
+          <div class="login-field">
+            <label for="password-input">
+              Senha
+              <abbr title="obrigatório" aria-label="campo obrigatório">*</abbr>
+            </label>
+            <div class="login-input-wrap">
+              <input 
+                id="password-input"
+                name="password" 
+                type="password" 
+                autocomplete="current-password" 
+                required
+                aria-required="true"
+                aria-invalid="false"
+                aria-describedby="password-hint password-error"
+                placeholder="Digite sua senha">
+              <button 
+                type="button"
+                class="password-toggle"
+                aria-label="Mostrar senha"
+                aria-pressed="false"
+                tabindex="0">
+                <span class="material-icons" aria-hidden="true">visibility</span>
+              </button>
+            </div>
+            <div id="password-hint" class="hint">
+              Sua senha é confidencial e criptografada
+            </div>
+            <div 
+              id="password-error" 
+              class="error-message" 
+              role="alert" 
+              aria-live="assertive"
+              hidden>
+            </div>
+          </div>
+          
+          <!-- Botão Submit -->
+          <button 
+            type="submit" 
+            class="login-submit"
+            aria-label="Entrar no sistema">
+            <span>Entrar</span>
+            <span class="material-icons" aria-hidden="true">arrow_forward</span>
+          </button>
+          
+          <!-- Security badge -->
+          <div class="login-security" role="note">
+            <i class="material-icons" aria-hidden="true">lock</i>
+            <span>Conexão segura e protegida</span>
+          </div>
+          
+          <!-- Loading state -->
+          <div 
+            id="loading-state" 
+            role="status"
+            aria-live="polite"
+            aria-label="Autenticando usuário"
+            hidden>
+            <span class="spinner" aria-hidden="true"></span>
+            <span class="sr-only">Autenticando...</span>
+          </div>
+        </form>
+        
+        <!-- Links auxiliares -->
+        <nav aria-label="Links auxiliares" class="auth-links">
+          <a href="#" id="forgot-password-link">
+            Esqueceu sua senha?
+          </a>
+        </nav>
+      </div>
+    </main>
+  </div>
+
+  <script>
+  /**
+   * Sistema de gerenciamento do formulário de login
+   * Com validação em tempo real e acessibilidade completa
+   */
+  (function() {
+    'use strict';
+    
+    // Elementos do DOM
+    const form = document.getElementById('login-form');
+    const usernameInput = document.getElementById('username-input');
+    const passwordInput = document.getElementById('password-input');
+    const passwordToggle = document.querySelector('.password-toggle');
+    const submitButton = form.querySelector('[type="submit"]');
+    const loadingState = document.getElementById('loading-state');
+    
+    // Toggle de visibilidade da senha
+    passwordToggle.addEventListener('click', function() {
+      const isPressed = this.getAttribute('aria-pressed') === 'true';
+      const newType = isPressed ? 'password' : 'text';
+      const newLabel = isPressed ? 'Mostrar senha' : 'Ocultar senha';
+      const newIcon = isPressed ? 'visibility' : 'visibility_off';
+      
+      passwordInput.type = newType;
+      this.setAttribute('aria-pressed', !isPressed);
+      this.setAttribute('aria-label', newLabel);
+      this.querySelector('.material-icons').textContent = newIcon;
+    });
+    
+    // Validação em tempo real
+    usernameInput.addEventListener('blur', function() {
+      validateField(this, 'username-error', 'Nome de usuário é obrigatório');
+    });
+    
+    passwordInput.addEventListener('blur', function() {
+      validateField(this, 'password-error', 'Senha é obrigatória');
+    });
+    
+    // Limpar erros ao digitar
+    usernameInput.addEventListener('input', function() {
+      clearError('username-error');
+      this.setAttribute('aria-invalid', 'false');
+    });
+    
+    passwordInput.addEventListener('input', function() {
+      clearError('password-error');
+      this.setAttribute('aria-invalid', 'false');
+    });
+    
+    /**
+     * Valida um campo individual
+     */
+    function validateField(input, errorId, errorMessage) {
+      if (!input.value.trim()) {
+        showError(errorId, errorMessage);
+        input.setAttribute('aria-invalid', 'true');
+        return false;
+      }
+      clearError(errorId);
+      input.setAttribute('aria-invalid', 'false');
+      return true;
+    }
+    
+    /**
+     * Mostra mensagem de erro
+     */
+    function showError(errorId, message) {
+      const errorDiv = document.getElementById(errorId);
+      errorDiv.textContent = message;
+      errorDiv.hidden = false;
+      
+      // Anunciar para screen readers
+      announceToScreenReader(message);
+    }
+    
+    /**
+     * Limpa mensagem de erro
+     */
+    function clearError(errorId) {
+      const errorDiv = document.getElementById(errorId);
+      errorDiv.textContent = '';
+      errorDiv.hidden = true;
+    }
+    
+    /**
+     * Anuncia mensagem para screen readers
+     */
+    function announceToScreenReader(message) {
+      // Implementar com ARIA live region ou AccessibilityManager se disponível
+      if (window.AccessibilityManager) {
+        AccessibilityManager.announce(message, 'alerts');
+      }
+    }
+    
+    /**
+     * Handler do submit do formulário
+     */
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Validar todos os campos
+      const usernameValid = validateField(
+        usernameInput, 
+        'username-error', 
+        'Nome de usuário é obrigatório'
+      );
+      const passwordValid = validateField(
+        passwordInput, 
+        'password-error', 
+        'Senha é obrigatória'
+      );
+      
+      if (!usernameValid || !passwordValid) {
+        // Focar primeiro campo com erro
+        if (!usernameValid) {
+          usernameInput.focus();
+        } else {
+          passwordInput.focus();
+        }
+        
+        announceToScreenReader('Formulário contém erros. Verifique os campos marcados.');
+        return;
+      }
+      
+      // Mostrar loading state
+      setLoadingState(true);
+      announceToScreenReader('Autenticando...');
+      
+      // Preparar dados
+      const credentials = {
+        username: usernameInput.value.trim(),
+        password: passwordInput.value
+      };
+      
+      // Chamar backend (integrar com google.script.run)
+      authenticateUser(credentials);
+    });
+    
+    /**
+     * Define estado de loading
+     */
+    function setLoadingState(isLoading) {
+      submitButton.disabled = isLoading;
+      submitButton.setAttribute('aria-busy', isLoading);
+      loadingState.hidden = !isLoading;
+      
+      if (isLoading) {
+        submitButton.querySelector('span:first-child').textContent = 'Autenticando...';
+      } else {
+        submitButton.querySelector('span:first-child').textContent = 'Entrar';
+      }
+    }
+    
+    /**
+     * Autentica usuário via Google Apps Script
+     * CORREÇÃO #5: Conectado ao backend real (auth.login)
+     */
+    function authenticateUser(credentials) {
+      console.log('[Login] Autenticando via backend...');
+      
+      var request = {
+        action: 'auth.login',
+        username: credentials.username,
+        password: credentials.password
+      };
+      
+      google.script.run
+        .withSuccessHandler(function(response) {
+          console.log('[Login] Resposta do backend:', response);
+          
+          if (response && response.ok) {
+            handleLoginSuccess(response.data || response);
+          } else {
+            var msg = (response && response.error && response.error.message)
+                      || 'Credenciais inválidas. Verifique seu usuário e senha.';
+            handleLoginError(msg);
+          }
+        })
+        .withFailureHandler(function(error) {
+          console.error('[Login] Erro no backend:', error);
+          var msg = (error && error.message) || 'Erro ao conectar com o servidor. Tente novamente.';
+          handleLoginError(msg);
+        })
+        .apiCall(request);
+    }
+    
+    /**
+     * Handler de sucesso no login
+     */
+    function handleLoginSuccess(response) {
+      setLoadingState(false);
+      announceToScreenReader('Login realizado com sucesso! Redirecionando...');
+      
+      // Armazenar token — suporta tanto response.session quanto response.data.session
+      var session = (response && response.session) || (response && response.data && response.data.session);
+      var user    = (response && response.user)    || (response && response.data && response.data.user);
+      
+      if (session && session.token) {
+        sessionStorage.setItem('authToken', session.token);
+      }
+      if (user) {
+        sessionStorage.setItem('authUser', JSON.stringify(user));
+      }
+      
+      // Redirecionar para dashboard
+      setTimeout(function() {
+        window.location.href = './index.html';
+      }, 500);
+    }
+    
+    /**
+     * Handler de erro no login
+     */
+    function handleLoginError(error) {
+      setLoadingState(false);
+      
+      const errorMessage = typeof error === 'string' 
+        ? error 
+        : 'Erro ao autenticar. Tente novamente.';
+      
+      showError('password-error', errorMessage);
+      passwordInput.setAttribute('aria-invalid', 'true');
+      passwordInput.focus();
+      
+      announceToScreenReader('Erro: ' + errorMessage);
+    }
+    
+  })();
+  </script>
+</body>
+</html>

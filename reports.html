@@ -1,0 +1,22 @@
+<!--
+COMPONENTE: reports.html
+PAPEL: Relatórios e exportações.
+
+PRINCIPAIS FUNCIONALIDADES:
+- seleção de entidade, filtros, JSON/CSV e resumo de auditoria;
+- mantém o estado de UI separado do processamento no Apps Script;
+- não acessa diretamente a planilha: usa client.html e os contratos do Web App.
+
+INTEGRAÇÕES:
+- ExportService, DashboardService;
+- dados esperados: Dados não sensíveis.
+
+SEGURANÇA E LIMITAÇÕES:
+- nunca renderizar senha, token completo ou stack trace;
+- validação visual não substitui ValidationService no servidor;
+- usar escaping/templating seguro para texto proveniente da planilha;
+- esqueleto preparado para HtmlService e componentes parciais.
+
+STATUS: ESQUELETO DE INTERFACE — completar acessibilidade, testes e estados de erro.
+-->
+<section class="view" data-component="reports.html"><header class="page-header"><div><p class="eyebrow">Relatórios e exportações</p><h1>Reports</h1><p>seleção de entidade, filtros, JSON/CSV e resumo de auditoria.</p></div><button data-action="create">Novo</button></header><?!= include('filters') ?><div data-role="content-mount"><?!= include('table') ?><?!= include('empty-state') ?></div><?!= include('pagination') ?></section>

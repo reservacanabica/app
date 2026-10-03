@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Estudos - Canabica</title>
+</head>
+<body>
+
+<div id="studies-page" class="studies-page">
+
+  <!-- ── HEADER ──────────────────────────────── -->
+  <div class="page-header">
+    <div class="page-header-content">
+      <div class="page-header-title">
+        <i class="material-icons">library_books</i>
+        <h2>Estudos</h2>
+      </div>
+      <p class="page-header-subtitle">Gerenciamento de projetos de pesquisa</p>
+    </div>
+    <div class="page-header-actions">
+      <button class="button" id="btn-new-study">
+        <i class="material-icons">add</i>
+        <span>Novo Estudo</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── TOOLBAR ─────────────────────────────── -->
+  <div class="page-filters">
+    <div class="search-box">
+      <i class="material-icons">search</i>
+      <input
+        type="text"
+        id="search-input"
+        class="search-input"
+        placeholder="Buscar estudos..."
+        aria-label="Buscar estudos"
+      />
+    </div>
+    <div class="toolbar-actions">
+      <button class="button button-secondary" id="btn-refresh">
+        <i class="material-icons">refresh</i>
+        <span>Atualizar</span>
+      </button>
+      <select id="filter-status" class="filter-select" aria-label="Filtrar por status">
+        <option value="">Todos os Status</option>
+        <option value="DRAFT">Rascunho</option>
+        <option value="ACTIVE">Ativo</option>
+        <option value="COMPLETED">Concluído</option>
+        <option value="ARCHIVED">Arquivado</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ── ERROR STATE ─────────────────────────── -->
+  <div id="error-state" class="alert alert-error" style="display:none;margin:0 var(--space-lg,24px) var(--space-lg,24px);">
+    <div class="alert-icon">✕</div>
+    <div class="alert-content">
+      <div class="alert-title">Erro</div>
+      <div class="alert-message" id="error-message"></div>
+    </div>
+  </div>
+
+  <!-- ── SKELETON (carregamento inicial) ──────── -->
+  <div id="loading-state" class="loading-state">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Nome</th><th>Status</th><th>Pesquisador</th>
+            <th>Data Início</th><th>Experimentos</th><th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- 5 skeleton rows -->
+          <tr><td><div class="skeleton skeleton-text"></div></td><td><div class="skeleton" style="height:22px;width:80px;border-radius:var(--radius-full,9999px)"></div></td><td><div class="skeleton skeleton-text" style="width:70%"></div></td><td><div class="skeleton skeleton-text" style="width:60%"></div></td><td><div class="skeleton skeleton-text" style="width:30px"></div></td><td><div class="skeleton skeleton-text" style="width:100px"></div></td></tr>
+          <tr><td><div class="skeleton skeleton-text"></div></td><td><div class="skeleton" style="height:22px;width:80px;border-radius:var(--radius-full,9999px)"></div></td><td><div class="skeleton skeleton-text" style="width:55%"></div></td><td><div class="skeleton skeleton-text" style="width:60%"></div></td><td><div class="skeleton skeleton-text" style="width:30px"></div></td><td><div class="skeleton skeleton-text" style="width:100px"></div></td></tr>
+          <tr><td><div class="skeleton skeleton-text"></div></td><td><div class="skeleton" style="height:22px;width:80px;border-radius:var(--radius-full,9999px)"></div></td><td><div class="skeleton skeleton-text" style="width:80%"></div></td><td><div class="skeleton skeleton-text" style="width:60%"></div></td><td><div class="skeleton skeleton-text" style="width:30px"></div></td><td><div class="skeleton skeleton-text" style="width:100px"></div></td></tr>
+          <tr><td><div class="skeleton skeleton-text"></div></td><td><div class="skeleton" style="height:22px;width:80px;border-radius:var(--radius-full,9999px)"></div></td><td><div class="skeleton skeleton-text" style="width:65%"></div></td><td><div class="skeleton skeleton-text" style="width:60%"></div></td><td><div class="skeleton skeleton-text" style="width:30px"></div></td><td><div class="skeleton skeleton-text" style="width:100px"></div></td></tr>
+          <tr><td><div class="skeleton skeleton-text"></div></td><td><div class="skeleton" style="height:22px;width:80px;border-radius:var(--radius-full,9999px)"></div></td><td><div class="skeleton skeleton-text" style="width:75%"></div></td><td><div class="skeleton skeleton-text" style="width:60%"></div></td><td><div class="skeleton skeleton-text" style="width:30px"></div></td><td><div class="skeleton skeleton-text" style="width:100px"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── EMPTY STATE ─────────────────────────── -->
+  <div id="empty-state" class="empty-state" style="display:none;">
+    <i class="material-icons">library_books</i>
+    <h3>Nenhum estudo encontrado</h3>
+    <p>Comece criando um novo estudo clicando no botão acima</p>
+    <button class="button" id="btn-new-study-empty">
+      <i class="material-icons">add</i>
+      <span>Novo Estudo</span>
+    </button>
+  </div>
+
+  <!-- ── STUDIES TABLE ───────────────────────── -->
+  <div id="studies-container" class="st-table-wrapper" style="display:none;">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Status</th>
+            <th>Pesquisador</th>
+            <th>Data Início</th>
+            <th>Experimentos</th>
+            <th style="text-align:right;">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="studies-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── PAGINATION ──────────────────────────── -->
+  <div id="pagination" class="st-pagination" style="display:none;">
+    <button class="button button-secondary" id="prev-btn" disabled>← Anterior</button>
+    <span id="page-info" class="st-page-info"></span>
+    <button class="button button-secondary" id="next-btn" disabled>Próximo →</button>
+  </div>
+
+</div><!-- /studies-page -->
+
+<!-- ── CREATE / EDIT MODAL ────────────────────── -->
+<div id="form-modal" class="st-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" style="display:none;">
+  <div class="st-modal-overlay" id="form-modal-overlay"></div>
+  <div class="st-modal-content">
+    <div class="st-modal-header">
+      <h3 class="st-modal-heading" id="modal-title">Novo Estudo</h3>
+      <button class="button button-ghost st-modal-close" id="btn-close-form" aria-label="Fechar modal">✕</button>
+    </div>
+    <div class="st-modal-body" id="form-container"></div>
+  </div>
+</div>
+
+<!-- ── DELETE CONFIRMATION MODAL ─────────────── -->
+<div id="delete-modal" class="st-modal" role="alertdialog" aria-modal="true" aria-labelledby="delete-modal-title" style="display:none;">
+  <div class="st-modal-overlay" id="delete-modal-overlay"></div>
+  <div class="st-modal-content st-modal-sm">
+    <div class="st-modal-header">
+      <h3 class="st-modal-heading" id="delete-modal-title">Confirmar Exclusão</h3>
+    </div>
+    <div class="st-modal-body">
+      <p>Tem certeza que deseja excluir este estudo?</p>
+      <p class="st-text-muted" id="delete-warning" style="margin-top:var(--space-sm,8px);"></p>
+    </div>
+    <div class="st-modal-actions">
+      <button class="button button-secondary" id="btn-cancel-delete">Cancelar</button>
+      <button class="button button-danger" id="btn-confirm-delete">
+        <i class="material-icons">delete</i>
+        <span>Excluir</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* ──────────────────────────────────────────────
+     BRIDGE: aliases legado → design system tokens
+     ────────────────────────────────────────────── */
+  :root {
+    --spacing-xs: var(--space-xs,  4px);
+    --spacing-sm: var(--space-sm,  8px);
+    --spacing-md: var(--space-md,  16px);
+    --spacing-lg: var(--space-lg,  24px);
+    --spacing-xl: var(--space-xl,  32px);
+
+    --primary:        var(--color-primary,        #4CAF50);
+    --primary-dark:   var(--color-primary-dark,   #1b5e20);
+    --text-primary:   var(--color-text-primary,   #212121);
+    --text-secondary: var(--color-text-secondary, #757575);
+    --bg-secondary:   var(--color-bg-hover,       #f5f5f5);
+    --border-color:   var(--color-border,         #e0e0e0);
+    --border-radius:  var(--radius-md,  8px);
+    --font-family:    var(--font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+    --shadow-sm:      var(--shadow-sm,  0 1px 2px rgba(0,0,0,.05));
+    --shadow-md:      var(--shadow-md,  0 4px 6px rgba(0,0,0,.1));
+    --transition:     var(--transition-base, 200ms cubic-bezier(.4,0,.2,1));
+  }
+
+  /* ── PAGE HEADER ────────────────────────────── */
+  .st-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-xl, 32px);
+    background: linear-gradient(135deg, var(--color-primary, #4CAF50) 0%, #229954 100%);
+    color: white;
+    margin-bottom: var(--space-lg, 24px);
+    flex-wrap: wrap;
+    gap: var(--space-lg, 24px);
+  }
+
+  .st-page-title {
+    font-size: var(--font-size-2xl, 1.8rem);
+    font-weight: var(--font-weight-bold, 700);
+    margin: 0;
+    color: white;
+  }
+
+  .st-page-subtitle {
+    margin: var(--space-xs, 4px) 0 0;
+    opacity: .9;
+    font-size: var(--font-size-base, 1rem);
+  }
+
+  /* ── TOOLBAR ────────────────────────────────── */
+  .st-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-md, 16px);
+    padding: var(--space-md, 16px) var(--space-lg, 24px);
+    background: var(--color-bg-card, white);
+    border-bottom: 1px solid var(--color-border, #e0e0e0);
+    margin-bottom: var(--space-lg, 24px);
+    flex-wrap: wrap;
+  }
+
+  .st-search-input {
+    padding: var(--space-sm, 8px) var(--space-md, 16px);
+    border: 2px solid var(--color-border, #e0e0e0);
+    border-radius: var(--radius-md, 8px);
+    font-size: var(--font-size-base, 1rem);
+    font-family: var(--font-family);
+    width: 260px;
+    transition: all var(--transition-base, 200ms);
+    color: var(--color-text-primary, #212121);
+    background: white;
+  }
+
+  .st-search-input:focus {
+    outline: none;
+    border-color: var(--color-primary, #4CAF50);
+    box-shadow: 0 0 0 3px var(--color-primary-bg, #e8f5e9);
+  }
+
+  .st-toolbar-actions {
+    display: flex;
+    gap: var(--space-sm, 8px);
+    align-items: center;
+  }
+
+  .st-filter-select {
+    padding: var(--space-sm, 8px) var(--space-md, 16px);
+    border: 2px solid var(--color-border, #e0e0e0);
+    border-radius: var(--radius-md, 8px);
+    font-size: var(--font-size-sm, .9rem);
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: border-color var(--transition-base, 200ms);
+    background: white;
+    color: var(--color-text-primary, #212121);
+  }
+
+  .st-filter-select:hover,
+  .st-filter-select:focus {
+    border-color: var(--color-primary, #4CAF50);
+    outline: none;
+  }
+
+  /* ── TABLE wrapper (padding sem conflito com .table-container do DS) */
+  .st-table-wrapper {
+    padding: 0 var(--space-lg, 24px);
+    margin-bottom: var(--space-lg, 24px);
+  }
+
+  .st-skeleton-container {
+    padding: 0 var(--space-lg, 24px);
+    margin-bottom: var(--space-lg, 24px);
+  }
+
+  /* ── STATUS BADGES — prefixo st- para não colidir com .badge do DS */
+  .st-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px var(--space-sm, 10px);
+    border-radius: var(--radius-full, 9999px);
+    font-size: var(--font-size-xs, .75rem);
+    font-weight: var(--font-weight-semibold, 600);
+    white-space: nowrap;
+  }
+
+  .st-badge-draft     { background: var(--color-bg-hover, #f5f5f5); color: var(--color-text-secondary, #757575); }
+  .st-badge-active    { background: #e8f5e9; color: #2e7d32; }
+  .st-badge-completed { background: #e3f2fd; color: #1565c0; }
+  .st-badge-archived  { background: #ffebee; color: #c62828; }
+
+  /* ── EMPTY STATE — prefixo st- ─────────────── */
+  .st-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-2xl, 48px) var(--space-lg, 24px);
+    text-align: center;
+    color: var(--color-text-secondary, #757575);
+  }
+
+  .st-empty-icon {
+    font-size: 4rem;
+    margin-bottom: var(--space-lg, 24px);
+    opacity: .5;
+  }
+
+  .st-empty-title {
+    font-size: var(--font-size-xl, 1.25rem);
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--color-text-primary, #212121);
+    margin: 0 0 var(--space-sm, 8px);
+  }
+
+  .st-empty-message {
+    margin: 0 0 var(--space-lg, 24px);
+    font-size: var(--font-size-base, 1rem);
+  }
+
+  /* ── PAGINATION ─────────────────────────────── */
+  .st-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-lg, 24px);
+    padding: var(--space-lg, 24px);
+    margin-bottom: var(--space-lg, 24px);
+  }
+
+  .st-page-info {
+    font-size: var(--font-size-sm, .9rem);
+    color: var(--color-text-secondary, #757575);
+  }
+
+  /* ── MODAL — prefixo st- ────────────────────── */
+  .st-modal {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: var(--z-modal, 1000);
+    padding: var(--space-lg, 24px);
+  }
+
+  .st-modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+  }
+
+  .st-modal-content {
+    position: relative;
+    background: var(--color-bg-card, white);
+    border-radius: var(--radius-lg, 12px);
+    box-shadow: var(--shadow-xl, 0 20px 25px rgba(0,0,0,.1));
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    z-index: 1;
+  }
+
+  .st-modal-sm { max-width: 420px; }
+
+  .st-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-lg, 24px);
+    border-bottom: 1px solid var(--color-border, #e0e0e0);
+  }
+
+  .st-modal-heading {
+    margin: 0;
+    font-size: var(--font-size-xl, 1.3rem);
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--color-text-primary, #212121);
+  }
+
+  .st-modal-close {
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  .st-modal-body {
+    padding: var(--space-lg, 24px);
+  }
+
+  .st-modal-actions {
+    display: flex;
+    gap: var(--space-md, 16px);
+    padding: var(--space-lg, 24px);
+    border-top: 1px solid var(--color-border, #e0e0e0);
+    justify-content: flex-end;
+  }
+
+  /* ── FORM (herdado do form-builder.html, apenas ajustes de cor) */
+  .form-builder { display: flex; flex-direction: column; gap: var(--space-lg, 24px); }
+
+  .form-group { display: flex; flex-direction: column; gap: var(--space-xs, 4px); }
+
+  .form-group label {
+    font-weight: var(--font-weight-semibold, 600);
+    font-size: var(--font-size-sm, .95rem);
+    color: var(--color-text-primary, #212121);
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    padding: var(--space-sm, 8px) var(--space-md, 12px);
+    border: 2px solid var(--color-border, #e0e0e0);
+    border-radius: var(--radius-md, 8px);
+    font-size: var(--font-size-base, .95rem);
+    font-family: var(--font-family);
+    transition: all var(--transition-base, 200ms);
+    color: var(--color-text-primary, #212121);
+    background: white;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: var(--color-primary, #4CAF50);
+    box-shadow: 0 0 0 3px var(--color-primary-bg, #e8f5e9);
+  }
+
+  /* usa .form-control-error do design system */
+  .form-group-error input,
+  .form-group-error textarea,
+  .form-group-error select { border-color: var(--color-error, #f44336); }
+
+  /* usa .form-error do design system */
+  .form-error {
+    font-size: var(--font-size-xs, .85rem);
+    color: var(--color-error, #f44336);
+  }
+
+  .form-help {
+    font-size: var(--font-size-xs, .85rem);
+    color: var(--color-text-secondary, #757575);
+  }
+
+  .form-actions {
+    display: flex;
+    gap: var(--space-md, 16px);
+    margin-top: var(--space-lg, 24px);
+  }
+
+  .form-actions .btn { flex: 1; }
+
+  .required { color: var(--color-error, #f44336); }
+
+  /* ── MISC ───────────────────────────────────── */
+  .st-text-muted {
+    color: var(--color-text-secondary, #757575);
+    font-size: var(--font-size-sm, .9rem);
+  }
+
+  /* ── RESPONSIVO ─────────────────────────────── */
+  @media (max-width: 768px) {
+    .st-page-header { flex-direction: column; align-items: flex-start; }
+    .st-page-header-right { width: 100%; }
+    .st-page-header-right .btn { width: 100%; }
+
+    .st-toolbar { flex-direction: column; }
+    .st-search-input { width: 100%; }
+    .st-toolbar-actions { width: 100%; justify-content: space-between; }
+
+    .st-table-wrapper,
+    .st-skeleton-container { padding: 0 var(--space-md, 16px); }
+
+    .table { font-size: var(--font-size-sm, .85rem); }
+
+    .st-modal-content { max-height: 95vh; }
+  }
+</style>
+
+<script>
+<?!= include("api-client.html"); ?>
+<?!= include("form-builder.html"); ?>
+<?!= include("crud-service.html"); ?>
+
+/* ── Helper anti-XSS ─────────────────────────── */
+function _esc(str) {
+  const d = document.createElement('div');
+  d.textContent = String(str ?? '');
+  return d.innerHTML;
+}
+
+/* ── Toast helper (UI.Toast com fallback) ──────── */
+const Toast = {
+  success: (t, m) => typeof UI !== 'undefined' ? UI.Toast.success(t, m) : console.log('[OK]', t, m),
+  warning: (t, m) => typeof UI !== 'undefined' ? UI.Toast.warning(t, m) : console.warn('[WARN]', t, m),
+  error:   (t, m) => typeof UI !== 'undefined' ? UI.Toast.error(t, m)   : console.error('[ERR]', t, m),
+  info:    (t, m) => typeof UI !== 'undefined' ? UI.Toast.info(t, m)    : console.info('[INFO]', t, m),
+};
+
+/* ── Modal confirm helper ────────────────────── */
+function confirmar(opts) {
+  if (typeof UI !== 'undefined') {
+    UI.Modal.confirm(opts);
+  } else {
+    if (window.confirm(opts.message)) opts.onConfirm && opts.onConfirm();
+    else opts.onCancel && opts.onCancel();
+  }
+}
+
+class StudiesPage {
+  constructor() {
+    this.crud = CRUDFactory.studies();
+    this.studies          = [];
+    this.filteredStudies  = [];
+    this.currentPage      = 1;
+    this.itemsPerPage     = 10;
+    this.currentEditingId = null;
+    this.deleteTargetId   = null;
+    this.searchQuery      = '';
+    this.filterStatus     = '';
+
+    // DOM refs
+    this.loadingState     = document.getElementById('loading-state');
+    this.errorState       = document.getElementById('error-state');
+    this.errorMessage     = document.getElementById('error-message');
+    this.emptyState       = document.getElementById('empty-state');
+    this.studiesContainer = document.getElementById('studies-container');
+    this.studiesTbody     = document.getElementById('studies-tbody');
+    this.pagination       = document.getElementById('pagination');
+    this.formModal        = document.getElementById('form-modal');
+    this.deleteModal      = document.getElementById('delete-modal');
+
+    this.initialize();
+  }
+
+  /* ── Boot ───────────────────────────────────── */
+  async initialize() {
+    try {
+      this.showLoading();
+      await this.loadStudies();
+      this.render();
+      this.attachEventListeners();
+    } catch (error) {
+      console.error('Initialize error:', error);
+      this.showError(error.message || 'Erro ao carregar estudos');
+    }
+  }
+
+  async loadStudies() {
+    const response = await this.crud.list();
+    this.studies = response.data || response || [];
+    this.applyFilters();
+  }
+
+  /* ── Filters ────────────────────────────────── */
+  applyFilters() {
+    let filtered = this.studies;
+
+    if (this.searchQuery) {
+      const q = this.searchQuery.toLowerCase();
+      filtered = filtered.filter(s =>
+        s.name.toLowerCase().includes(q) ||
+        (s.description && s.description.toLowerCase().includes(q)) ||
+        (s.researcher  && s.researcher.toLowerCase().includes(q))
+      );
+    }
+
+    if (this.filterStatus) {
+      filtered = filtered.filter(s => s.status === this.filterStatus);
+    }
+
+    this.filteredStudies = filtered;
+    this.currentPage = 1;
+  }
+
+  /* ── Render ─────────────────────────────────── */
+  render() {
+    this.hideLoading();
+    this.hideError();
+
+    if (this.filteredStudies.length === 0) {
+      this.showEmpty();
+      return;
+    }
+
+    this.studiesContainer.style.display = 'block';
+    this.emptyState.style.display = 'none';
+    this.renderTable();
+    this.renderPagination();
+  }
+
+  renderTable() {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    const pageStudies = this.filteredStudies.slice(start, start + this.itemsPerPage);
+
+    this.studiesTbody.innerHTML = pageStudies.map(s => `
+      <tr>
+        <td>
+          <strong>${_esc(s.name)}</strong>
+          ${s.description
+            ? `<br><span class="st-text-muted">${_esc(s.description.substring(0, 60))}…</span>`
+            : ''}
+        </td>
+        <td>
+          <span class="st-badge ${this.getStatusClass(s.status)}">
+            ${_esc(this.getStatusLabel(s.status))}
+          </span>
+        </td>
+        <td>${_esc(s.researcher || 'N/A')}</td>
+        <td>${_esc(s.startDate  || 'N/A')}</td>
+        <td>${_esc(s.experimentCount ?? 0)}</td>
+        <td>
+          <div class="table-actions">
+            <button class="btn btn-sm btn-secondary"
+                    data-study-id="${_esc(s.id)}" data-action="edit"
+                    aria-label="Editar ${_esc(s.name)}">
+              ✏️ Editar
+            </button>
+            <button class="btn btn-sm btn-danger"
+                    data-study-id="${_esc(s.id)}" data-action="delete"
+                    aria-label="Excluir ${_esc(s.name)}">
+              🗑️ Excluir
+            </button>
+          </div>
+        </td>
+      </tr>`).join('');
+
+    // Re-attach action listeners
+    this.studiesTbody.querySelectorAll('[data-study-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id     = btn.dataset.studyId;
+        const action = btn.dataset.action;
+        if (action === 'edit')   this.openEditModal(id);
+        if (action === 'delete') this.openDeleteModal(id);
+      });
+    });
+  }
+
+  renderPagination() {
+    const totalPages = Math.ceil(this.filteredStudies.length / this.itemsPerPage);
+
+    if (totalPages <= 1) {
+      this.pagination.style.display = 'none';
+      return;
+    }
+
+    this.pagination.style.display = 'flex';
+    document.getElementById('page-info').textContent =
+      `Página ${this.currentPage} de ${totalPages}`;
+    document.getElementById('prev-btn').disabled = this.currentPage === 1;
+    document.getElementById('next-btn').disabled = this.currentPage === totalPages;
+  }
+
+  /* ── Create / Edit Modal ────────────────────── */
+  openCreateModal() {
+    this.currentEditingId = null;
+    document.getElementById('modal-title').textContent = 'Novo Estudo';
+    const form = this.buildForm('Criar');
+    document.getElementById('form-container').innerHTML = form.render();
+    this.showFormModal();
+    this.attachFormListeners(form);
+  }
+
+  async openEditModal(studyId) {
+    this.currentEditingId = studyId;
+    document.getElementById('modal-title').textContent = 'Editar Estudo';
+
+    try {
+      this.showLoading();
+      const study = await this.crud.get(studyId);
+      const form  = this.buildForm('Salvar');
+      form.setValues(study);
+      document.getElementById('form-container').innerHTML = form.render();
+      this.hideLoading();
+      this.studiesContainer.style.display = 'block';
+      this.showFormModal();
+      this.attachFormListeners(form);
+    } catch (error) {
+      this.hideLoading();
+      this.studiesContainer.style.display = 'block';
+      this.showError(`Erro ao carregar estudo: ${error.message}`);
+    }
+  }
+
+  buildForm(submitText) {
+    return new FormBuilder({
+      title: '',
+      submitText,
+      fields: [
+        FieldTypes.text('name',        'Nome',                     'Ex: Teste de Trichoderma v1'),
+        FieldTypes.textarea('description', 'Descrição',            'Descreva o objetivo do estudo', 4),
+        FieldTypes.text('researcher',  'Pesquisador',              'Nome do pesquisador responsável'),
+        FieldTypes.select('status',    'Status', [
+          { value: 'DRAFT',     label: 'Rascunho' },
+          { value: 'ACTIVE',    label: 'Ativo' },
+          { value: 'COMPLETED', label: 'Concluído' }
+        ]),
+        FieldTypes.date('startDate', 'Data de Início'),
+        FieldTypes.date('endDate',   'Data de Fim (opcional)', false)
+      ]
+    });
+  }
+
+  attachFormListeners(form) {
+    const formEl = document.querySelector('.form-builder');
+    if (!formEl) return;
+
+    formEl.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const values = form.getValues(formEl);
+
+      if (!form.validate(values)) {
+        document.getElementById('form-container').innerHTML = form.render();
+        this.attachFormListeners(form);
+        return;
+      }
+
+      form.setLoading(true);
+      document.getElementById('form-container').innerHTML = form.render();
+
+      try {
+        if (this.currentEditingId) {
+          await this.crud.update(this.currentEditingId, values);
+          Toast.success('Estudo atualizado', 'As alterações foram salvas com sucesso.');
+        } else {
+          await this.crud.create(values);
+          Toast.success('Estudo criado', 'Novo estudo registrado com sucesso.');
+        }
+        this.closeFormModal();
+        await this.loadStudies();
+        this.render();
+      } catch (error) {
+        form.setGlobalError(error.message);
+        document.getElementById('form-container').innerHTML = form.render();
+        this.attachFormListeners(form);
+        Toast.error('Erro ao salvar', error.message);
+      }
+    });
+
+    const cancelBtn = formEl.querySelector('.btn-secondary, button.button-outline');
+    if (cancelBtn) cancelBtn.addEventListener('click', () => this.closeFormModal());
+  }
+
+  /* ── Delete Modal ───────────────────────────── */
+  openDeleteModal(studyId) {
+    const study = this.studies.find(s => s.id === studyId || s.id === Number(studyId));
+    if (!study) return;
+
+    this.deleteTargetId = studyId;
+    // _esc protege contra XSS no nome do estudo
+    document.getElementById('delete-warning').textContent =
+      `O estudo "${study.name}" será movido para arquivo.`;
+    this.deleteModal.style.display = 'flex';
+  }
+
+  async confirmDelete() {
+    if (!this.deleteTargetId) return;
+
+    try {
+      await this.crud.delete(this.deleteTargetId);
+      this.cancelDelete();
+      await this.loadStudies();
+      this.render();
+      Toast.success('Estudo excluído', 'O registro foi arquivado com sucesso.');
+    } catch (error) {
+      Toast.error('Erro ao excluir', error.message);
+    }
+  }
+
+  cancelDelete() {
+    this.deleteTargetId = null;
+    this.deleteModal.style.display = 'none';
+  }
+
+  /* ── Event Listeners ────────────────────────── */
+  attachEventListeners() {
+    // Search (debounce 200ms)
+    let searchTimer;
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        this.searchQuery = e.target.value;
+        this.applyFilters();
+        this.render();
+      }, 200);
+    });
+
+    // Status filter
+    document.getElementById('filter-status').addEventListener('change', (e) => {
+      this.filterStatus = e.target.value;
+      this.applyFilters();
+      this.render();
+    });
+
+    // Novo estudo (header + empty state)
+    document.getElementById('btn-new-study').addEventListener('click', () => this.openCreateModal());
+    const btnEmpty = document.getElementById('btn-new-study-empty');
+    if (btnEmpty) btnEmpty.addEventListener('click', () => this.openCreateModal());
+
+    // Refresh
+    document.getElementById('btn-refresh').addEventListener('click', () => this.initialize());
+
+    // Pagination
+    document.getElementById('prev-btn').addEventListener('click', () => {
+      if (this.currentPage > 1) { this.currentPage--; this.renderTable(); this.renderPagination(); }
+    });
+    document.getElementById('next-btn').addEventListener('click', () => {
+      const total = Math.ceil(this.filteredStudies.length / this.itemsPerPage);
+      if (this.currentPage < total) { this.currentPage++; this.renderTable(); this.renderPagination(); }
+    });
+
+    // Form modal close
+    document.getElementById('btn-close-form').addEventListener('click', () => this.closeFormModal());
+    document.getElementById('form-modal-overlay').addEventListener('click', () => this.closeFormModal());
+
+    // Delete modal
+    document.getElementById('btn-confirm-delete').addEventListener('click', () => this.confirmDelete());
+    document.getElementById('btn-cancel-delete').addEventListener('click', () => this.cancelDelete());
+    document.getElementById('delete-modal-overlay').addEventListener('click', () => this.cancelDelete());
+
+    // Escape fecha qualquer modal aberto
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      if (this.formModal.style.display   !== 'none') this.closeFormModal();
+      if (this.deleteModal.style.display !== 'none') this.cancelDelete();
+    });
+  }
+
+  /* ── Modal helpers ──────────────────────────── */
+  showFormModal()  { this.formModal.style.display  = 'flex'; }
+  closeFormModal() { this.formModal.style.display  = 'none'; }
+
+  /* ── State helpers ──────────────────────────── */
+  showLoading() {
+    this.loadingState.style.display     = 'block';
+    this.studiesContainer.style.display = 'none';
+    this.emptyState.style.display       = 'none';
+  }
+
+  hideLoading() { this.loadingState.style.display = 'none'; }
+
+  showEmpty() {
+    this.emptyState.style.display       = 'flex';
+    this.studiesContainer.style.display = 'none';
+    this.pagination.style.display       = 'none';
+  }
+
+  showError(message) {
+    this.errorMessage.textContent   = message;
+    this.errorState.style.display   = 'flex';
+    this.loadingState.style.display = 'none';
+  }
+
+  hideError() { this.errorState.style.display = 'none'; }
+
+  /* ── Status helpers ─────────────────────────── */
+  getStatusLabel(status) {
+    return { DRAFT:'✏️ Rascunho', ACTIVE:'🟢 Ativo',
+             COMPLETED:'✅ Concluído', ARCHIVED:'📦 Arquivado' }[status] || status;
+  }
+
+  getStatusClass(status) {
+    return { DRAFT:'st-badge-draft', ACTIVE:'st-badge-active',
+             COMPLETED:'st-badge-completed', ARCHIVED:'st-badge-archived' }[status] || 'st-badge-draft';
+  }
+}
+
+/* ── Boot ──────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => { new StudiesPage(); });
+</script>
+
+</body>
+</html>

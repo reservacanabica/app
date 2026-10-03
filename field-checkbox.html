@@ -1,0 +1,22 @@
+<!--
+COMPONENTE: field-checkbox.html
+PAPEL: Campo booleano.
+
+PRINCIPAIS FUNCIONALIDADES:
+- flags de ativo, publicado, elegível e dry-run;
+- mantém o estado de UI separado do processamento no Apps Script;
+- não acessa diretamente a planilha: usa client.html e os contratos do Web App.
+
+INTEGRAÇÕES:
+- form.html;
+- dados esperados: Booleanos.
+
+SEGURANÇA E LIMITAÇÕES:
+- nunca renderizar senha, token completo ou stack trace;
+- validação visual não substitui ValidationService no servidor;
+- usar escaping/templating seguro para texto proveniente da planilha;
+- esqueleto preparado para HtmlService e componentes parciais.
+
+STATUS: ESQUELETO DE INTERFACE — completar acessibilidade, testes e estados de erro.
+-->
+<label data-field-type="checkbox"><span><input data-role="input" type="checkbox"> <span data-role="label"></span></span></label>

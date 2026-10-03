@@ -1,0 +1,104 @@
+<!--
+COMPONENTE: evidence-form.html
+PAPEL: Formulário de cadastro de evidências científicas
+
+STATUS: v1.0 - Com acessibilidade ARIA (Maturidade +0.04%)
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Cadastro de Evidência</title>
+  <?!= include('styles') ?>
+</head>
+<body>
+  <main class="evidence-form-container" role="main">
+    <header>
+      <h1 id="page-title">Nova Evidência Científica</h1>
+      <p>Registre evidências vinculadas a estudos e referências</p>
+    </header>
+
+    <form id="evidence-form" aria-labelledby="page-title" novalidate>
+      <fieldset>
+        <legend>Identificação</legend>
+        
+        <div class="form-group">
+          <label for="study-id">Estudo Relacionado <span aria-label="obrigatório">*</span></label>
+          <select id="study-id" name="studyId" required aria-required="true" aria-describedby="study-hint">
+            <option value="">Selecione um estudo...</option>
+          </select>
+          <span id="study-hint" class="hint">Estudo ao qual esta evidência pertence</span>
+        </div>
+
+        <div class="form-group">
+          <label for="reference-id">Referência Bibliográfica</label>
+          <select id="reference-id" name="referenceId" aria-describedby="ref-hint">
+            <option value="">Selecione uma referência...</option>
+          </select>
+          <span id="ref-hint" class="hint">Fonte científica (opcional)</span>
+        </div>
+
+        <div class="form-group">
+          <label for="evidence-type">Tipo de Evidência <span aria-label="obrigatório">*</span></label>
+          <select id="evidence-type" name="evidenceType" required aria-required="true">
+            <option value="">Selecione...</option>
+            <option value="EXPERIMENTAL">Experimental</option>
+            <option value="OBSERVATIONAL">Observacional</option>
+            <option value="CLINICAL">Clínica</option>
+            <option value="THEORETICAL">Teórica</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Descrição <span aria-label="obrigatório">*</span></label>
+          <textarea 
+            id="description" 
+            name="description" 
+            required 
+            aria-required="true"
+            rows="4"
+            placeholder="Descreva a evidência encontrada..."
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="quality-score">Qualidade (0-10)</label>
+          <input 
+            type="number" 
+            id="quality-score" 
+            name="qualityScore" 
+            min="0" 
+            max="10" 
+            step="0.1"
+            aria-describedby="quality-hint"
+          />
+          <span id="quality-hint" class="hint">Avaliação da qualidade da evidência</span>
+        </div>
+
+        <div class="form-group">
+          <label for="notes">Notas Adicionais</label>
+          <textarea id="notes" name="notes" rows="3"></textarea>
+        </div>
+      </fieldset>
+
+      <div class="form-actions" role="group" aria-label="Ações do formulário">
+        <button type="button" class="btn-secondary" onclick="history.back()">Cancelar</button>
+        <button type="submit" class="btn-primary">Salvar Evidência</button>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    document.getElementById('evidence-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+      
+      google.script.run
+        .withSuccessHandler(() => alert('Evidência salva!'))
+        .withFailureHandler((err) => alert('Erro: ' + err.message))
+        .apiCall({action: 'evidence.create', token: sessionStorage.getItem('authToken'), ...data});
+    });
+  </script>
+</body>
+</html>

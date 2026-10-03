@@ -1,0 +1,36 @@
+<!--
+COMPONENTE: nav.html
+PAPEL: Barra superior.
+
+PRINCIPAIS FUNCIONALIDADES:
+- identidade do usuário, navegação rápida e ação de logout;
+- mantém o estado de UI separado do processamento no Apps Script;
+- não acessa diretamente a planilha: usa client.html e os contratos do Web App.
+
+INTEGRAÇÕES:
+- SessionService, client.html;
+- dados esperados: Usuário autenticado.
+
+SEGURANÇA E LIMITAÇÕES:
+- nunca renderizar senha, token completo ou stack trace;
+- validação visual não substitui ValidationService no servidor;
+- usar escaping/templating seguro para texto proveniente da planilha;
+- esqueleto preparado para HtmlService e componentes parciais.
+
+STATUS: ESQUELETO DE INTERFACE — completar acessibilidade, testes e estados de erro.
+-->
+<nav class="top-nav" role="navigation" aria-label="Navegação principal">
+  <a class="brand" href="#dashboard" aria-label="Ir para dashboard principal">
+    <i data-feather="microscope" class="icon icon-md" aria-hidden="true"></i> Sheet Research Hub
+  </a>
+  <div class="nav-user" role="group" aria-label="Informações do usuário">
+    <span id="current-user-name" aria-live="polite" aria-atomic="true"></span>
+    <button 
+      data-action="logout" 
+      class="link-button" 
+      aria-label="Sair da aplicação"
+      type="button">
+      Sair
+    </button>
+  </div>
+</nav>

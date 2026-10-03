@@ -1,0 +1,252 @@
+<!--
+COMPONENTE: validation-list.html
+PAPEL: Lista de validações.
+
+PRINCIPAIS FUNCIONALIDADES:
+- runs, status, severidade, data e responsável;
+- mantém o estado de UI separado do processamento no Apps Script;
+- não acessa diretamente a planilha: usa client.html e os contratos do Web App.
+
+INTEGRAÇÕES:
+- ValidationRunService, table;
+- dados esperados: ValidationRuns.
+
+SEGURANÇA E LIMITAÇÕES:
+- nunca renderizar senha, token completo ou stack trace;
+- validação visual não substitui ValidationService no servidor;
+- usar escaping/templating seguro para texto proveniente da planilha;
+- esqueleto preparado para HtmlService e componentes parciais.
+
+STATUS: v2.0 — Completo com ARIA labels e navegação
+-->
+<section class="view" data-component="validation-list.html" role="main" aria-labelledby="validation-list-title">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow" aria-label="Seção">Lista de validações</p>
+      <h1 id="validation-list-title">Validation Runs</h1>
+      <p>Histórico de execuções de validação com status e severidade</p>
+    </div>
+    <button data-action="create" aria-label="Criar nova execução de validação">
+      Nova Validação
+    </button>
+  </header>
+
+  <div class="filters" role="search" aria-label="Filtros de validação">
+    <div class="filter-group">
+      <label for="filterStatus">Status</label>
+      <select id="filterStatus" aria-label="Filtrar por status">
+        <option value="">Todos</option>
+        <option value="PENDING">Pendente</option>
+        <option value="RUNNING">Executando</option>
+        <option value="COMPLETED">Concluído</option>
+        <option value="FAILED">Falhou</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="filterSeverity">Severidade</label>
+      <select id="filterSeverity" aria-label="Filtrar por severidade">
+        <option value="">Todas</option>
+        <option value="HIGH">Alta</option>
+        <option value="MEDIUM">Média</option>
+        <option value="LOW">Baixa</option>
+        <option value="INFO">Informação</option>
+      </select>
+    </div>
+
+    <button 
+      data-action="apply-filters" 
+      aria-label="Aplicar filtros selecionados">
+      Filtrar
+    </button>
+    <button 
+      data-action="clear-filters" 
+      aria-label="Limpar todos os filtros">
+      Limpar
+    </button>
+  </div>
+
+  <div data-role="content-mount">
+    <div id="validationTable" role="region" aria-label="Tabela de validações" aria-live="polite">
+      <table aria-labelledby="validation-list-title">
+        <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Executado Por</th>
+            <th scope="col">Escopo</th>
+            <th scope="col">Status</th>
+            <th scope="col">Severidade</th>
+            <th scope="col">Criado Em</th>
+            <th scope="col" aria-label="Ações">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="validationTableBody">
+          <!-- Rows dynamically loaded -->
+        </tbody>
+      </table>
+    </div>
+
+    <div id="emptyState" class="empty-state" role="status" aria-live="polite" style="display: none;">
+      <p>Nenhuma validação encontrada.</p>
+      <button data-action="create" aria-label="Criar primeira validação">
+        Criar primeira validação
+      </button>
+    </div>
+  </div>
+
+  <nav class="pagination" role="navigation" aria-label="Paginação de validações">
+    <button 
+      id="btnPrevPage" 
+      data-action="prev-page" 
+      aria-label="Página anterior"
+      disabled>
+      Anterior
+    </button>
+    <span id="pageInfo" aria-live="polite" aria-atomic="true">Página 1 de 1</span>
+    <button 
+      id="btnNextPage" 
+      data-action="next-page" 
+      aria-label="Próxima página"
+      disabled>
+      Próxima
+    </button>
+  </nav>
+
+  <div id="loadingStatus" role="status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+
+</section>
+
+<script>
+  (function() {
+    let currentPage = 1;
+    let totalPages = 1;
+    const itemsPerPage = 20;
+    let allValidations = [];
+    let filteredValidations = [];
+
+    const tableBody = document.getElementById('validationTableBody');
+    const emptyState = document.getElementById('emptyState');
+    const loadingStatus = document.getElementById('loadingStatus');
+    const pageInfo = document.getElementById('pageInfo');
+
+    function loadValidations() {
+      loadingStatus.textContent = 'Carregando validações...';
+      
+      google.script.run
+        .withSuccessHandler(function(response) {
+          if (response.success && response.data) {
+            allValidations = response.data;
+            filteredValidations = allValidations;
+            renderTable();
+            loadingStatus.textContent = 'Validações carregadas.';
+          } else {
+            loadingStatus.textContent = 'Erro ao carregar validações.';
+          }
+        })
+        .withFailureHandler(function(error) {
+          loadingStatus.textContent = 'Erro: ' + error.message;
+        })
+        .apiCall({action: 'validation.list'});
+    }
+
+    function renderTable() {
+      tableBody.innerHTML = '';
+      
+      if (filteredValidations.length === 0) {
+        document.getElementById('validationTable').style.display = 'none';
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      document.getElementById('validationTable').style.display = 'block';
+      emptyState.style.display = 'none';
+
+      totalPages = Math.ceil(filteredValidations.length / itemsPerPage);
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const pageItems = filteredValidations.slice(startIndex, endIndex);
+
+      pageItems.forEach(function(validation) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${validation.id.substring(0, 8)}</td>
+          <td>${validation.executedBy || 'Sistema'}</td>
+          <td>${validation.scope || 'Geral'}</td>
+          <td><span class="badge badge-${validation.status.toLowerCase()}">${validation.status}</span></td>
+          <td><span class="badge badge-${validation.maxSeverity.toLowerCase()}">${validation.maxSeverity}</span></td>
+          <td>${new Date(validation.createdAt).toLocaleDateString('pt-BR')}</td>
+          <td>
+            <button 
+              data-action="view" 
+              data-id="${validation.id}"
+              aria-label="Ver detalhes da validação ${validation.id}">
+              Ver
+            </button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      updatePagination();
+    }
+
+    function updatePagination() {
+      pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+      document.getElementById('btnPrevPage').disabled = currentPage === 1;
+      document.getElementById('btnNextPage').disabled = currentPage === totalPages;
+    }
+
+    function applyFilters() {
+      const statusFilter = document.getElementById('filterStatus').value;
+      const severityFilter = document.getElementById('filterSeverity').value;
+
+      filteredValidations = allValidations.filter(function(v) {
+        if (statusFilter && v.status !== statusFilter) return false;
+        if (severityFilter && v.maxSeverity !== severityFilter) return false;
+        return true;
+      });
+
+      currentPage = 1;
+      renderTable();
+    }
+
+    // Event listeners
+    document.querySelector('[data-action="create"]').addEventListener('click', function() {
+      window.location.href = 'validation-create.html';
+    });
+
+    document.querySelector('[data-action="apply-filters"]').addEventListener('click', applyFilters);
+
+    document.querySelector('[data-action="clear-filters"]').addEventListener('click', function() {
+      document.getElementById('filterStatus').value = '';
+      document.getElementById('filterSeverity').value = '';
+      filteredValidations = allValidations;
+      currentPage = 1;
+      renderTable();
+    });
+
+    document.getElementById('btnPrevPage').addEventListener('click', function() {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTable();
+      }
+    });
+
+    document.getElementById('btnNextPage').addEventListener('click', function() {
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderTable();
+      }
+    });
+
+    tableBody.addEventListener('click', function(e) {
+      if (e.target.dataset.action === 'view') {
+        const validationId = e.target.dataset.id;
+        window.location.href = 'validation-detail.html?id=' + validationId;
+      }
+    });
+
+    // Initial load
+    loadValidations();
+  })();
+</script>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('quality-components-css') ?>
+  <?!= include('quality-helpers-js') ?>
+</head>
+<body>
+  <div class="container mt-4">
+    <div class="card">
+      <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Detalhes do Lote</h5>
+        <button class="btn btn-sm btn-light" onclick="goBack()">← Voltar</button>
+      </div>
+      <div class="card-body">
+        <!-- Identificação do Lote -->
+        <section class="mb-4">
+          <h6 class="border-bottom pb-2">Identificação</h6>
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>ID Lote:</strong> <span id="lote-id">—</span></p>
+              <p><strong>Insumo Vinculado:</strong> <span id="lote-insumo">—</span></p>
+              <p><strong>Data de Fabricação:</strong> <span id="lote-fabricacao">—</span></p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Data de Validade:</strong> <span id="lote-validade">—</span></p>
+              <p><strong>Quantidade (kg):</strong> <span id="lote-quantidade">—</span></p>
+              <p><strong>Certificado:</strong> <span id="lote-certificado">—</span></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Status -->
+        <section class="mb-4">
+          <h6 class="border-bottom pb-2">Status</h6>
+          <div class="row">
+            <div class="col-md-4">
+              <p><strong>Status Auditoria:</strong></p>
+              <div id="lote-status-auditoria">—</div>
+            </div>
+            <div class="col-md-4">
+              <p><strong>Status Liberação:</strong></p>
+              <div id="lote-status-liberacao">—</div>
+            </div>
+            <div class="col-md-4">
+              <p><strong>Última Atualização:</strong></p>
+              <p id="lote-updated">—</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Auditoria de Metais Pesados -->
+        <section class="mb-4">
+          <h6 class="border-bottom pb-2">Auditoria de Metais Pesados</h6>
+          <div class="alert alert-info mb-3">
+            <strong>Limites de Referência (ppm):</strong> 
+            Pb ≤ 2.0 | Cd ≤ 0.5 | As ≤ 1.0 | Hg ≤ 0.1
+          </div>
+          <div id="metais-table-container">
+            <p class="text-muted">Carregando dados de metais pesados...</p>
+          </div>
+        </section>
+
+        <!-- Justificativa Técnica -->
+        <section class="mb-4" id="justificativa-section" style="display:none;">
+          <h6 class="border-bottom pb-2">Justificativa Técnica</h6>
+          <div class="card bg-light">
+            <div class="card-body">
+              <p id="lote-justificativa" class="mb-0">—</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Metadata -->
+        <section class="mb-4">
+          <h6 class="border-bottom pb-2">Metadados</h6>
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>Criado em:</strong> <span id="lote-created">—</span></p>
+              <p><strong>Criado por:</strong> <span id="lote-created-by">—</span></p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Atualizado em:</strong> <span id="lote-updated-full">—</span></p>
+              <p><strong>Atualizado por:</strong> <span id="lote-updated-by">—</span></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Ações -->
+        <section>
+          <button id="btn-workflow" class="btn btn-primary" onclick="openWorkflow()">
+            🔄 Atualizar Status
+          </button>
+          <button id="btn-view-insumo" class="btn btn-secondary" onclick="viewInsumo()">
+            📦 Ver Insumo Vinculado
+          </button>
+          <button id="btn-delete-lote" class="btn btn-danger" onclick="deleteLote()">
+            🗑️ Excluir Lote
+          </button>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentLote = null;
+
+    function goBack() {
+      window.history.back();
+    }
+
+    function loadLoteData(loteId) {
+      setButtonLoading('btn-workflow', true);
+      
+      google.script.run
+        .withSuccessHandler(onLoteLoaded)
+        .withFailureHandler(onLoadError)
+        .routeRequest({
+          action: 'getLote',
+          loteId: loteId
+        });
+    }
+
+    function onLoteLoaded(response) {
+      setButtonLoading('btn-workflow', false);
+      
+      if (!response.success) {
+        showError(response.message || 'Erro ao carregar lote');
+        return;
+      }
+      
+      currentLote = response.data;
+      renderLote(currentLote);
+    }
+
+    function renderLote(lote) {
+      // Identificação
+      document.getElementById('lote-id').textContent = lote.idLote || '—';
+      document.getElementById('lote-insumo').innerHTML = lote.nomeInsumo 
+        ? `<a href="#" onclick="viewInsumo(); return false;">${escapeHtml(lote.nomeInsumo)}</a>`
+        : '—';
+      document.getElementById('lote-fabricacao').textContent = formatDate(lote.dataFabricacao);
+      document.getElementById('lote-validade').textContent = formatDate(lote.dataValidade);
+      document.getElementById('lote-quantidade').textContent = lote.quantidade ? lote.quantidade + ' kg' : '—';
+      document.getElementById('lote-certificado').textContent = lote.certificadoAnalise || '—';
+      
+      // Status
+      document.getElementById('lote-status-auditoria').innerHTML = renderStatusBadge(lote.statusAuditoria);
+      document.getElementById('lote-status-liberacao').innerHTML = renderStatusBadge(lote.statusLiberacao);
+      document.getElementById('lote-updated').textContent = formatDateTime(lote.updatedAt);
+      
+      // Metais Pesados
+      const metaisContainer = document.getElementById('metais-table-container');
+      if (lote.metaisPesados && Object.keys(lote.metaisPesados).length > 0) {
+        metaisContainer.innerHTML = renderMetaisPesadosTable(lote.metaisPesados);
+      } else {
+        metaisContainer.innerHTML = '<p class="text-muted">Nenhum dado de metais pesados cadastrado</p>';
+      }
+      
+      // Justificativa Técnica
+      if (lote.justificativaTecnica && lote.justificativaTecnica.trim() !== '') {
+        document.getElementById('justificativa-section').style.display = 'block';
+        document.getElementById('lote-justificativa').textContent = lote.justificativaTecnica;
+      } else {
+        document.getElementById('justificativa-section').style.display = 'none';
+      }
+      
+      // Metadata
+      document.getElementById('lote-created').textContent = formatDateTime(lote.createdAt);
+      document.getElementById('lote-created-by').textContent = lote.createdBy || '—';
+      document.getElementById('lote-updated-full').textContent = formatDateTime(lote.updatedAt);
+      document.getElementById('lote-updated-by').textContent = lote.updatedBy || '—';
+    }
+
+    function onLoadError(error) {
+      setButtonLoading('btn-workflow', false);
+      showError(error.message || 'Erro ao carregar dados');
+    }
+
+    function openWorkflow() {
+      if (!currentLote) {
+        showError('Nenhum lote carregado');
+        return;
+      }
+      // Navegar para formulário de workflow
+      window.location.href = '?page=lote-workflow&id=' + currentLote.id;
+    }
+
+    function viewInsumo() {
+      if (!currentLote || !currentLote.idInsumo) {
+        showError('Insumo não vinculado');
+        return;
+      }
+      window.location.href = '?page=insumo-view&id=' + currentLote.idInsumo;
+    }
+
+    async function deleteLote() {
+      if (!currentLote) {
+        showError('Nenhum lote carregado');
+        return;
+      }
+
+      const ok = await confirmAction('Tem certeza que deseja excluir este lote? Esta ação não pode ser desfeita.');
+      if (!ok) return;
+      
+      setButtonLoading('btn-delete-lote', true);
+      
+      google.script.run
+        .withSuccessHandler(onDeleteSuccess)
+        .withFailureHandler(onDeleteError)
+        .routeRequest({
+          action: 'deleteLote',
+          loteId: currentLote.id
+        });
+    }
+
+    function onDeleteSuccess(response) {
+      setButtonLoading('btn-delete-lote', false);
+      
+      if (response.success) {
+        showSuccess('Lote excluído com sucesso');
+        setTimeout(() => window.history.back(), 1500);
+      } else {
+        showError(response.message || 'Erro ao excluir lote');
+      }
+    }
+
+    function onDeleteError(error) {
+      setButtonLoading('btn-delete-lote', false);
+      showError(error.message || 'Erro ao excluir lote');
+    }
+
+    // Inicializar ao carregar página
+    window.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const loteId = urlParams.get('id');
+      
+      if (loteId) {
+        loadLoteData(loteId);
+      } else {
+        showError('ID do lote não fornecido');
+      }
+    });
+  </script>
+</body>
+</html>

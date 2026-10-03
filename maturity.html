@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<!--
+COMPONENTE: maturity.html
+PAPEL: Interface de avaliação de maturidade do backend.
+
+PRINCIPAIS FUNCIONALIDADES:
+- exibição visual de scores por categoria;
+- gráfico radar de maturidade;
+- lista priorizada de recomendações;
+- roadmap de melhorias;
+- métricas do sistema.
+
+INTEGRAÇÕES:
+- MaturityAssessment, Bootstrap, Router;
+
+STATUS: INTERFACE DE MONITORAMENTO — executar periodicamente para acompanhamento.
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Avaliação de Maturidade - Backend</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      margin: 0;
+      padding: var(--canna-space-5);
+      background: #f5f5f5;
+      color: #333;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      padding: var(--canna-space-8);
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2c3e50;
+      margin-top: 0;
+      border-bottom: 3px solid #3498db;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #34495e;
+      margin-top: 30px;
+      border-bottom: 1px solid #ecf0f1;
+      padding-bottom: 8px;
+    }
+    .summary-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: var(--canna-space-8);
+      border-radius: 12px;
+      margin: var(--canna-space-5) 0;
+      text-align: center;
+    }
+    .summary-card h2 {
+      color: white;
+      border: none;
+      margin: 0;
+      font-size: 48px;
+    }
+    .summary-card p {
+      margin: 10px /* Intentional: badge/button padding */ 0 0 0;
+      font-size: 24px;
+      opacity: 0.9;
+    }
+    .summary-card small {
+      display: block;
+      margin-top: 15px;
+      opacity: 0.8;
+      font-size: 14px;
+    }
+    .categories {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--canna-space-5);
+      margin: var(--canna-space-5) 0;
+    }
+    .category-card {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: var(--canna-space-5);
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .category-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .category-card h3 {
+      margin: 0 0 10px 0;
+      color: #2c3e50;
+      font-size: 16px;
+    }
+    .score {
+      font-size: 36px;
+      font-weight: bold;
+      margin: 10px /* Intentional: badge/button padding */ 0;
+    }
+    .score.excellent { color: #27ae60; }
+    .score.good { color: #2ecc71; }
+    .score.fair { color: #f39c12; }
+    .score.poor { color: #e67e22; }
+    .score.critical { color: #e74c3c; }
+    .level {
+      display: inline-block;
+      padding: var(--canna-space-1) 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #ecf0f1;
+      color: #7f8c8d;
+      margin-top: 5px;
+    }
+    .recommendations {
+      margin: var(--canna-space-5) 0;
+    }
+    .rec-item {
+      background: #f8f9fa;
+      border-left: 4px solid #3498db;
+      padding: var(--canna-space-4);
+      margin: 10px /* Intentional: badge/button padding */ 0;
+      border-radius: 6px;
+    }
+    .rec-item.critical {
+      border-left-color: #e74c3c;
+      background: #fef5f4;
+    }
+    .rec-item.high {
+      border-left-color: #e67e22;
+      background: #fef9f5;
+    }
+    .rec-item.medium {
+      border-left-color: #f39c12;
+      background: #fefaf5;
+    }
+    .rec-item.low {
+      border-left-color: #95a5a6;
+      background: #f8f9fa;
+    }
+    .rec-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .rec-title {
+      font-weight: 600;
+      font-size: 16px;
+      color: #2c3e50;
+    }
+    .rec-badges {
+      display: flex;
+      gap: 5px /* Intentional: micro-spacing */;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge.priority-critical { background: #e74c3c; color: white; }
+    .badge.priority-high { background: #e67e22; color: white; }
+    .badge.priority-medium { background: #f39c12; color: white; }
+    .badge.priority-low { background: #95a5a6; color: white; }
+    .badge.effort-high { background: #34495e; color: white; }
+    .badge.effort-medium { background: #7f8c8d; color: white; }
+    .badge.effort-low { background: #95a5a6; color: white; }
+    .rec-description {
+      color: #555;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .roadmap {
+      margin: var(--canna-space-5) 0;
+    }
+    .roadmap-phase {
+      margin: var(--canna-space-5) 0;
+      padding: var(--canna-space-4);
+      background: #f8f9fa;
+      border-radius: 12px;
+    }
+    .roadmap-phase h3 {
+      margin: 0 0 15px 0;
+      color: #2c3e50;
+    }
+    .roadmap-item {
+      padding: var(--canna-space-2) 12px;
+      background: white;
+      margin: var(--canna-space-2) 0;
+      border-radius: 6px;
+      border-left: 3px solid #3498db;
+      font-size: 14px;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--canna-space-4);
+      margin: var(--canna-space-5) 0;
+    }
+    .metric-card {
+      background: #ecf0f1;
+      padding: var(--canna-space-4);
+      border-radius: 12px;
+      text-align: center;
+    }
+    .metric-value {
+      font-size: 28px;
+      font-weight: bold;
+      color: #2c3e50;
+      margin: 5px /* Intentional: micro-spacing */ 0;
+    }
+    .metric-label {
+      font-size: 13px;
+      color: #7f8c8d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: #7f8c8d;
+    }
+    .loading-spinner {
+      border: 4px solid #ecf0f1;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .btn {
+      display: inline-block;
+      padding: 10px /* Intentional: badge/button padding */ 20px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:hover {
+      background: #2980b9;
+    }
+    .btn:disabled {
+      background: #95a5a6;
+      cursor: not-allowed;
+    }
+    .error {
+      background: #fef5f4;
+      border: 1px solid #e74c3c;
+      color: #c0392b;
+      padding: var(--canna-space-4);
+      border-radius: 6px;
+      margin: var(--canna-space-5) 0;
+    }
+    .tabs {
+      display: flex;
+      gap: 10px /* Intentional: badge/button padding */;
+      border-bottom: 2px solid #ecf0f1;
+      margin: var(--canna-space-5) 0;
+    }
+    .tab {
+      padding: 10px /* Intentional: badge/button padding */ 20px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+    }
+    .tab:hover {
+      color: #3498db;
+    }
+    .tab.active {
+      border-bottom-color: #3498db;
+      color: #3498db;
+      font-weight: 600;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎯 Avaliação de Maturidade do Backend</h1>
+    
+    <div id="loading" class="loading">
+      <div class="loading-spinner"></div>
+      <p>Analisando sistema...</p>
+    </div>
+    
+    <div id="content" style="display: none;">
+      <div class="summary-card">
+        <h2 id="overallScore">-</h2>
+        <p id="overallLevel">-</p>
+        <small id="assessedAt">-</small>
+      </div>
+      
+      <div class="tabs">
+        <div class="tab active" data-tab="overview">Visão Geral</div>
+        <div class="tab" data-tab="recommendations">Recomendações</div>
+        <div class="tab" data-tab="roadmap">Roadmap</div>
+        <div class="tab" data-tab="metrics">Métricas</div>
+      </div>
+      
+      <!-- Tab: Overview -->
+      <div id="tab-overview" class="tab-content active">
+        <h2>Scores por Categoria</h2>
+        <div id="categories" class="categories"></div>
+      </div>
+      
+      <!-- Tab: Recommendations -->
+      <div id="tab-recommendations" class="tab-content">
+        <h2>Recomendações Priorizadas</h2>
+        <div id="recommendations" class="recommendations"></div>
+      </div>
+      
+      <!-- Tab: Roadmap -->
+      <div id="tab-roadmap" class="tab-content">
+        <h2>Roadmap de Melhorias</h2>
+        <div id="roadmap" class="roadmap"></div>
+      </div>
+      
+      <!-- Tab: Metrics -->
+      <div id="tab-metrics" class="tab-content">
+        <h2>Métricas do Sistema</h2>
+        <div id="metrics" class="metrics"></div>
+      </div>
+    </div>
+    
+    <div id="error" class="error" style="display: none;"></div>
+  </div>
+  
+  <script>
+    // Estado global
+    let maturityData = null;
+    
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', function() {
+      setupTabs();
+      loadMaturityData();
+    });
+    
+    // Gerenciamento de tabs
+    function setupTabs() {
+      document.querySelectorAll('.tab').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          const tabName = this.getAttribute('data-tab');
+          switchTab(tabName);
+        });
+      });
+    }
+    
+    function switchTab(tabName) {
+      // Atualizar tabs
+      document.querySelectorAll('.tab').forEach(function(t) {
+        t.classList.remove('active');
+      });
+      document.querySelector('[data-tab="' + tabName + '"]').classList.add('active');
+      
+      // Atualizar conteúdo
+      document.querySelectorAll('.tab-content').forEach(function(c) {
+        c.classList.remove('active');
+      });
+      document.getElementById('tab-' + tabName).classList.add('active');
+    }
+    
+    // Carregar dados de maturidade
+    function loadMaturityData() {
+      google.script.run
+        .withSuccessHandler(onMaturityDataLoaded)
+        .withFailureHandler(onError)
+        .routeRequest({
+          action: 'maturity.assess',
+          token: getSessionToken()
+        });
+    }
+    
+    function onMaturityDataLoaded(response) {
+      if (!response.success) {
+        onError(response.error || 'Erro ao carregar dados');
+        return;
+      }
+      
+      maturityData = response.data;
+      renderMaturityReport();
+      
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+    }
+    
+    function onError(error) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error').style.display = 'block';
+      document.getElementById('error').textContent = 'Erro: ' + (error.message || error);
+    }
+    
+    // Renderizar relatório completo
+    function renderMaturityReport() {
+      renderSummary();
+      renderCategories();
+      renderRecommendations();
+      renderRoadmap();
+      renderMetrics();
+    }
+    
+    function renderSummary() {
+      const summary = maturityData.summary;
+      
+      document.getElementById('overallScore').textContent = summary.overallScore + '/100';
+      document.getElementById('overallLevel').textContent = summary.overallLevel.name + ' - ' + summary.overallLevel.description;
+      document.getElementById('assessedAt').textContent = 'Avaliado em: ' + formatDateTime(summary.assessedAt);
+    }
+    
+    function renderCategories() {
+      const container = document.getElementById('categories');
+      container.innerHTML = '';
+      
+      Object.keys(maturityData.categoryScores).forEach(function(key) {
+        const cat = maturityData.categoryScores[key];
+        const card = createCategoryCard(cat);
+        container.appendChild(card);
+      });
+    }
+    
+    function createCategoryCard(category) {
+      const div = document.createElement('div');
+      div.className = 'category-card';
+      
+      const scoreClass = getScoreClass(category.score);
+      
+      div.innerHTML = 
+        '<h3>' + category.category + '</h3>' +
+        '<div class="score ' + scoreClass + '">' + category.score + '</div>' +
+        '<div class="level">' + category.level.name + '</div>';
+      
+      return div;
+    }
+    
+    function renderRecommendations() {
+      const container = document.getElementById('recommendations');
+      container.innerHTML = '';
+      
+      if (!maturityData.prioritizedRecommendations || maturityData.prioritizedRecommendations.length === 0) {
+        container.innerHTML = '<p>Nenhuma recomendação disponível.</p>';
+        return;
+      }
+      
+      maturityData.prioritizedRecommendations.forEach(function(rec) {
+        const item = createRecommendationItem(rec);
+        container.appendChild(item);
+      });
+    }
+    
+    function createRecommendationItem(rec) {
+      const div = document.createElement('div');
+      div.className = 'rec-item ' + rec.priority.toLowerCase();
+      
+      div.innerHTML = 
+        '<div class="rec-header">' +
+          '<div class="rec-title">' + rec.title + '</div>' +
+          '<div class="rec-badges">' +
+            '<span class="badge priority-' + rec.priority.toLowerCase() + '">' + rec.priority + '</span>' +
+            '<span class="badge effort-' + rec.effort.toLowerCase() + '">' + rec.effort + ' esforço</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="rec-description">' + rec.description + '</div>';
+      
+      return div;
+    }
+    
+    function renderRoadmap() {
+      const container = document.getElementById('roadmap');
+      container.innerHTML = '';
+      
+      const roadmap = maturityData.roadmap;
+      
+      Object.keys(roadmap).forEach(function(phaseKey) {
+        const phase = roadmap[phaseKey];
+        if (phase.items && phase.items.length > 0) {
+          const phaseDiv = createRoadmapPhase(phase);
+          container.appendChild(phaseDiv);
+        }
+      });
+    }
+    
+    function createRoadmapPhase(phase) {
+      const div = document.createElement('div');
+      div.className = 'roadmap-phase';
+      
+      let html = '<h3>' + phase.name + '</h3>';
+      
+      phase.items.forEach(function(item) {
+        html += '<div class="roadmap-item">' +
+          '<strong>' + item.title + '</strong>' +
+          ' <span class="badge priority-' + item.priority.toLowerCase() + '">' + item.priority + '</span>' +
+          '</div>';
+      });
+      
+      div.innerHTML = html;
+      return div;
+    }
+    
+    function renderMetrics() {
+      const container = document.getElementById('metrics');
+      container.innerHTML = '';
+      
+      const metrics = maturityData.metrics;
+      
+      if (metrics.error) {
+        container.innerHTML = '<p class="error">' + metrics.error + '</p>';
+        return;
+      }
+      
+      // Total de registros
+      container.appendChild(createMetricCard('Total de Registros', metrics.totalRecords || 0));
+      
+      // Por sheet
+      if (metrics.sheets) {
+        Object.keys(metrics.sheets).forEach(function(sheetName) {
+          const sheet = metrics.sheets[sheetName];
+          if (!sheet.error) {
+            container.appendChild(createMetricCard(sheetName, sheet.records || 0));
+          }
+        });
+      }
+      
+      // Auditoria
+      if (metrics.auditLog && !metrics.auditLog.error) {
+        container.appendChild(createMetricCard('Eventos de Auditoria', metrics.auditLog.totalEvents || 0));
+        container.appendChild(createMetricCard('Erros Registrados', metrics.auditLog.recentErrors || 0));
+      }
+    }
+    
+    function createMetricCard(label, value) {
+      const div = document.createElement('div');
+      div.className = 'metric-card';
+      div.innerHTML = 
+        '<div class="metric-label">' + label + '</div>' +
+        '<div class="metric-value">' + value + '</div>';
+      return div;
+    }
+    
+    // Helpers
+    function getScoreClass(score) {
+      if (score >= 90) return 'excellent';
+      if (score >= 70) return 'good';
+      if (score >= 50) return 'fair';
+      if (score >= 30) return 'poor';
+      return 'critical';
+    }
+    
+    function formatDateTime(isoString) {
+      const date = new Date(isoString);
+      return date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR');
+    }
+    
+    function getSessionToken() {
+      // Implementar recuperação de token de sessão do localStorage ou cookie
+      return localStorage.getItem('sessionToken') || '';
+    }
+    
+    function routeRequest(request) {
+      return google.script.run.routeRequest(request);
+    }
+  </script>
+</body>
+</html>

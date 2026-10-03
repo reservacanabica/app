@@ -1,0 +1,321 @@
+<!--
+COMPONENTE: field-textarea.html
+PAPEL: Campo de texto longo com validação, contador de caracteres e autoexpansão.
+
+PRINCIPAIS FUNCIONALIDADES:
+- textarea com contador de caracteres em tempo real;
+- validação de comprimento mínimo/máximo;
+- autoexpansão vertical conforme usuário digita;
+- suporte a placeholder, required, maxlength;
+- estados visuais: normal, focus, error, disabled;
+- acessibilidade completa com ARIA labels e live regions.
+
+INTEGRAÇÕES:
+- form.html para validação de formulário;
+- ValidationService no servidor para validação final;
+- dados esperados: text, name, label, placeholder, required, minlength, maxlength, rows.
+
+SEGURANÇA E LIMITAÇÕES:
+- nunca renderizar senha, token completo ou stack trace;
+- validação visual não substitui ValidationService no servidor;
+- usar escaping/templating seguro para texto proveniente da planilha;
+- componente pronto para produção com testes de acessibilidade.
+
+STATUS: PRODUÇÃO — acessibilidade WCAG 2.1 AA, validação client-side completa.
+-->
+
+<div class="field-textarea" data-field-type="textarea" role="group">
+  <label class="field-textarea__label" data-role="label">
+    <span class="field-textarea__label-text"></span>
+    <span class="field-textarea__required" aria-label="obrigatório">*</span>
+  </label>
+  
+  <div class="field-textarea__wrapper">
+    <textarea 
+      class="field-textarea__input" 
+      data-role="input"
+      rows="5"
+      aria-describedby="textarea-help textarea-counter textarea-error"
+      aria-invalid="false">
+    </textarea>
+    
+    <div class="field-textarea__footer">
+      <div class="field-textarea__help" id="textarea-help" data-role="help"></div>
+      <div class="field-textarea__counter" id="textarea-counter" data-role="counter" aria-live="polite">
+        <span data-role="current">0</span> / <span data-role="max">500</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="field-textarea__error" id="textarea-error" data-role="error" role="alert" aria-live="assertive"></div>
+</div>
+
+<style>
+.field-textarea {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.field-textarea__label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.field-textarea__required {
+  color: #dc2626;
+  font-size: 1rem;
+  display: none;
+}
+
+.field-textarea[data-required="true"] .field-textarea__required {
+  display: inline;
+}
+
+.field-textarea__wrapper {
+  position: relative;
+}
+
+.field-textarea__input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #111827;
+  background: #ffffff;
+  resize: vertical;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.field-textarea__input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.field-textarea__input:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.field-textarea[data-error="true"] .field-textarea__input {
+  border-color: #dc2626;
+}
+
+.field-textarea[data-error="true"] .field-textarea__input:focus {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.field-textarea__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.375rem;
+  gap: 0.5rem;
+}
+
+.field-textarea__help {
+  font-size: 0.75rem;
+  color: #6b7280;
+  flex: 1;
+}
+
+.field-textarea__counter {
+  font-size: 0.75rem;
+  color: #6b7280;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.field-textarea[data-counter-warn="true"] .field-textarea__counter {
+  color: #f59e0b;
+  font-weight: 500;
+}
+
+.field-textarea[data-counter-error="true"] .field-textarea__counter {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.field-textarea__error {
+  font-size: 0.75rem;
+  color: #dc2626;
+  display: none;
+  margin-top: 0.25rem;
+}
+
+.field-textarea[data-error="true"] .field-textarea__error {
+  display: block;
+}
+
+/* Auto-expand animation */
+.field-textarea__input.expanding {
+  transition: height 0.15s ease-out;
+}
+</style>
+
+<script>
+(function() {
+  /**
+   * Inicializa campo textarea com validação e contador.
+   * @param {HTMLElement} container - Container do campo
+   * @param {Object} options - Configurações do campo
+   */
+  function initTextarea(container, options = {}) {
+    const textarea = container.querySelector('[data-role="input"]');
+    const labelText = container.querySelector('.field-textarea__label-text');
+    const help = container.querySelector('[data-role="help"]');
+    const error = container.querySelector('[data-role="error"]');
+    const currentCounter = container.querySelector('[data-role="current"]');
+    const maxCounter = container.querySelector('[data-role="max"]');
+    
+    // Configurações
+    const config = {
+      label: options.label || '',
+      name: options.name || '',
+      placeholder: options.placeholder || '',
+      help: options.helpText || '',
+      required: options.required || false,
+      minlength: options.minlength || 0,
+      maxlength: options.maxlength || 500,
+      rows: options.rows || 5,
+      autoExpand: options.autoExpand !== false,
+      value: options.value || ''
+    };
+    
+    // Aplicar configurações
+    labelText.textContent = config.label;
+    textarea.name = config.name;
+    textarea.placeholder = config.placeholder;
+    textarea.required = config.required;
+    textarea.minLength = config.minlength;
+    textarea.maxLength = config.maxlength;
+    textarea.rows = config.rows;
+    textarea.value = config.value;
+    
+    if (config.help) {
+      help.textContent = config.help;
+    }
+    
+    if (config.required) {
+      container.setAttribute('data-required', 'true');
+    }
+    
+    maxCounter.textContent = config.maxlength;
+    
+    // Atualizar contador
+    function updateCounter() {
+      const length = textarea.value.length;
+      currentCounter.textContent = length;
+      
+      // Estados do contador
+      container.removeAttribute('data-counter-warn');
+      container.removeAttribute('data-counter-error');
+      
+      const ratio = length / config.maxlength;
+      if (ratio >= 1) {
+        container.setAttribute('data-counter-error', 'true');
+      } else if (ratio >= 0.9) {
+        container.setAttribute('data-counter-warn', 'true');
+      }
+    }
+    
+    // Validar campo
+    function validate() {
+      const value = textarea.value.trim();
+      const errors = [];
+      
+      if (config.required && value === '') {
+        errors.push('Este campo é obrigatório');
+      }
+      
+      if (config.minlength > 0 && value.length > 0 && value.length < config.minlength) {
+        errors.push(`Mínimo de ${config.minlength} caracteres`);
+      }
+      
+      if (value.length > config.maxlength) {
+        errors.push(`Máximo de ${config.maxlength} caracteres`);
+      }
+      
+      // Atualizar UI
+      if (errors.length > 0) {
+        container.setAttribute('data-error', 'true');
+        error.textContent = errors[0];
+        textarea.setAttribute('aria-invalid', 'true');
+        return false;
+      } else {
+        container.removeAttribute('data-error');
+        error.textContent = '';
+        textarea.setAttribute('aria-invalid', 'false');
+        return true;
+      }
+    }
+    
+    // Auto-expansão
+    function autoExpand() {
+      if (!config.autoExpand) return;
+      
+      textarea.classList.add('expanding');
+      textarea.style.height = 'auto';
+      textarea.style.height = textarea.scrollHeight + 'px';
+      
+      setTimeout(() => textarea.classList.remove('expanding'), 150);
+    }
+    
+    // Event listeners
+    textarea.addEventListener('input', function() {
+      updateCounter();
+      autoExpand();
+    });
+    
+    textarea.addEventListener('blur', function() {
+      validate();
+    });
+    
+    // Inicialização
+    updateCounter();
+    if (config.autoExpand) {
+      autoExpand();
+    }
+    
+    // API pública
+    container._textareaAPI = {
+      validate,
+      getValue: () => textarea.value,
+      setValue: (val) => {
+        textarea.value = val;
+        updateCounter();
+        autoExpand();
+      },
+      reset: () => {
+        textarea.value = '';
+        container.removeAttribute('data-error');
+        error.textContent = '';
+        updateCounter();
+        autoExpand();
+      }
+    };
+  }
+  
+  // Inicializar todos os textareas na página
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-field-type="textarea"]').forEach(function(el) {
+      if (!el._textareaAPI) {
+        initTextarea(el, el.dataset);
+      }
+    });
+  });
+  
+  // Exportar para uso global
+  window.initTextarea = initTextarea;
+})();
+</script>

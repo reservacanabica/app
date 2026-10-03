@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulário de Protocolo Biológico</title>
+  
+  <link rel="stylesheet" href="quality-components.css">
+</head>
+<body>
+  <div class="form-container">
+    <h2 id="formTitle">Novo Protocolo Biológico</h2>
+    
+    <form id="protocoloForm">
+      <!-- Seção 1: Identificação -->
+      <fieldset>
+        <legend>Identificação do Organismo</legend>
+        
+        <div class="form-group">
+          <label for="organismo_alvo">
+            Organismo Alvo <span style="color: red;">*</span>
+          </label>
+          <input
+            type="text"
+            id="organismo_alvo"
+            name="organismo_alvo"
+            required
+            maxlength="200"
+            placeholder="Ex: Trichoderma harzianum"
+          >
+          <small class="help-text">
+            Nome científico ou comum do organismo biológico
+          </small>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label for="tipo_aplicacao">
+              Tipo de Aplicação <span style="color: red;">*</span>
+            </label>
+            <select id="tipo_aplicacao" name="tipo_aplicacao" required>
+              <option value="">Selecione...</option>
+              <option value="FOLIAR">Foliar</option>
+              <option value="SOLO">Solo / Substrato</option>
+              <option value="INOCULACAO">Inoculação Direta</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="fase_cultivo">
+              Fase do Cultivo <span style="color: red;">*</span>
+            </label>
+            <select id="fase_cultivo" name="fase_cultivo" required>
+              <option value="">Selecione...</option>
+              <option value="PROPAGACAO">Propagação</option>
+              <option value="VEGETATIVA">Vegetativa</option>
+              <option value="FLORACAO">Floração</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+      
+      <!-- Seção 2: Dosagem e Aplicação -->
+      <fieldset>
+        <legend>Dosagem e Aplicação</legend>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label for="concentracao_recomendada">
+              Concentração Recomendada <span style="color: red;">*</span>
+            </label>
+            <input
+              type="text"
+              id="concentracao_recomendada"
+              name="concentracao_recomendada"
+              required
+              maxlength="100"
+              placeholder="Ex: 1x10^6 UFC/mL"
+            >
+            <small class="help-text">
+              Unidade livre (UFC/mL, g/L, etc)
+            </small>
+          </div>
+          
+          <div class="form-group">
+            <label for="intervalo_aplicacao_dias">
+              Intervalo de Aplicação (dias) <span style="color: red;">*</span>
+            </label>
+            <input
+              type="number"
+              id="intervalo_aplicacao_dias"
+              name="intervalo_aplicacao_dias"
+              required
+              min="1"
+              placeholder="Ex: 7"
+            >
+          </div>
+        </div>
+      </fieldset>
+      
+      <!-- Seção 3: Ranges de Compatibilidade -->
+      <fieldset>
+        <legend>Compatibilidade Físico-Química</legend>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label for="ph_minimo">
+              pH Mínimo <span style="color: red;">*</span>
+            </label>
+            <input
+              type="number"
+              id="ph_minimo"
+              name="ph_minimo"
+              required
+              step="0.1"
+              min="4.0"
+              max="8.0"
+              placeholder="Ex: 5.5"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="ph_maximo">
+              pH Máximo <span style="color: red;">*</span>
+            </label>
+            <input
+              type="number"
+              id="ph_maximo"
+              name="ph_maximo"
+              required
+              step="0.1"
+              min="4.0"
+              max="8.0"
+              placeholder="Ex: 7.0"
+            >
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="ec_maximo">
+            EC Máximo (mS/cm) <span style="color: red;">*</span>
+          </label>
+          <input
+            type="number"
+            id="ec_maximo"
+            name="ec_maximo"
+            required
+            step="0.1"
+            min="0"
+            placeholder="Ex: 2.5"
+          >
+          <small class="help-text">
+            Condutividade elétrica máxima tolerada pelo organismo
+          </small>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label for="temperatura_minima">
+              Temperatura Mínima (°C)
+            </label>
+            <input
+              type="number"
+              id="temperatura_minima"
+              name="temperatura_minima"
+              step="0.1"
+              placeholder="Ex: 18"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="temperatura_maxima">
+              Temperatura Máxima (°C)
+            </label>
+            <input
+              type="number"
+              id="temperatura_maxima"
+              name="temperatura_maxima"
+              step="0.1"
+              placeholder="Ex: 28"
+            >
+          </div>
+        </div>
+      </fieldset>
+      
+      <!-- Seção 4: Incompatibilidades -->
+      <fieldset>
+        <legend>Incompatibilidades Químicas</legend>
+        
+        <div class="form-group">
+          <label>Quelatos Incompatíveis</label>
+          <div class="checkbox-group">
+            <label>
+              <input type="checkbox" name="quelato_edta" value="EDTA">
+              EDTA (ácido etilenodiaminotetracético)
+            </label>
+            <label>
+              <input type="checkbox" name="quelato_dtpa" value="DTPA">
+              DTPA (ácido dietilenotriaminopentacético)
+            </label>
+            <label>
+              <input type="checkbox" name="quelato_eddha" value="EDDHA">
+              EDDHA (ácido etilenodiamino di-hidroxifenilacético)
+            </label>
+          </div>
+          <small class="help-text">
+            Selecione quelatos que não devem estar presentes na solução
+          </small>
+        </div>
+      </fieldset>
+      
+      <!-- Seção 5: Precauções e Observações -->
+      <fieldset>
+        <legend>Precauções e Observações</legend>
+        
+        <div class="form-group">
+          <label for="precaucoes">
+            Precauções de Uso
+          </label>
+          <textarea
+            id="precaucoes"
+            name="precaucoes"
+            rows="3"
+            placeholder="Ex: Não misturar com fungicidas cúpricos. Aplicar preferencialmente no período da manhã..."
+          ></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="observacoes">
+            Observações Gerais
+          </label>
+          <textarea
+            id="observacoes"
+            name="observacoes"
+            rows="3"
+            placeholder="Observações adicionais, referências científicas, histórico de uso..."
+          ></textarea>
+        </div>
+      </fieldset>
+      
+      <!-- Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" onclick="cancel()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-primary">
+          Salvar Protocolo
+        </button>
+      </div>
+    </form>
+  </div>
+  
+  <script src="quality-helpers.js"></script>
+  <script src="api-client.html"></script>
+  
+  <script>
+    // Estado
+    const isEditMode = !!getUrlParam('id');
+    const protocoloId = getUrlParam('id');
+    
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+      if (isEditMode) {
+        loadProtocolo();
+      }
+    });
+    
+    /**
+     * Carrega protocolo para edição
+     */
+    async function loadProtocolo() {
+      try {
+        document.getElementById('formTitle').textContent = 'Editar Protocolo Biológico';
+        showLoading(true);
+        
+        const protocolo = await api.protocolos.get(protocoloId);
+        
+        // Preencher campos básicos
+        setFormData('protocoloForm', {
+          organismo_alvo: protocolo.organismo_alvo,
+          tipo_aplicacao: protocolo.tipo_aplicacao,
+          fase_cultivo: protocolo.fase_cultivo,
+          concentracao_recomendada: protocolo.concentracao_recomendada,
+          intervalo_aplicacao_dias: protocolo.intervalo_aplicacao_dias,
+          ph_minimo: protocolo.ph_minimo,
+          ph_maximo: protocolo.ph_maximo,
+          ec_maximo: protocolo.ec_maximo,
+          temperatura_minima: protocolo.temperatura_minima,
+          temperatura_maxima: protocolo.temperatura_maxima,
+          precaucoes: protocolo.precaucoes,
+          observacoes: protocolo.observacoes
+        });
+        
+        // Preencher checkboxes de quelatos
+        if (protocolo.quelatos_incompativeis && Array.isArray(protocolo.quelatos_incompativeis)) {
+          protocolo.quelatos_incompativeis.forEach(q => {
+            const checkbox = document.querySelector(`input[value="${q}"]`);
+            if (checkbox) checkbox.checked = true;
+          });
+        }
+        
+      } catch (error) {
+        handleApiError(error);
+        goBack();
+      } finally {
+        showLoading(false);
+      }
+    }
+    
+    /**
+     * Handler de submit
+     */
+    document.getElementById('protocoloForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!validateForm('protocoloForm')) {
+        showToast('error', 'Preencha todos os campos obrigatórios');
+        return;
+      }
+      
+      try {
+        showLoading(true);
+        
+        const data = getFormData('protocoloForm');
+        
+        // Converter campos numéricos
+        data.intervalo_aplicacao_dias = parseInt(data.intervalo_aplicacao_dias);
+        data.ph_minimo = parseFloat(data.ph_minimo);
+        data.ph_maximo = parseFloat(data.ph_maximo);
+        data.ec_maximo = parseFloat(data.ec_maximo);
+        data.temperatura_minima = data.temperatura_minima ? parseFloat(data.temperatura_minima) : null;
+        data.temperatura_maxima = data.temperatura_maxima ? parseFloat(data.temperatura_maxima) : null;
+        
+        // Validar pH
+        if (data.ph_minimo >= data.ph_maximo) {
+          showToast('error', 'pH mínimo deve ser menor que pH máximo');
+          showLoading(false);
+          return;
+        }
+        
+        // Validar temperatura
+        if (data.temperatura_minima && data.temperatura_maxima && 
+            data.temperatura_minima >= data.temperatura_maxima) {
+          showToast('error', 'Temperatura mínima deve ser menor que temperatura máxima');
+          showLoading(false);
+          return;
+        }
+        
+        // Coletar quelatos incompatíveis
+        const quelatos = [];
+        if (document.querySelector('input[name="quelato_edta"]').checked) quelatos.push('EDTA');
+        if (document.querySelector('input[name="quelato_dtpa"]').checked) quelatos.push('DTPA');
+        if (document.querySelector('input[name="quelato_eddha"]').checked) quelatos.push('EDDHA');
+        
+        data.quelatos_incompativeis = quelatos.length > 0 ? quelatos : null;
+        
+        // Remover campos temporários dos checkboxes
+        delete data.quelato_edta;
+        delete data.quelato_dtpa;
+        delete data.quelato_eddha;
+        
+        let result;
+        if (isEditMode) {
+          result = await api.protocolos.update(protocoloId, data);
+          showToast('success', 'Protocolo atualizado com sucesso!');
+        } else {
+          result = await api.protocolos.create(data);
+          showToast('success', 'Protocolo criado com sucesso!');
+        }
+        
+        setTimeout(() => {
+          navigateTo('protocolo-list');
+        }, 1000);
+        
+      } catch (error) {
+        handleApiError(error);
+      } finally {
+        showLoading(false);
+      }
+    });
+    
+    /**
+     * Cancela
+     */
+    function cancel() {
+      if (confirm('Deseja realmente cancelar? As alterações não salvas serão perdidas.')) {
+        navigateTo('protocolo-list');
+      }
+    }
+  </script>
+</body>
+</html>

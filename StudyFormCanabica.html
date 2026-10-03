@@ -1,0 +1,1094 @@
+<!--
+⚠️ ARQUIVO LEGADO — NÃO PRODUTIVO
+Este arquivo não é mais servido por rotas ativas.
+A versão produtiva está em: studies.html (formulário via modal incluído via layout.html)
+Manter apenas como referência histórica ou remover em limpeza futura.
+Data de descontinuação: 2026-01-20
+Motivo: Padronização visual — formulários em modais dentro da página principal
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulário de Estudo - Reserva Canabica</title>
+  <?!= include('CannaDesignSystem') ?>
+</head>
+<body>
+  <style id="study-form-layout">
+    .form-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: var(--canna-safe-area-top) var(--canna-safe-area-right) var(--canna-safe-area-bottom) var(--canna-safe-area-left);
+    }
+
+    .form-header {
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--canna-border);
+    }
+
+    .form-title {
+      font-size: clamp(1.75rem, 2vw + 1rem, 2.25rem);
+      font-weight: 700;
+      color: var(--canna-text);
+      margin: 0 0 8px 0;
+      line-height: 1.2;
+    }
+
+    .form-description {
+      color: var(--canna-text-muted);
+      font-size: 1rem;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .form-card {
+      background: var(--canna-surface);
+      border: 1px solid var(--canna-border);
+      border-radius: var(--canna-radius);
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+
+    .form-section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--canna-text);
+      margin: 0 0 20px 0;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--canna-border-soft);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .form-grid-full {
+      grid-column: 1 / -1;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-label {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--canna-text);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .form-label-required::after {
+      content: '*';
+      color: var(--canna-danger);
+      margin-left: 2px;
+    }
+
+    .form-help {
+      font-size: 0.8125rem;
+      color: var(--canna-text-muted);
+      line-height: 1.4;
+    }
+
+    .form-error {
+      font-size: 0.8125rem;
+      color: var(--canna-danger);
+      display: none;
+    }
+
+    .form-group.has-error .form-error {
+      display: block;
+    }
+
+    .form-group.has-error .canna-input,
+    .form-group.has-error .canna-select,
+    .form-group.has-error .canna-textarea {
+      border-color: var(--canna-danger);
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      padding-top: 20px;
+      border-top: 1px solid var(--canna-border);
+    }
+
+    .form-actions-full {
+      flex-direction: column;
+    }
+
+    .form-actions-full button {
+      width: 100%;
+    }
+
+    /* Character Counter */
+    .char-counter {
+      font-size: 0.75rem;
+      color: var(--canna-text-muted);
+      text-align: right;
+      margin-top: 4px;
+    }
+
+    .char-counter.warning {
+      color: var(--canna-warning);
+    }
+
+    .char-counter.danger {
+      color: var(--canna-danger);
+    }
+
+    /* File Upload */
+    .file-upload-area {
+      border: 2px dashed var(--canna-border);
+      border-radius: var(--canna-radius);
+      padding: 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .file-upload-area:hover {
+      border-color: var(--canna-primary);
+      background: var(--canna-primary-soft);
+    }
+
+    .file-upload-area.dragging {
+      border-color: var(--canna-primary);
+      background: var(--canna-primary-soft);
+    }
+
+    .file-upload-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .file-upload-text {
+      color: var(--canna-text-muted);
+      margin: 0;
+    }
+
+    .file-list {
+      list-style: none;
+      padding: 0;
+      margin: 12px 0 0 0;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: var(--canna-surface-soft);
+      border: 1px solid var(--canna-border-soft);
+      border-radius: var(--canna-radius-sm);
+      margin-bottom: 8px;
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .file-name {
+      font-weight: 500;
+      color: var(--canna-text);
+    }
+
+    .file-size {
+      font-size: 0.8125rem;
+      color: var(--canna-text-muted);
+    }
+
+    .file-remove {
+      background: transparent;
+      border: none;
+      color: var(--canna-danger);
+      cursor: pointer;
+      padding: 4px 8px;
+      font-size: 1rem;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .toggle-input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .toggle-slider {
+      position: relative;
+      width: 48px;
+      height: 24px;
+      background: var(--canna-border);
+      border-radius: 12px;
+      transition: background 0.2s ease;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s ease;
+    }
+
+    .toggle-input:checked + .toggle-slider {
+      background: var(--canna-primary);
+    }
+
+    .toggle-input:checked + .toggle-slider::before {
+      transform: translateX(24px);
+    }
+
+    .toggle-input:focus-visible + .toggle-slider {
+      outline: 3px solid var(--canna-focus);
+      outline-offset: 2px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .form-card {
+        padding: 20px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-actions {
+        flex-direction: column;
+      }
+
+      .form-actions button {
+        width: 100%;
+      }
+    }
+
+    /* Loading State */
+    form[aria-busy="true"] {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .save-progress {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--canna-surface);
+      border: 1px solid var(--canna-border);
+      border-radius: var(--canna-radius);
+      padding: 12px 16px;
+      box-shadow: var(--canna-shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: var(--canna-text-muted);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.2s ease;
+      pointer-events: none;
+    }
+
+    .save-progress.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .save-progress.saving {
+      color: var(--canna-warning);
+    }
+
+    .save-progress.saved {
+      color: var(--canna-success);
+    }
+
+    @media (max-width: 768px) {
+      .save-progress {
+        left: 24px;
+        right: 24px;
+      }
+    }
+  </style>
+
+  <div class="form-container" role="main" aria-labelledby="form-title">
+    <!-- Header -->
+    <header class="form-header">
+      <h1 id="form-title" class="form-title"><i data-feather="file-text" class="icon icon-lg" aria-hidden="true"></i> Novo Estudo</h1>
+      <p class="form-description">
+        Preencha as informações do estudo de cannabis medicinal
+      </p>
+    </header>
+
+    <!-- Form -->
+    <form id="study-form" onsubmit="return submitForm(event)" novalidate>
+      <!-- Basic Information -->
+      <div class="form-card">
+        <h2 class="form-section-title">Informações Básicas</h2>
+        
+        <div class="form-grid">
+          <div class="form-group form-grid-full">
+            <label for="study-title" class="form-label form-label-required">
+              Título do Estudo
+            </label>
+            <input
+              type="text"
+              id="study-title"
+              name="title"
+              class="canna-input"
+              required
+              maxlength="200"
+              placeholder="Ex: Efeitos do CBD na Ansiedade Generalizada"
+              aria-describedby="title-help title-error"
+            />
+            <p id="title-help" class="form-help">
+              Título descritivo e informativo do estudo
+            </p>
+            <p id="title-error" class="form-error" role="alert">
+              O título é obrigatório
+            </p>
+            <div id="title-counter" class="char-counter">0 / 200</div>
+          </div>
+
+          <div class="form-group">
+            <label for="study-type" class="form-label form-label-required">
+              Tipo de Estudo
+            </label>
+            <select
+              id="study-type"
+              name="type"
+              class="canna-select"
+              required
+              aria-describedby="type-help type-error"
+            >
+              <option value="">Selecione...</option>
+              <option value="clinical">Clínico</option>
+              <option value="observational">Observacional</option>
+              <option value="experimental">Experimental</option>
+              <option value="preclinical">Pré-clínico</option>
+              <option value="review">Revisão</option>
+            </select>
+            <p id="type-help" class="form-help">
+              Categoria metodológica do estudo
+            </p>
+            <p id="type-error" class="form-error" role="alert">
+              O tipo é obrigatório
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="study-status" class="form-label form-label-required">
+              Status
+            </label>
+            <select
+              id="study-status"
+              name="status"
+              class="canna-select"
+              required
+              aria-describedby="status-help"
+            >
+              <option value="planning">Planejamento</option>
+              <option value="active" selected>Ativo</option>
+              <option value="pending">Pendente</option>
+              <option value="completed">Concluído</option>
+              <option value="archived">Arquivado</option>
+            </select>
+            <p id="status-help" class="form-help">
+              Estado atual do estudo
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="study-start-date" class="form-label form-label-required">
+              Data de Início
+            </label>
+            <input
+              type="date"
+              id="study-start-date"
+              name="startDate"
+              class="canna-input"
+              required
+              aria-describedby="start-date-error"
+            />
+            <p id="start-date-error" class="form-error" role="alert">
+              A data de início é obrigatória
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="study-end-date" class="form-label">
+              Data de Término
+            </label>
+            <input
+              type="date"
+              id="study-end-date"
+              name="endDate"
+              class="canna-input"
+              aria-describedby="end-date-help"
+            />
+            <p id="end-date-help" class="form-help">
+              Data prevista ou real de conclusão
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Description & Objectives -->
+      <div class="form-card">
+        <h2 class="form-section-title">Descrição e Objetivos</h2>
+        
+        <div class="form-grid">
+          <div class="form-group form-grid-full">
+            <label for="study-description" class="form-label form-label-required">
+              Descrição
+            </label>
+            <textarea
+              id="study-description"
+              name="description"
+              class="canna-textarea"
+              rows="5"
+              required
+              maxlength="1000"
+              placeholder="Descreva o contexto, metodologia e relevância do estudo..."
+              aria-describedby="description-help description-error"
+            ></textarea>
+            <p id="description-help" class="form-help">
+              Resumo detalhado do estudo
+            </p>
+            <p id="description-error" class="form-error" role="alert">
+              A descrição é obrigatória
+            </p>
+            <div id="description-counter" class="char-counter">0 / 1000</div>
+          </div>
+
+          <div class="form-group form-grid-full">
+            <label for="study-objectives" class="form-label form-label-required">
+              Objetivos
+            </label>
+            <textarea
+              id="study-objectives"
+              name="objectives"
+              class="canna-textarea"
+              rows="4"
+              required
+              maxlength="500"
+              placeholder="Liste os objetivos principais do estudo..."
+              aria-describedby="objectives-help objectives-error"
+            ></textarea>
+            <p id="objectives-help" class="form-help">
+              Objetivos gerais e específicos
+            </p>
+            <p id="objectives-error" class="form-error" role="alert">
+              Os objetivos são obrigatórios
+            </p>
+            <div id="objectives-counter" class="char-counter">0 / 500</div>
+          </div>
+
+          <div class="form-group form-grid-full">
+            <label for="study-hypothesis" class="form-label">
+              Hipótese
+            </label>
+            <textarea
+              id="study-hypothesis"
+              name="hypothesis"
+              class="canna-textarea"
+              rows="3"
+              maxlength="500"
+              placeholder="Hipótese principal do estudo (opcional)..."
+              aria-describedby="hypothesis-help"
+            ></textarea>
+            <p id="hypothesis-help" class="form-help">
+              Hipótese científica a ser testada
+            </p>
+            <div id="hypothesis-counter" class="char-counter">0 / 500</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cannabis Information -->
+      <div class="form-card">
+        <h2 class="form-section-title">Informações sobre Cannabis</h2>
+        
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="cannabinoid-profile" class="form-label">
+              Perfil de Canabinoides
+            </label>
+            <input
+              type="text"
+              id="cannabinoid-profile"
+              name="cannabinoidProfile"
+              class="canna-input"
+              placeholder="Ex: CBD 10%, THC 0.3%"
+              aria-describedby="cannabinoid-help"
+            />
+            <p id="cannabinoid-help" class="form-help">
+              Composição de canabinoides
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="terpene-profile" class="form-label">
+              Perfil de Terpenos
+            </label>
+            <input
+              type="text"
+              id="terpene-profile"
+              name="terpeneProfile"
+              class="canna-input"
+              placeholder="Ex: Limoneno, Mirceno"
+              aria-describedby="terpene-help"
+            />
+            <p id="terpene-help" class="form-help">
+              Principais terpenos
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="strain-info" class="form-label">
+              Informações da Cepa
+            </label>
+            <input
+              type="text"
+              id="strain-info"
+              name="strainInfo"
+              class="canna-input"
+              placeholder="Ex: Sativa, Indica, Híbrida"
+              aria-describedby="strain-help"
+            />
+            <p id="strain-help" class="form-help">
+              Tipo e origem da cepa
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="dosage-info" class="form-label">
+              Informações de Dosagem
+            </label>
+            <input
+              type="text"
+              id="dosage-info"
+              name="dosageInfo"
+              class="canna-input"
+              placeholder="Ex: 25mg 2x ao dia"
+              aria-describedby="dosage-help"
+            />
+            <p id="dosage-help" class="form-help">
+              Dosagem e frequência
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Research Team -->
+      <div class="form-card">
+        <h2 class="form-section-title">Equipe de Pesquisa</h2>
+        
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="principal-investigator" class="form-label form-label-required">
+              Pesquisador Principal
+            </label>
+            <input
+              type="text"
+              id="principal-investigator"
+              name="principalInvestigator"
+              class="canna-input"
+              required
+              placeholder="Nome completo"
+              aria-describedby="pi-error"
+            />
+            <p id="pi-error" class="form-error" role="alert">
+              O pesquisador principal é obrigatório
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="institution" class="form-label form-label-required">
+              Instituição
+            </label>
+            <input
+              type="text"
+              id="institution"
+              name="institution"
+              class="canna-input"
+              required
+              placeholder="Nome da instituição"
+              aria-describedby="institution-error"
+            />
+            <p id="institution-error" class="form-error" role="alert">
+              A instituição é obrigatória
+            </p>
+          </div>
+
+          <div class="form-group form-grid-full">
+            <label for="team-members" class="form-label">
+              Membros da Equipe
+            </label>
+            <textarea
+              id="team-members"
+              name="teamMembers"
+              class="canna-textarea"
+              rows="3"
+              placeholder="Liste outros membros da equipe (um por linha)..."
+              aria-describedby="team-help"
+            ></textarea>
+            <p id="team-help" class="form-help">
+              Outros pesquisadores e colaboradores
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Settings -->
+      <div class="form-card">
+        <h2 class="form-section-title">Configurações Adicionais</h2>
+        
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="toggle-switch">
+              <input
+                type="checkbox"
+                id="require-approval"
+                name="requireApproval"
+                class="toggle-input"
+                checked
+              />
+              <span class="toggle-slider" role="presentation"></span>
+              <span>Requer Aprovação</span>
+            </label>
+            <p class="form-help">
+              Dados requerem validação antes de publicação
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label class="toggle-switch">
+              <input
+                type="checkbox"
+                id="is-public"
+                name="isPublic"
+                class="toggle-input"
+              />
+              <span class="toggle-slider" role="presentation"></span>
+              <span>Estudo Público</span>
+            </label>
+            <p class="form-help">
+              Visível para todos os usuários
+            </p>
+          </div>
+
+          <div class="form-group form-grid-full">
+            <label for="tags" class="form-label">
+              Tags
+            </label>
+            <input
+              type="text"
+              id="tags"
+              name="tags"
+              class="canna-input"
+              placeholder="Ex: ansiedade, cbd, fase-ii (separadas por vírgula)"
+              aria-describedby="tags-help"
+            />
+            <p id="tags-help" class="form-help">
+              Palavras-chave para categorização
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- File Upload -->
+      <div class="form-card">
+        <h2 class="form-section-title">Documentos Anexos</h2>
+        
+        <div class="form-group">
+          <input
+            type="file"
+            id="file-input"
+            multiple
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
+            hidden
+            aria-describedby="file-help"
+          />
+          <div
+            class="file-upload-area"
+            id="file-upload-area"
+            role="button"
+            tabindex="0"
+            aria-label="Área de upload de arquivos"
+            onclick="document.getElementById('file-input').click()"
+          >
+            <div class="file-upload-icon"><i data-feather="paperclip" class="icon icon-xl icon-muted" aria-hidden="true"></i></div>
+            <p class="file-upload-text">
+              <strong>Clique para selecionar</strong> ou arraste arquivos aqui
+            </p>
+            <p class="file-upload-text" style="font-size: 0.8125rem; margin-top: 8px;">
+              PDF, DOC, XLS, CSV, TXT (máx. 10MB cada)
+            </p>
+          </div>
+          <p id="file-help" class="form-help">
+            Protocolos, aprovações éticas, dados brutos, etc.
+          </p>
+          <ul id="file-list" class="file-list"></ul>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="cancelForm()">
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="saveDraft()">
+          Salvar Rascunho
+        </button>
+        <button type="submit" class="btn btn-primary">
+          Criar Estudo
+        </button>
+      </div>
+    </form>
+
+    <!-- Save Progress Indicator -->
+    <div id="save-progress" class="save-progress">
+      <span id="save-icon"><i data-feather="save" class="icon icon-sm" aria-hidden="true"></i></span>
+      <span id="save-text">Salvando...</span>
+    </div>
+  </div>
+
+  <?!= include('CannaJavaScript') ?>
+
+  <script>
+    /**
+     * Study Form - Main Logic
+     */
+    (function initStudyForm() {
+      'use strict';
+
+      const form = document.getElementById('study-form');
+      const saveProgress = document.getElementById('save-progress');
+      let saveTimer = null;
+      let attachedFiles = [];
+
+      // Character counters
+      function setupCharCounter(inputId, counterId) {
+        const input = document.getElementById(inputId);
+        const counter = document.getElementById(counterId);
+        if (!input || !counter) return;
+
+        const maxLength = input.getAttribute('maxlength');
+        
+        function update() {
+          const length = input.value.length;
+          counter.textContent = `${length} / ${maxLength}`;
+          
+          counter.classList.remove('warning', 'danger');
+          if (length > maxLength * 0.9) {
+            counter.classList.add('warning');
+          }
+          if (length >= maxLength) {
+            counter.classList.add('danger');
+          }
+        }
+
+        input.addEventListener('input', update);
+        update();
+      }
+
+      setupCharCounter('study-title', 'title-counter');
+      setupCharCounter('study-description', 'description-counter');
+      setupCharCounter('study-objectives', 'objectives-counter');
+      setupCharCounter('study-hypothesis', 'hypothesis-counter');
+
+      // Form validation
+      function validateForm() {
+        let isValid = true;
+        const requiredFields = form.querySelectorAll('[required]');
+
+        requiredFields.forEach(field => {
+          const group = field.closest('.form-group');
+          if (!group) return;
+
+          if (!field.value.trim()) {
+            group.classList.add('has-error');
+            isValid = false;
+          } else {
+            group.classList.remove('has-error');
+          }
+        });
+
+        // Date validation
+        const startDate = document.getElementById('study-start-date').value;
+        const endDate = document.getElementById('study-end-date').value;
+        if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+          if (window.Canna && window.Canna.toast) {
+            window.Canna.toast.error('A data de término deve ser posterior à data de início');
+          }
+          isValid = false;
+        }
+
+        return isValid;
+      }
+
+      // Clear error on input
+      form.querySelectorAll('input, select, textarea').forEach(field => {
+        field.addEventListener('input', () => {
+          const group = field.closest('.form-group');
+          if (group) {
+            group.classList.remove('has-error');
+          }
+        });
+      });
+
+      // File upload handling
+      const fileInput = document.getElementById('file-input');
+      const fileUploadArea = document.getElementById('file-upload-area');
+      const fileList = document.getElementById('file-list');
+
+      fileInput.addEventListener('change', handleFileSelect);
+
+      fileUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.add('dragging');
+      });
+
+      fileUploadArea.addEventListener('dragleave', () => {
+        fileUploadArea.classList.remove('dragging');
+      });
+
+      fileUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragging');
+        handleFileSelect({ target: { files: e.dataTransfer.files } });
+      });
+
+      function handleFileSelect(event) {
+        const files = Array.from(event.target.files);
+        const maxSize = 10 * 1024 * 1024; // 10MB
+
+        files.forEach(file => {
+          if (file.size > maxSize) {
+            if (window.Canna && window.Canna.toast) {
+              window.Canna.toast.error(`Arquivo "${file.name}" excede 10MB`);
+            }
+            return;
+          }
+
+          attachedFiles.push(file);
+          renderFileList();
+        });
+
+        fileInput.value = '';
+      }
+
+      function renderFileList() {
+        fileList.innerHTML = '';
+        
+        attachedFiles.forEach((file, index) => {
+          const li = document.createElement('li');
+          li.className = 'file-item';
+          li.innerHTML = `
+            <div class="file-info">
+              <i data-feather="file" class="icon icon-md icon-muted" aria-hidden="true"></i>
+              <div>
+                <div class="file-name">${escapeHtml(file.name)}</div>
+                <div class="file-size">${formatFileSize(file.size)}</div>
+              </div>
+            </div>
+            <button type="button" class="file-remove" onclick="removeFile(${index})" aria-label="Remover arquivo">
+              <i data-feather="x" class="icon icon-sm icon-danger" aria-hidden="true"></i>
+            </button>
+          `;
+          fileList.appendChild(li);
+        });
+      }
+
+      window.removeFile = function(index) {
+        attachedFiles.splice(index, 1);
+        renderFileList();
+      };
+
+      function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+      }
+
+      // Auto-save draft
+      form.addEventListener('input', () => {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+          autoSaveDraft();
+        }, 3000);
+      });
+
+      function autoSaveDraft() {
+        showSaveProgress('saving');
+        
+        // Simulate save
+        setTimeout(() => {
+          showSaveProgress('saved');
+        }, 500);
+      }
+
+      function showSaveProgress(state) {
+        const icon = document.getElementById('save-icon');
+        const text = document.getElementById('save-text');
+        
+        saveProgress.className = 'save-progress visible ' + state;
+        
+        if (state === 'saving') {
+          icon.innerHTML = '<i data-feather="save" class="icon icon-sm" aria-hidden="true"></i>';
+          text.textContent = 'Salvando rascunho...';
+        } else if (state === 'saved') {
+          icon.innerHTML = '<i data-feather="check-circle" class="icon icon-sm icon-success" aria-hidden="true"></i>';
+          text.textContent = 'Rascunho salvo';
+          setTimeout(() => {
+            saveProgress.classList.remove('visible');
+          }, 2000);
+        }
+      }
+
+      // Form submission
+      window.submitForm = function(event) {
+        event.preventDefault();
+
+        if (!validateForm()) {
+          if (window.Canna && window.Canna.toast) {
+            window.Canna.toast.error('Por favor, preencha todos os campos obrigatórios');
+          }
+          return false;
+        }
+
+        const formData = getFormData();
+        
+        form.setAttribute('aria-busy', 'true');
+
+        if (hasGoogleScriptAPI()) {
+          google.script.run
+            .withSuccessHandler(onSubmitSuccess)
+            .withFailureHandler(onSubmitError)
+            .createStudy(formData);
+        } else {
+          // Development mode
+          setTimeout(() => {
+            onSubmitSuccess({ id: 'ST' + Date.now(), title: formData.title });
+          }, 1000);
+        }
+
+        return false;
+      };
+
+      function onSubmitSuccess(result) {
+        form.removeAttribute('aria-busy');
+        
+        if (window.Canna && window.Canna.toast) {
+          window.Canna.toast.success('Estudo criado com sucesso!');
+        }
+
+        setTimeout(() => {
+          window.location.href = '#estudos';
+        }, 1500);
+      }
+
+      function onSubmitError(error) {
+        form.removeAttribute('aria-busy');
+        
+        if (window.Canna && window.Canna.toast) {
+          window.Canna.toast.error('Erro ao criar estudo: ' + error.message);
+        }
+      }
+
+      // Get form data
+      function getFormData() {
+        const formData = {};
+        const formElements = form.elements;
+
+        for (let i = 0; i < formElements.length; i++) {
+          const element = formElements[i];
+          if (element.name) {
+            if (element.type === 'checkbox') {
+              formData[element.name] = element.checked;
+            } else if (element.type === 'file') {
+              formData[element.name] = attachedFiles;
+            } else {
+              formData[element.name] = element.value;
+            }
+          }
+        }
+
+        return formData;
+      }
+
+      // Actions
+      window.saveDraft = function() {
+        const formData = getFormData();
+        
+        if (window.Canna && window.Canna.toast) {
+          window.Canna.toast.info('Salvando rascunho...');
+        }
+
+        // TODO: Implement draft save
+        setTimeout(() => {
+          if (window.Canna && window.Canna.toast) {
+            window.Canna.toast.success('Rascunho salvo');
+          }
+        }, 500);
+      };
+
+      window.cancelForm = function() {
+        if (confirm('Deseja realmente cancelar? As alterações não salvas serão perdidas.')) {
+          window.location.href = '#estudos';
+        }
+      };
+
+      // Utilities
+      function hasGoogleScriptAPI() {
+        return !!(window.google && window.google.script && window.google.script.run);
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Initialize
+      function init() {
+        // Focus first field
+        const firstField = form.querySelector('input:not([type="hidden"])');
+        if (firstField) {
+          setTimeout(() => firstField.focus(), 100);
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Importar - Canabica</title>
+</head>
+<body>
+
+<div id="import-page" class="import-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <h2>📥 Importar Dados</h2>
+      <p>Carregue dados de estudos em CSV ou JSON</p>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="import-content">
+    <!-- Instructions -->
+    <div class="card">
+      <h3>📋 Como Importar</h3>
+      <ol>
+        <li>Prepare um arquivo CSV ou JSON com seus dados</li>
+        <li>Selecione o tipo de entidade (Estudos, Experimentos, etc)</li>
+        <li>Faça upload do arquivo</li>
+        <li>Revise a pré-visualização e validações</li>
+        <li>Clique "Importar" para confirmar</li>
+      </ol>
+
+      <div class="format-examples">
+        <h4>📝 Formatos Aceitos</h4>
+        <div class="example">
+          <strong>CSV (Estudos):</strong>
+          <code>name,description,researcher,status,startDate
+"Estudo 1","Descrição","João",ACTIVE,2024-01-01</code>
+        </div>
+        <div class="example">
+          <strong>JSON (Estudos):</strong>
+          <code>[{
+  "name": "Estudo 1",
+  "description": "Descrição",
+  "researcher": "João",
+  "status": "ACTIVE",
+  "startDate": "2024-01-01"
+}]</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- File Upload -->
+    <div class="card">
+      <h3>📤 Upload de Arquivo</h3>
+      
+      <div class="form-group">
+        <label for="entity-type">Tipo de Entidade:</label>
+        <select id="entity-type" class="form-control">
+          <option value="">Selecione...</option>
+          <option value="studies">Estudos</option>
+          <option value="experiments">Experimentos</option>
+          <option value="observations">Observações</option>
+          <option value="references">Referências</option>
+          <option value="evidence">Evidências</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="file-input">Arquivo (CSV ou JSON):</label>
+        <div class="file-input-wrapper">
+          <input type="file" id="file-input" accept=".csv,.json" />
+          <span id="file-name" class="file-name">Nenhum arquivo selecionado</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="dry-run" checked />
+          Fazer dry-run (validar sem importar)
+        </label>
+      </div>
+
+      <button class="button button-primary" data-click="handleUpload">
+        ✅ Validar e Visualizar
+      </button>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading-state" class="card" style="display: none;">
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+        <p>Processando arquivo...</p>
+      </div>
+    </div>
+
+    <!-- Validation Results -->
+    <div id="validation-results" class="card" style="display: none;">
+      <h3>✅ Resultados de Validação</h3>
+      <div id="validation-message" class="validation-message"></div>
+      
+      <div id="validation-stats" class="validation-stats"></div>
+
+      <div id="validation-errors" class="validation-errors" style="display: none;">
+        <h4>⚠️ Erros Encontrados:</h4>
+        <ul id="error-list"></ul>
+      </div>
+
+      <div id="validation-warnings" class="validation-warnings" style="display: none;">
+        <h4>⚠️ Avisos:</h4>
+        <ul id="warning-list"></ul>
+      </div>
+
+      <div id="preview-section" class="preview-section" style="display: none;">
+        <h4>👁️ Pré-visualização (primeiras 5 linhas)</h4>
+        <div id="preview-table" class="preview-table"></div>
+      </div>
+
+      <div class="action-buttons">
+        <button class="button button-primary" id="import-btn" data-click="handleImport" style="display: none;">
+          📥 Importar
+        </button>
+        <button class="button button-outline" data-click="handleReset">
+          Voltar
+        </button>
+      </div>
+    </div>
+
+    <!-- Import Progress -->
+    <div id="import-progress" class="card" style="display: none;">
+      <h3>📥 Importando...</h3>
+      <div class="progress-bar">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+      <p id="progress-text" class="text-center">0%</p>
+    </div>
+
+    <!-- Import Complete -->
+    <div id="import-complete" class="card" style="display: none;">
+      <h3>✅ Importação Concluída</h3>
+      <div id="complete-message" class="alert alert-success"></div>
+      <div id="complete-stats" class="stats-box"></div>
+      <button class="button button-primary" data-click="handleReset">
+        Voltar ao Início
+      </button>
+    </div>
+
+    <!-- Import History -->
+    <div class="card">
+      <h3>📋 Histórico de Importações</h3>
+      <div id="import-history" class="history-list">
+        <p class="text-muted">Nenhuma importação realizada ainda</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* PAGE HEADER */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xl);
+  background: linear-gradient(135deg, var(--primary) 0%, #229954 100%);
+  color: white;
+  margin-bottom: var(--spacing-lg);
+}
+
+.page-header-left h2 {
+  margin: 0 0 5px 0;
+  font-size: 1.8rem;
+}
+
+.page-header-left p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+/* CONTENT */
+.import-content {
+  padding: 0 var(--spacing-lg) var(--spacing-lg);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.card {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.card h3 {
+  margin-top: 0;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--bg-secondary);
+  padding-bottom: var(--spacing-md);
+}
+
+.card h4 {
+  margin: var(--spacing-lg) 0 var(--spacing-md) 0;
+  color: var(--text-primary);
+}
+
+.card ol,
+.card ul {
+  margin: var(--spacing-md) 0;
+  padding-left: 20px;
+  line-height: 1.8;
+}
+
+.card li {
+  margin: var(--spacing-sm) 0;
+}
+
+/* FORMAT EXAMPLES */
+.format-examples {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 2px solid var(--bg-secondary);
+}
+
+.example {
+  margin: var(--spacing-md) 0;
+  padding: var(--spacing-md);
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  border-left: 3px solid var(--primary);
+}
+
+.example code {
+  display: block;
+  font-family: monospace;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text-primary);
+}
+
+/* FORM */
+.form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-primary);
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px /* Intentional: badge/button padding */ 12px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.95rem;
+  font-family: var(--font-family);
+  transition: all var(--transition);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
+}
+
+.form-group input[type="checkbox"] {
+  margin-right: var(--spacing-sm);
+  cursor: pointer;
+}
+
+.form-group label {
+  display: flex;
+  align-items: center;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+/* FILE INPUT */
+.file-input-wrapper {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#file-input {
+  position: absolute;
+  left: -9999px;
+}
+
+.file-name {
+  display: block;
+  padding: 10px /* Intentional: badge/button padding */ 12px;
+  background-color: var(--bg-secondary);
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.file-input-wrapper:hover .file-name {
+  border-color: var(--primary);
+  background-color: rgba(46, 204, 113, 0.05);
+}
+
+.file-name.has-file {
+  border-style: solid;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* LOADING SPINNER */
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  gap: var(--spacing-lg);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--bg-secondary);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* VALIDATION */
+.validation-message {
+  padding: var(--spacing-md);
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-md);
+}
+
+.validation-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-md);
+  margin: var(--spacing-md) 0;
+}
+
+.stat {
+  background-color: var(--bg-secondary);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+/* ERRORS & WARNINGS */
+.validation-errors,
+.validation-warnings {
+  margin: var(--spacing-md) 0;
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  border-left: 4px solid;
+}
+
+.validation-errors {
+  background-color: #fee;
+  border-left-color: #e74c3c;
+}
+
+.validation-errors h4 {
+  color: #c00;
+  margin-top: 0;
+}
+
+.validation-errors ul {
+  color: #c00;
+}
+
+.validation-warnings {
+  background-color: #fffbea;
+  border-left-color: #f39c12;
+}
+
+.validation-warnings h4 {
+  color: #856404;
+  margin-top: 0;
+}
+
+.validation-warnings ul {
+  color: #856404;
+}
+
+/* PREVIEW */
+.preview-section {
+  margin: var(--spacing-md) 0;
+}
+
+.preview-table {
+  overflow-x: auto;
+  margin-top: var(--spacing-md);
+}
+
+.preview-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.preview-table th,
+.preview-table td {
+  padding: var(--spacing-sm);
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.preview-table th {
+  background-color: var(--bg-secondary);
+  font-weight: 600;
+}
+
+/* PROGRESS BAR */
+.progress-bar {
+  width: 100%;
+  height: 30px;
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  margin: var(--spacing-md) 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), #229954);
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* ALERTS */
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+}
+
+/* STATS BOX */
+.stats-box {
+  background-color: var(--bg-secondary);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius);
+  margin: var(--spacing-md) 0;
+}
+
+.stats-box .stat {
+  background-color: transparent;
+  border-bottom: 2px solid var(--border-color);
+  padding: var(--spacing-md) 0;
+}
+
+.stats-box .stat:last-child {
+  border-bottom: none;
+}
+
+/* BUTTONS */
+.button {
+  padding: 10px /* Intentional: badge/button padding */ 16px;
+  border: none;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.button-primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.button-primary:hover {
+  background-color: #229954;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.button-outline {
+  background-color: transparent;
+  color: var(--text-primary);
+  border: 2px solid var(--border-color);
+}
+
+.button-outline:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.action-buttons .button {
+  flex: 1;
+}
+
+/* HISTORY */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.history-item {
+  padding: var(--spacing-md);
+  background-color: var(--bg-secondary);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--border-radius);
+}
+
+.history-item-title {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.history-item-meta {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+/* TEXT UTILITIES */
+.text-muted {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* RESPONSIVO */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .import-content {
+    padding: 0 var(--spacing-md) var(--spacing-md);
+  }
+
+  .card {
+    padding: var(--spacing-md);
+  }
+
+  .validation-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+}
+</style>
+
+<script>
+<?!= include("api-client.html"); ?>
+
+class ImportPage {
+  constructor() {
+    this.selectedFile = null;
+    this.selectedEntityType = null;
+    this.importHistory = [];
+
+    this.initialize();
+  }
+
+  async initialize() {
+    this.attachEventListeners();
+    this.loadImportHistory();
+  }
+
+  attachEventListeners() {
+    // File input
+    const fileInput = document.getElementById('file-input');
+    fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+
+    // Entity type
+    document.getElementById('entity-type').addEventListener('change', (e) => {
+      this.selectedEntityType = e.target.value;
+    });
+
+    // Upload button
+    document.querySelectorAll('[data-click]').forEach(btn => {
+      const action = btn.getAttribute('data-click');
+      btn.addEventListener('click', () => {
+        if (typeof this[action] === 'function') {
+          this[action]();
+        }
+      });
+    });
+  }
+
+  handleFileSelect(e) {
+    this.selectedFile = e.target.files[0];
+    const fileName = document.getElementById('file-name');
+    
+    if (this.selectedFile) {
+      fileName.textContent = this.selectedFile.name;
+      fileName.classList.add('has-file');
+    } else {
+      fileName.textContent = 'Nenhum arquivo selecionado';
+      fileName.classList.remove('has-file');
+    }
+  }
+
+  async handleUpload() {
+    if (!this.selectedFile || !this.selectedEntityType) {
+      if (typeof UI !== 'undefined') UI.Toast.warning('Arquivo não selecionado', 'Por favor, selecione um arquivo e um tipo de entidade.');
+      else console.warn('Por favor, selecione um arquivo e um tipo de entidade');
+      return;
+    }
+
+    const dryRun = document.getElementById('dry-run').checked;
+
+    try {
+      this.showLoading(true);
+
+      const formData = new FormData();
+      formData.append('file', this.selectedFile);
+      formData.append('entityType', this.selectedEntityType);
+      formData.append('dryRun', dryRun);
+
+      // Fazer upload com FormData
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${api.getToken()}`
+        }
+      };
+
+      const response = await api.post(`/import/validate`, formData, config);
+
+      this.showLoading(false);
+      this.displayValidationResults(response);
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      this.showLoading(false);
+      if (typeof UI !== 'undefined') UI.Toast.error('Erro ao processar arquivo', error.message);
+      else console.error('Erro ao processar arquivo: ' + error.message);
+    }
+  }
+
+  displayValidationResults(result) {
+    const resultsCard = document.getElementById('validation-results');
+    const message = document.getElementById('validation-message');
+    const stats = document.getElementById('validation-stats');
+    const errorsList = document.getElementById('error-list');
+    const warningsList = document.getElementById('warning-list');
+    const errorsDiv = document.getElementById('validation-errors');
+    const warningsDiv = document.getElementById('validation-warnings');
+    const previewSection = document.getElementById('preview-section');
+    const previewTable = document.getElementById('preview-table');
+    const importBtn = document.getElementById('import-btn');
+
+    resultsCard.style.display = 'block';
+
+    // Message
+    const isValid = result.errors.length === 0;
+    message.textContent = isValid 
+      ? `✅ ${result.validRecords} registro(s) válido(s)` 
+      : `❌ ${result.errors.length} erro(s) encontrado(s)`;
+
+    // Stats
+    stats.innerHTML = `
+      <div class="stat">
+        <div class="stat-number">${result.totalRecords}</div>
+        <div class="stat-label">Total de Registros</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">${result.validRecords}</div>
+        <div class="stat-label">Válidos</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">${result.errors.length}</div>
+        <div class="stat-label">Erros</div>
+      </div>
+    `;
+
+    // Errors
+    if (result.errors.length > 0) {
+      errorsDiv.style.display = 'block';
+      errorsList.innerHTML = result.errors.map(e => `<li>${e}</li>`).join('');
+    } else {
+      errorsDiv.style.display = 'none';
+    }
+
+    // Warnings
+    if (result.warnings && result.warnings.length > 0) {
+      warningsDiv.style.display = 'block';
+      warningsList.innerHTML = result.warnings.map(w => `<li>${w}</li>`).join('');
+    } else {
+      warningsDiv.style.display = 'none';
+    }
+
+    // Preview
+    if (result.preview && result.preview.length > 0) {
+      previewSection.style.display = 'block';
+      const headers = Object.keys(result.preview[0]);
+      const rows = result.preview.slice(0, 5);
+
+      let html = '<table><thead><tr>';
+      headers.forEach(h => html += `<th>${h}</th>`);
+      html += '</tr></thead><tbody>';
+
+      rows.forEach(row => {
+        html += '<tr>';
+        headers.forEach(h => html += `<td>${row[h] || ''}</td>`);
+        html += '</tr>';
+      });
+
+      html += '</tbody></table>';
+      previewTable.innerHTML = html;
+    }
+
+    // Import button
+    if (isValid) {
+      importBtn.style.display = 'inline-block';
+    }
+  }
+
+  async handleImport() {
+    if (!this.selectedFile || !this.selectedEntityType) {
+      return;
+    }
+
+    try {
+      this.showProgress(true);
+
+      const formData = new FormData();
+      formData.append('file', this.selectedFile);
+      formData.append('entityType', this.selectedEntityType);
+      formData.append('dryRun', false);
+
+      const response = await api.post(`/import/execute`, formData);
+
+      this.showProgress(false);
+      this.showComplete(response);
+
+      // Adicionar ao histórico
+      this.addToHistory(this.selectedEntityType, response.importedCount);
+
+    } catch (error) {
+      console.error('Import error:', error);
+      this.showProgress(false);
+      if (typeof UI !== 'undefined') UI.Toast.error('Erro na importação', error.message);
+      else console.error('Erro na importação: ' + error.message);
+    }
+  }
+
+  showComplete(result) {
+    document.getElementById('validation-results').style.display = 'none';
+    document.getElementById('import-complete').style.display = 'block';
+
+    const completeMsg = document.getElementById('complete-message');
+    completeMsg.textContent = `✅ ${result.importedCount} registros importados com sucesso!`;
+
+    const stats = document.getElementById('complete-stats');
+    stats.innerHTML = `
+      <div class="stat">
+        <div class="stat-number">${result.importedCount}</div>
+        <div class="stat-label">Registros Importados</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">${result.skippedCount || 0}</div>
+        <div class="stat-label">Pulados</div>
+      </div>
+    `;
+  }
+
+  handleReset() {
+    // Reset form
+    document.getElementById('entity-type').value = '';
+    document.getElementById('file-input').value = '';
+    document.getElementById('file-name').textContent = 'Nenhum arquivo selecionado';
+    document.getElementById('file-name').classList.remove('has-file');
+
+    // Hide all result sections
+    document.getElementById('validation-results').style.display = 'none';
+    document.getElementById('import-progress').style.display = 'none';
+    document.getElementById('import-complete').style.display = 'none';
+
+    this.selectedFile = null;
+    this.selectedEntityType = null;
+  }
+
+  showLoading(show) {
+    document.getElementById('loading-state').style.display = show ? 'block' : 'none';
+  }
+
+  showProgress(show) {
+    document.getElementById('import-progress').style.display = show ? 'block' : 'none';
+    if (show) {
+      // Simular progresso
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 30;
+        if (progress > 90) progress = 90;
+        document.getElementById('progress-fill').style.width = progress + '%';
+        document.getElementById('progress-text').textContent = Math.floor(progress) + '%';
+      }, 500);
+    }
+  }
+
+  addToHistory(entityType, count) {
+    this.importHistory.unshift({
+      entityType: this.getEntityLabel(entityType),
+      count,
+      timestamp: new Date().toLocaleString('pt-BR')
+    });
+
+    this.importHistory = this.importHistory.slice(0, 10);
+    this.renderHistory();
+  }
+
+  loadImportHistory() {
+    this.renderHistory();
+  }
+
+  renderHistory() {
+    const container = document.getElementById('import-history');
+
+    if (this.importHistory.length === 0) {
+      container.innerHTML = '<p class="text-muted">Nenhuma importação realizada ainda</p>';
+      return;
+    }
+
+    const html = this.importHistory.map((item, idx) => `
+      <div class="history-item">
+        <div class="history-item-title">${idx + 1}. ${item.entityType} (${item.count} registros)</div>
+        <div class="history-item-meta">${item.timestamp}</div>
+      </div>
+    `).join('');
+
+    container.innerHTML = html;
+  }
+
+  getEntityLabel(type) {
+    const labels = {
+      studies: 'Estudos',
+      experiments: 'Experimentos',
+      observations: 'Observações',
+      references: 'Referências',
+      evidence: 'Evidências'
+    };
+    return labels[type] || type;
+  }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  new ImportPage();
+});
+</script>
+
+</body>
+</html>

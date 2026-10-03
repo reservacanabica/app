@@ -1,0 +1,443 @@
+<!--
+COMPONENTE: study-list.component.html
+PAPEL: Componente reativo para listagem de estudos.
+-->
+<script>
+(function() {
+  'use strict';
+  
+  class StudyListComponent extends Component {
+    constructor() {
+      super();
+      this.setState({
+        studies: [],
+        loading: false,
+        error: null,
+        filters: {},
+        pagination: { page: 1, pageSize: 20 },
+        total: 0
+      });
+    }
+    
+    static get observedAttributes() {
+      return ['auto-load'];
+    }
+    
+    onMount() {
+      if (this.getAttribute('auto-load') === 'true') {
+        this.loadStudies();
+      }
+      
+      // Subscribe to store changes
+      this._unsubscribe = window.store.subscribe('studies-updated', () => {
+        this.loadStudies();
+      });
+    }
+    
+    onUnmount() {
+      if (this._unsubscribe) this._unsubscribe();
+    }
+    
+    async loadStudies() {
+      this.setState({ loading: true, error: null });
+      
+      try {
+        const response = await window.api.listStudies(
+          this.getState().filters,
+          this.getState().pagination
+        );
+        
+        this.setState({
+          studies: response.items || response || [],
+          total: response.total || response.length || 0,
+          loading: false
+        });
+        
+        this.emit('studies-loaded', { studies: response });
+      } catch (error) {
+        this.setState({
+          error: error.message,
+          loading: false
+        });
+        this.emit('error', { error });
+      }
+    }
+    
+    async deleteStudy(id) {
+      if (!confirm('Deseja realmente excluir este estudo?')) return;
+      
+      try {
+        await window.api.deleteStudy(id);
+        window.showToast('Estudo excluído com sucesso', 'success');
+        this.loadStudies();
+      } catch (error) {
+        window.showToast('Erro ao excluir estudo: ' + error.message, 'error');
+      }
+    }
+    
+    handlePageChange(e) {
+      const page = parseInt(e.target.dataset.page);
+      const state = this.getState();
+      this.setState({
+        pagination: { ...state.pagination, page }
+      });
+      this.loadStudies();
+    }
+    
+    handleFilterChange(e) {
+      const state = this.getState();
+      this.setState({
+        filters: { ...state.filters, search: e.target.value },
+        pagination: { ...state.pagination, page: 1 }
+      });
+      
+      // Debounce
+      clearTimeout(this._filterTimeout);
+      this._filterTimeout = setTimeout(() => this.loadStudies(), 500);
+    }
+    
+    viewStudy(id) {
+      this.emit('study-selected', { id });
+    }
+    
+    editStudy(id) {
+      this.emit('study-edit', { id });
+    }
+    
+    template() {
+      const state = this.getState();
+      
+      if (state.loading) {
+        return html`
+          <div class="study-list-loading">
+            <div class="spinner"></div>
+            <p>Carregando estudos...</p>
+          </div>
+        `;
+      }
+      
+      if (state.error) {
+        return html`
+          <div class="study-list-error">
+            <p>❌ ${state.error}</p>
+            <button @click="loadStudies">Tentar novamente</button>
+          </div>
+        `;
+      }
+      
+      return html`
+        <div class="study-list">
+          <div class="study-list-header">
+            <h2>Estudos</h2>
+            <div class="study-list-actions">
+              <input 
+                type="search" 
+                placeholder="Buscar estudos..." 
+                @input="handleFilterChange"
+                class="search-input"
+              />
+              <button class="btn-primary" @click="createStudy">
+                ➕ Novo Estudo
+              </button>
+            </div>
+          </div>
+          
+          ${state.studies.length === 0 ? html`
+            <div class="empty-state">
+              <p>📋 Nenhum estudo encontrado</p>
+              <button class="btn-primary" @click="createStudy">
+                Criar primeiro estudo
+              </button>
+            </div>
+          ` : html`
+            <div class="study-cards">
+              ${state.studies.map(study => this.renderStudyCard(study))}
+            </div>
+            
+            ${this.renderPagination()}
+          `}
+        </div>
+      `;
+    }
+    
+    renderStudyCard(study) {
+      return html`
+        <div class="study-card" data-id="${study.id}">
+          <div class="study-card-header">
+            <h3>${study.title || 'Sem título'}</h3>
+            <span class="status-badge status-${(study.status || 'draft').toLowerCase()}">
+              ${study.status || 'DRAFT'}
+            </span>
+          </div>
+          
+          <div class="study-card-body">
+            <p>${study.description || 'Sem descrição'}</p>
+            <div class="study-meta">
+              <span>📅 ${this.formatDate(study.createdAt)}</span>
+              <span>👤 ${study.createdBy || 'Desconhecido'}</span>
+            </div>
+          </div>
+          
+          <div class="study-card-actions">
+            <button @click="viewStudy" data-id="${study.id}">
+              👁️ Ver
+            </button>
+            <button @click="editStudy" data-id="${study.id}">
+              ✏️ Editar
+            </button>
+            <button @click="deleteStudy" data-id="${study.id}" class="btn-danger">
+              🗑️ Excluir
+            </button>
+          </div>
+        </div>
+      `;
+    }
+    
+    renderPagination() {
+      const state = this.getState();
+      const totalPages = Math.ceil(state.total / state.pagination.pageSize);
+      
+      if (totalPages <= 1) return '';
+      
+      return html`
+        <div class="pagination">
+          <button 
+            @click="handlePageChange" 
+            data-page="${state.pagination.page - 1}"
+            ${state.pagination.page === 1 ? 'disabled' : ''}
+          >
+            ← Anterior
+          </button>
+          
+          <span>Página ${state.pagination.page} de ${totalPages}</span>
+          
+          <button 
+            @click="handlePageChange" 
+            data-page="${state.pagination.page + 1}"
+            ${state.pagination.page >= totalPages ? 'disabled' : ''}
+          >
+            Próxima →
+          </button>
+        </div>
+      `;
+    }
+    
+    formatDate(dateStr) {
+      if (!dateStr) return 'N/A';
+      try {
+        return new Date(dateStr).toLocaleDateString('pt-BR');
+      } catch (e) {
+        return dateStr;
+      }
+    }
+    
+    createStudy() {
+      this.emit('study-create');
+    }
+    
+    styles() {
+      return css`
+        :host {
+          display: block;
+          width: 100%;
+        }
+        
+        .study-list {
+          padding: 20px;
+        }
+        
+        .study-list-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 24px;
+        }
+        
+        .study-list-header h2 {
+          margin: 0;
+          font-size: 24px;
+          color: #1a1a1a;
+        }
+        
+        .study-list-actions {
+          display: flex;
+          gap: 12px;
+        }
+        
+        .search-input {
+          padding: 8px 16px;
+          border: 1px solid #ddd;
+          border-radius: 6px;
+          font-size: 14px;
+          min-width: 250px;
+        }
+        
+        .btn-primary {
+          padding: 8px 16px;
+          background: #2563eb;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 500;
+        }
+        
+        .btn-primary:hover {
+          background: #1d4ed8;
+        }
+        
+        .btn-danger {
+          background: #dc2626;
+          color: white;
+        }
+        
+        .btn-danger:hover {
+          background: #b91c1c;
+        }
+        
+        .study-cards {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+          gap: 20px;
+        }
+        
+        .study-card {
+          background: white;
+          border: 1px solid #e5e7eb;
+          border-radius: 12px;
+          padding: 20px;
+          transition: box-shadow 0.2s;
+        }
+        
+        .study-card:hover {
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .study-card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: start;
+          margin-bottom: 12px;
+        }
+        
+        .study-card-header h3 {
+          margin: 0;
+          font-size: 18px;
+          color: #1a1a1a;
+          flex: 1;
+        }
+        
+        .status-badge {
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-size: 12px;
+          font-weight: 600;
+          text-transform: uppercase;
+        }
+        
+        .status-draft { background: #fef3c7; color: #92400e; }
+        .status-active { background: #d1fae5; color: #065f46; }
+        .status-completed { background: #dbeafe; color: #1e40af; }
+        .status-archived { background: #f3f4f6; color: #6b7280; }
+        
+        .study-card-body p {
+          color: #6b7280;
+          font-size: 14px;
+          line-height: 1.5;
+          margin: 0 0 16px 0;
+        }
+        
+        .study-meta {
+          display: flex;
+          gap: 16px;
+          font-size: 13px;
+          color: #9ca3af;
+        }
+        
+        .study-card-actions {
+          display: flex;
+          gap: 8px;
+          margin-top: 16px;
+          padding-top: 16px;
+          border-top: 1px solid #f3f4f6;
+        }
+        
+        .study-card-actions button {
+          flex: 1;
+          padding: 8px 12px;
+          background: #f3f4f6;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 13px;
+          transition: background 0.2s;
+        }
+        
+        .study-card-actions button:hover {
+          background: #e5e7eb;
+        }
+        
+        .empty-state {
+          text-align: center;
+          padding: 60px 20px;
+          color: #6b7280;
+        }
+        
+        .empty-state p {
+          font-size: 18px;
+          margin-bottom: 20px;
+        }
+        
+        .pagination {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 16px;
+          margin-top: 32px;
+          padding: 20px;
+        }
+        
+        .pagination button {
+          padding: 8px 16px;
+          background: white;
+          border: 1px solid #e5e7eb;
+          border-radius: 6px;
+          cursor: pointer;
+        }
+        
+        .pagination button:hover:not(:disabled) {
+          background: #f9fafb;
+        }
+        
+        .pagination button:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        
+        .study-list-loading,
+        .study-list-error {
+          text-align: center;
+          padding: 60px 20px;
+        }
+        
+        .spinner {
+          width: 40px;
+          height: 40px;
+          border: 4px solid #f3f4f6;
+          border-top-color: #2563eb;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `;
+    }
+  }
+  
+  defineComponent('study-list', StudyListComponent);
+})();
+</script>

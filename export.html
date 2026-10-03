@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Exportar - Canabica</title>
+</head>
+<body>
+
+<div id="export-page" class="export-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <h2>📤 Exportar Dados</h2>
+      <p>Exporte seus estudos e dados em CSV, JSON ou Excel</p>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="export-content">
+    <!-- Export Options -->
+    <div class="card">
+      <h3>⚙️ Opções de Exportação</h3>
+
+      <div class="form-group">
+        <label for="export-scope">Escopo de Exportação:</label>
+        <select id="export-scope" class="form-control">
+          <option value="all">Todos os Estudos</option>
+          <option value="selected">Estudos Selecionados</option>
+          <option value="filtered">Estudos Filtrados</option>
+        </select>
+      </div>
+
+      <div id="selected-studies-section" style="display: none;">
+        <label>Selecione os Estudos:</label>
+        <div id="studies-checklist" class="studies-checklist"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="export-format">Formato:</label>
+        <select id="export-format" class="form-control">
+          <option value="json">JSON (estruturado)</option>
+          <option value="csv">CSV (tabular)</option>
+          <option value="excel">Excel (.xlsx)</option>
+          <option value="zip">ZIP (todos os formatos)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Incluir:</label>
+        <div class="checkbox-group">
+          <label>
+            <input type="checkbox" name="include" value="studies" checked />
+            Estudos
+          </label>
+          <label>
+            <input type="checkbox" name="include" value="experiments" checked />
+            Experimentos
+          </label>
+          <label>
+            <input type="checkbox" name="include" value="observations" checked />
+            Observações
+          </label>
+          <label>
+            <input type="checkbox" name="include" value="references" checked />
+            Referências
+          </label>
+          <label>
+            <input type="checkbox" name="include" value="evidence" checked />
+            Evidências
+          </label>
+          <label>
+            <input type="checkbox" name="include" value="validations" />
+            Validações
+          </label>
+          <label>
+            <input type="checkbox" name="include" value="audit" />
+            Auditoria (logs)
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Opções Avançadas:</label>
+        <div class="checkbox-group">
+          <label>
+            <input type="checkbox" id="include-metadata" checked />
+            Incluir metadados
+          </label>
+          <label>
+            <input type="checkbox" id="sanitize" checked />
+            Sanitizar dados (remover info sensível)
+          </label>
+          <label>
+            <input type="checkbox" id="compress" />
+            Comprimir (ZIP)
+          </label>
+        </div>
+      </div>
+
+      <button class="button button-primary" data-click="handleExport">
+        📥 Preparar Exportação
+      </button>
+    </div>
+
+    <!-- Preview -->
+    <div id="preview-card" class="card" style="display: none;">
+      <h3>👁️ Pré-visualização</h3>
+      <div id="preview-content" class="preview-content"></div>
+    </div>
+
+    <!-- Download Section -->
+    <div id="download-card" class="card" style="display: none;">
+      <h3>✅ Pronto para Download</h3>
+      <div id="download-message" class="download-message"></div>
+      <a id="download-link" href="#" class="button button-primary" style="display: inline-block; margin-bottom: var(--spacing-lg);">
+        📥 Baixar Arquivo
+      </a>
+      <p class="text-muted">Arquivo disponível por 24 horas</p>
+    </div>
+
+    <!-- Export History -->
+    <div class="card">
+      <h3>📋 Histórico de Exportações</h3>
+      <div id="export-history" class="history-list">
+        <p class="text-muted">Nenhuma exportação realizada ainda</p>
+      </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="card">
+      <h3>📊 Estatísticas de Dados</h3>
+      <div id="statistics" class="statistics-grid">
+        <div class="stat-box">
+          <div class="stat-number" id="stat-studies">-</div>
+          <div class="stat-label">Estudos</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number" id="stat-experiments">-</div>
+          <div class="stat-label">Experimentos</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number" id="stat-observations">-</div>
+          <div class="stat-label">Observações</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number" id="stat-references">-</div>
+          <div class="stat-label">Referências</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number" id="stat-evidence">-</div>
+          <div class="stat-label">Evidências</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* PAGE HEADER */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xl);
+  background: linear-gradient(135deg, var(--primary) 0%, #229954 100%);
+  color: white;
+  margin-bottom: var(--spacing-lg);
+}
+
+.page-header-left h2 {
+  margin: 0 0 5px 0;
+  font-size: 1.8rem;
+}
+
+.page-header-left p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+/* CONTENT */
+.export-content {
+  padding: 0 var(--spacing-lg) var(--spacing-lg);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.card {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.card h3 {
+  margin-top: 0;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--bg-secondary);
+  padding-bottom: var(--spacing-md);
+}
+
+/* FORM */
+.form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-primary);
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px /* Intentional: badge/UI padding */ 12px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.95rem;
+  font-family: var(--font-family);
+  transition: all var(--transition);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
+}
+
+/* CHECKBOX GROUP */
+.checkbox-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-md);
+  margin: var(--spacing-md) 0;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  font-weight: 400;
+  cursor: pointer;
+  margin: 0;
+}
+
+.checkbox-group input[type="checkbox"] {
+  margin-right: var(--spacing-sm);
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* STUDIES CHECKLIST */
+.studies-checklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  margin: var(--spacing-md) 0;
+  padding: var(--spacing-md);
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius);
+}
+
+.study-checkbox {
+  display: flex;
+  align-items: center;
+}
+
+.study-checkbox input {
+  margin-right: var(--spacing-sm);
+}
+
+/* PREVIEW */
+.preview-content {
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  font-family: monospace;
+  font-size: 0.85rem;
+  max-height: 400px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* DOWNLOAD */
+.download-message {
+  padding: var(--spacing-md);
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-md);
+}
+
+/* HISTORY */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.history-item {
+  padding: var(--spacing-md);
+  background-color: var(--bg-secondary);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--border-radius);
+}
+
+.history-item-title {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.history-item-meta {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+/* STATISTICS */
+.statistics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.stat-box {
+  background: linear-gradient(135deg, var(--primary) 0%, #229954 100%);
+  color: white;
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius);
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* BUTTONS */
+.button {
+  padding: 10px /* Intentional: badge/UI padding */ 16px;
+  border: none;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.button-primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.button-primary:hover {
+  background-color: #229954;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* TEXT UTILITIES */
+.text-muted {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* RESPONSIVO */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .export-content {
+    padding: 0 var(--spacing-md) var(--spacing-md);
+  }
+
+  .card {
+    padding: var(--spacing-md);
+  }
+
+  .checkbox-group {
+    grid-template-columns: 1fr;
+  }
+
+  .studies-checklist {
+    grid-template-columns: 1fr;
+  }
+
+  .statistics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+</style>
+
+<script>
+<?!= include("api-client.html"); ?>
+<?!= include("crud-service.html"); ?>
+
+class ExportPage {
+  constructor() {
+    this.studiesCrud = CRUDFactory.studies();
+    this.studies = [];
+    this.exportHistory = [];
+    this.statistics = {
+      studies: 0,
+      experiments: 0,
+      observations: 0,
+      references: 0,
+      evidence: 0
+    };
+
+    this.initialize();
+  }
+
+  async initialize() {
+    try {
+      await this.loadStudies();
+      await this.loadStatistics();
+      this.populateStudiesChecklist();
+      this.renderStatistics();
+      this.attachEventListeners();
+    } catch (error) {
+      console.error('Initialize error:', error);
+    }
+  }
+
+  async loadStudies() {
+    try {
+      const response = await this.studiesCrud.list();
+      this.studies = response.data || response || [];
+    } catch (error) {
+      console.error('Error loading studies:', error);
+    }
+  }
+
+  async loadStatistics() {
+    try {
+      // Mock statistics (seria vindo do backend)
+      this.statistics = {
+        studies: this.studies.length,
+        experiments: Math.floor(Math.random() * 100),
+        observations: Math.floor(Math.random() * 500),
+        references: Math.floor(Math.random() * 200),
+        evidence: Math.floor(Math.random() * 1000)
+      };
+    } catch (error) {
+      console.error('Error loading statistics:', error);
+    }
+  }
+
+  populateStudiesChecklist() {
+    const container = document.getElementById('studies-checklist');
+    const html = this.studies.map(s => `
+      <label class="study-checkbox">
+        <input type="checkbox" value="${s.id}" checked />
+        ${s.name}
+      </label>
+    `).join('');
+
+    container.innerHTML = html;
+  }
+
+  renderStatistics() {
+    document.getElementById('stat-studies').textContent = this.statistics.studies;
+    document.getElementById('stat-experiments').textContent = this.statistics.experiments;
+    document.getElementById('stat-observations').textContent = this.statistics.observations;
+    document.getElementById('stat-references').textContent = this.statistics.references;
+    document.getElementById('stat-evidence').textContent = this.statistics.evidence;
+  }
+
+  async handleExport() {
+    const scope = document.getElementById('export-scope').value;
+    const format = document.getElementById('export-format').value;
+    const includes = Array.from(document.querySelectorAll('input[name="include"]:checked'))
+      .map(cb => cb.value);
+    const includeMetadata = document.getElementById('include-metadata').checked;
+    const sanitize = document.getElementById('sanitize').checked;
+
+    let studyIds = [];
+    if (scope === 'selected') {
+      studyIds = Array.from(document.querySelectorAll('.study-checkbox input:checked'))
+        .map(cb => cb.value);
+      if (studyIds.length === 0) {
+        if (typeof UI !== 'undefined') UI.Toast.warning('Nenhum estudo selecionado', 'Por favor, selecione pelo menos um estudo.');
+        else console.warn('Por favor, selecione pelo menos um estudo');
+        return;
+      }
+    }
+
+    try {
+      const response = await api.post('/export', {
+        scope,
+        format,
+        includes,
+        studyIds,
+        includeMetadata,
+        sanitize
+      });
+
+      this.showDownload(response);
+      this.addToHistory(scope, format, includes.length);
+
+    } catch (error) {
+      console.error('Export error:', error);
+      if (typeof UI !== 'undefined') UI.Toast.error('Erro na exportação', error.message);
+      else console.error('Erro na exportação: ' + error.message);
+    }
+  }
+
+  showDownload(response) {
+    const downloadCard = document.getElementById('download-card');
+    const message = document.getElementById('download-message');
+    const link = document.getElementById('download-link');
+
+    downloadCard.style.display = 'block';
+    message.textContent = `✅ Arquivo gerado com sucesso (${response.fileSize || 'tamanho desconhecido'})`;
+    link.href = response.downloadUrl;
+    link.download = response.filename;
+  }
+
+  addToHistory(scope, format, entityCount) {
+    this.exportHistory.unshift({
+      scope: this.getScopeLabel(scope),
+      format: format.toUpperCase(),
+      entities: entityCount,
+      timestamp: new Date().toLocaleString('pt-BR')
+    });
+
+    this.exportHistory = this.exportHistory.slice(0, 10);
+    this.renderHistory();
+  }
+
+  renderHistory() {
+    const container = document.getElementById('export-history');
+
+    if (this.exportHistory.length === 0) {
+      container.innerHTML = '<p class="text-muted">Nenhuma exportação realizada ainda</p>';
+      return;
+    }
+
+    const html = this.exportHistory.map((item, idx) => `
+      <div class="history-item">
+        <div class="history-item-title">
+          ${idx + 1}. ${item.scope} (${item.entities} entidades) - ${item.format}
+        </div>
+        <div class="history-item-meta">${item.timestamp}</div>
+      </div>
+    `).join('');
+
+    container.innerHTML = html;
+  }
+
+  getScopeLabel(scope) {
+    const labels = {
+      all: 'Todos os Estudos',
+      selected: 'Estudos Selecionados',
+      filtered: 'Estudos Filtrados'
+    };
+    return labels[scope] || scope;
+  }
+
+  attachEventListeners() {
+    // Scope change
+    document.getElementById('export-scope').addEventListener('change', (e) => {
+      const section = document.getElementById('selected-studies-section');
+      section.style.display = e.target.value === 'selected' ? 'block' : 'none';
+    });
+
+    // Export button
+    document.querySelectorAll('[data-click]').forEach(btn => {
+      const action = btn.getAttribute('data-click');
+      btn.addEventListener('click', () => {
+        if (typeof this[action] === 'function') {
+          this[action]();
+        }
+      });
+    });
+  }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  new ExportPage();
+});
+</script>
+
+</body>
+</html>

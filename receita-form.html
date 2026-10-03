@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulário de Receita de Fertirrigação</title>
+  
+  <link rel="stylesheet" href="quality-components.css">
+</head>
+<body>
+  <div class="form-container">
+    <h2 id="formTitle">Nova Receita de Fertirrigação</h2>
+    
+    <form id="receitaForm">
+      <!-- Seção 1: Identificação -->
+      <fieldset>
+        <legend>Identificação</legend>
+        
+        <div class="form-group">
+          <label for="nome_fase">
+            Nome da Fase <span style="color: red;">*</span>
+          </label>
+          <input
+            type="text"
+            id="nome_fase"
+            name="nome_fase"
+            required
+            maxlength="100"
+            placeholder="Ex: Vegetativa Semana 3"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="fase_cultivo">
+            Fase do Cultivo <span style="color: red;">*</span>
+          </label>
+          <select id="fase_cultivo" name="fase_cultivo" required>
+            <option value="">Selecione...</option>
+            <option value="PROPAGACAO">Propagação</option>
+            <option value="VEGETATIVA">Vegetativa</option>
+            <option value="FLORACAO">Floração</option>
+          </select>
+        </div>
+      </fieldset>
+      
+      <!-- Seção 2: Macronutrientes Primários (NPK) -->
+      <fieldset>
+        <legend>Macronutrientes Primários (NPK)</legend>
+        
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+          <div class="form-group">
+            <label for="n_ppm">
+              Nitrogênio Total (N) ppm <span style="color: red;">*</span>
+            </label>
+            <input
+              type="number"
+              id="n_ppm"
+              name="n_ppm"
+              required
+              step="0.1"
+              min="0"
+              placeholder="Ex: 200"
+            >
+            <small class="help-text">
+              Total de N (NO₃⁻ + NH₄⁺)
+            </small>
+          </div>
+          
+          <div class="form-group">
+            <label for="p_ppm">
+              Fósforo (P) ppm <span style="color: red;">*</span>
+            </label>
+            <input
+              type="number"
+              id="p_ppm"
+              name="p_ppm"
+              required
+              step="0.1"
+              min="0"
+              placeholder="Ex: 30"
+            >
+            <small class="help-text">
+              P elementar (não P₂O₅)
+            </small>
+          </div>
+          
+          <div class="form-group">
+            <label for="k_ppm">
+              Potássio (K) ppm <span style="color: red;">*</span>
+            </label>
+            <input
+              type="number"
+              id="k_ppm"
+              name="k_ppm"
+              required
+              step="0.1"
+              min="0"
+              placeholder="Ex: 250"
+            >
+            <small class="help-text">
+              K elementar (não K₂O)
+            </small>
+          </div>
+        </div>
+      </fieldset>
+      
+      <!-- Seção 3: Macronutrientes Secundários -->
+      <fieldset>
+        <legend>Macronutrientes Secundários (Ca, Mg, S)</legend>
+        
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+          <div class="form-group">
+            <label for="ca_ppm">
+              Cálcio (Ca) ppm <span style="color: red;">*</span>
+            </label>
+            <input
+              type="number"
+              id="ca_ppm"
+              name="ca_ppm"
+              required
+              step="0.1"
+              min="0"
+              placeholder="Ex: 180"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="mg_ppm">
+              Magnésio (Mg) ppm <span style="color: red;">*</span>
+            </label>
+            <input
+              type="number"
+              id="mg_ppm"
+              name="mg_ppm"
+              required
+              step="0.1"
+              min="0"
+              placeholder="Ex: 50"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="s_ppm">
+              Enxofre (S) ppm
+            </label>
+            <input
+              type="number"
+              id="s_ppm"
+              name="s_ppm"
+              step="0.1"
+              min="0"
+              placeholder="Ex: 65"
+            >
+          </div>
+        </div>
+      </fieldset>
+      
+      <!-- Seção 4: Micronutrientes -->
+      <fieldset>
+        <legend>Micronutrientes</legend>
+        
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+          <div class="form-group">
+            <label for="fe_ppm">
+              Ferro (Fe) ppm <span style="color: red;">*</span>
+            </label>
+            <input
+              type="number"
+              id="fe_ppm"
+              name="fe_ppm"
+              required
+              step="0.01"
+              min="0"
+              placeholder="Ex: 3.0"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="mn_ppm">
+              Manganês (Mn) ppm
+            </label>
+            <input
+              type="number"
+              id="mn_ppm"
+              name="mn_ppm"
+              step="0.01"
+              min="0"
+              placeholder="Ex: 0.5"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="zn_ppm">
+              Zinco (Zn) ppm
+            </label>
+            <input
+              type="number"
+              id="zn_ppm"
+              name="zn_ppm"
+              step="0.01"
+              min="0"
+              placeholder="Ex: 0.3"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="cu_ppm">
+              Cobre (Cu) ppm
+            </label>
+            <input
+              type="number"
+              id="cu_ppm"
+              name="cu_ppm"
+              step="0.01"
+              min="0"
+              placeholder="Ex: 0.1"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="b_ppm">
+              Boro (B) ppm
+            </label>
+            <input
+              type="number"
+              id="b_ppm"
+              name="b_ppm"
+              step="0.01"
+              min="0"
+              placeholder="Ex: 0.5"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="mo_ppm">
+              Molibdênio (Mo) ppm
+            </label>
+            <input
+              type="number"
+              id="mo_ppm"
+              name="mo_ppm"
+              step="0.001"
+              min="0"
+              placeholder="Ex: 0.05"
+            >
+          </div>
+        </div>
+      </fieldset>
+      
+      <!-- Seção 5: Parâmetros Físico-Químicos -->
+      <fieldset>
+        <legend>Parâmetros Físico-Químicos</legend>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label for="ph_solucao">
+              pH da Solução <span style="color: red;">*</span>
+            </label>
+            <input
+              type="number"
+              id="ph_solucao"
+              name="ph_solucao"
+              required
+              step="0.1"
+              min="4.0"
+              max="8.0"
+              placeholder="Ex: 6.0"
+            >
+            <small class="help-text">
+              Faixa típica: 5.5 - 6.5
+            </small>
+          </div>
+          
+          <div class="form-group">
+            <label for="ec_final">
+              EC Final (mS/cm) <span style="color: red;">*</span>
+            </label>
+            <input
+              type="number"
+              id="ec_final"
+              name="ec_final"
+              required
+              step="0.1"
+              min="0"
+              placeholder="Ex: 2.0"
+            >
+            <small class="help-text">
+              Condutividade elétrica esperada
+            </small>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="agente_quelante_exigido">
+            Agente Quelante Exigido (para Fe)
+          </label>
+          <select id="agente_quelante_exigido" name="agente_quelante_exigido">
+            <option value="">Nenhum específico</option>
+            <option value="EDTA">EDTA</option>
+            <option value="DTPA">DTPA</option>
+            <option value="EDDHA">EDDHA</option>
+          </select>
+          <small class="help-text">
+            Quelato preferencial para estabilização de ferro
+          </small>
+        </div>
+      </fieldset>
+      
+      <!-- Seção 6: Observações -->
+      <fieldset>
+        <legend>Observações</legend>
+        
+        <div class="form-group">
+          <label for="observacoes">
+            Observações e Notas
+          </label>
+          <textarea
+            id="observacoes"
+            name="observacoes"
+            rows="4"
+            placeholder="Observações sobre a receita, ajustes realizados, fontes consultadas..."
+          ></textarea>
+        </div>
+      </fieldset>
+      
+      <!-- Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" onclick="cancel()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-primary">
+          Salvar Receita
+        </button>
+      </div>
+    </form>
+  </div>
+  
+  <script src="quality-helpers.js"></script>
+  <script src="api-client.html"></script>
+  
+  <script>
+    // Estado
+    const isEditMode = !!getUrlParam('id');
+    const receitaId = getUrlParam('id');
+    
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+      if (isEditMode) {
+        loadReceita();
+      }
+    });
+    
+    /**
+     * Carrega receita existente para edição
+     */
+    async function loadReceita() {
+      try {
+        document.getElementById('formTitle').textContent = 'Editar Receita de Fertirrigação';
+        showLoading(true);
+        
+        const receita = await api.receitas.get(receitaId);
+        
+        setFormData('receitaForm', {
+          nome_fase: receita.nome_fase,
+          fase_cultivo: receita.fase_cultivo,
+          n_ppm: receita.n_ppm,
+          p_ppm: receita.p_ppm,
+          k_ppm: receita.k_ppm,
+          ca_ppm: receita.ca_ppm,
+          mg_ppm: receita.mg_ppm,
+          s_ppm: receita.s_ppm,
+          fe_ppm: receita.fe_ppm,
+          mn_ppm: receita.mn_ppm,
+          zn_ppm: receita.zn_ppm,
+          cu_ppm: receita.cu_ppm,
+          b_ppm: receita.b_ppm,
+          mo_ppm: receita.mo_ppm,
+          ph_solucao: receita.ph_solucao,
+          ec_final: receita.ec_final,
+          agente_quelante_exigido: receita.agente_quelante_exigido || '',
+          observacoes: receita.observacoes
+        });
+        
+      } catch (error) {
+        handleApiError(error);
+        goBack();
+      } finally {
+        showLoading(false);
+      }
+    }
+    
+    /**
+     * Handler de submit
+     */
+    document.getElementById('receitaForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!validateForm('receitaForm')) {
+        showToast('error', 'Preencha todos os campos obrigatórios');
+        return;
+      }
+      
+      try {
+        showLoading(true);
+        
+        const data = getFormData('receitaForm');
+        
+        // Converter campos numéricos
+        data.n_ppm = parseFloat(data.n_ppm);
+        data.p_ppm = parseFloat(data.p_ppm);
+        data.k_ppm = parseFloat(data.k_ppm);
+        data.ca_ppm = parseFloat(data.ca_ppm);
+        data.mg_ppm = parseFloat(data.mg_ppm);
+        data.s_ppm = data.s_ppm ? parseFloat(data.s_ppm) : null;
+        data.fe_ppm = parseFloat(data.fe_ppm);
+        data.mn_ppm = data.mn_ppm ? parseFloat(data.mn_ppm) : null;
+        data.zn_ppm = data.zn_ppm ? parseFloat(data.zn_ppm) : null;
+        data.cu_ppm = data.cu_ppm ? parseFloat(data.cu_ppm) : null;
+        data.b_ppm = data.b_ppm ? parseFloat(data.b_ppm) : null;
+        data.mo_ppm = data.mo_ppm ? parseFloat(data.mo_ppm) : null;
+        data.ph_solucao = parseFloat(data.ph_solucao);
+        data.ec_final = parseFloat(data.ec_final);
+        
+        // Limpar agente quelante se vazio
+        if (!data.agente_quelante_exigido) {
+          data.agente_quelante_exigido = null;
+        }
+        
+        // Validações adicionais
+        const warnings = [];
+        
+        // Validar pH
+        if (data.ph_solucao < 5.0 || data.ph_solucao > 7.0) {
+          warnings.push('pH fora da faixa recomendada (5.0 - 7.0)');
+        }
+        
+        // Validar ratio Ca:Mg
+        const ratioCaMg = data.ca_ppm / data.mg_ppm;
+        if (ratioCaMg < 2.0 || ratioCaMg > 5.0) {
+          warnings.push(`Ratio Ca:Mg (${ratioCaMg.toFixed(2)}) fora da faixa ideal (2.0 - 5.0)`);
+        }
+        
+        if (warnings.length > 0) {
+          const proceed = confirm(
+            'AVISOS detectados:\n\n' +
+            warnings.join('\n') +
+            '\n\nDeseja continuar mesmo assim?'
+          );
+          
+          if (!proceed) {
+            showLoading(false);
+            return;
+          }
+        }
+        
+        let result;
+        if (isEditMode) {
+          result = await api.receitas.update(receitaId, data);
+          showToast('success', 'Receita atualizada com sucesso!');
+        } else {
+          result = await api.receitas.create(data);
+          showToast('success', 'Receita criada com sucesso!');
+        }
+        
+        // Redirecionar
+        setTimeout(() => {
+          navigateTo('receita-list');
+        }, 1000);
+        
+      } catch (error) {
+        handleApiError(error);
+      } finally {
+        showLoading(false);
+      }
+    });
+    
+    /**
+     * Cancela e volta
+     */
+    function cancel() {
+      if (confirm('Deseja realmente cancelar? As alterações não salvas serão perdidas.')) {
+        navigateTo('receita-list');
+      }
+    }
+  </script>
+</body>
+</html>

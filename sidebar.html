@@ -1,0 +1,83 @@
+<!--
+COMPONENTE: sidebar.html
+PAPEL: Menu lateral por papel.
+
+PRINCIPAIS FUNCIONALIDADES:
+- itens condicionais por permissão e domínios do sistema;
+- mantém o estado de UI separado do processamento no Apps Script;
+- não acessa diretamente a planilha: usa client.html e os contratos do Web App.
+
+INTEGRAÇÕES:
+- PermissionService, client.html;
+- dados esperados: Users.Role.
+
+SEGURANÇA E LIMITAÇÕES:
+- nunca renderizar senha, token completo ou stack trace;
+- validação visual não substitui ValidationService no servidor;
+- usar escaping/templating seguro para texto proveniente da planilha;
+- esqueleto preparado para HtmlService e componentes parciais.
+
+STATUS: ESQUELETO DE INTERFACE — completar acessibilidade, testes e estados de erro.
+-->
+<aside class="sidebar" role="complementary" aria-label="Menu de navegação lateral">
+  <nav aria-label="Menu principal do sistema">
+    <ul role="list">
+      <li><a href="#dashboard" aria-label="Ir para dashboard" aria-current="page"><i data-feather="bar-chart-2" class="icon icon-md" aria-hidden="true"></i> Dashboard</a></li>
+      <li><a href="#comorbidades" aria-label="Condições, Cultivo & CoA"><i data-feather="activity" class="icon icon-md" aria-hidden="true"></i> Condições, Cultivo & CoA</a></li>
+      <li><a href="#studies" aria-label="Gerenciar estudos"><i data-feather="book-open" class="icon icon-md" aria-hidden="true"></i> Estudos</a></li>
+      <li><a href="#experiments" aria-label="Gerenciar experimentos"><i data-feather="flask" class="icon icon-md" aria-hidden="true"></i> Experimentos</a></li>
+      <li><a href="#observations" aria-label="Gerenciar observações"><i data-feather="file-text" class="icon icon-md" aria-hidden="true"></i> Observações</a></li>
+      <li><a href="#references" aria-label="Gerenciar referências bibliográficas"><i data-feather="book" class="icon icon-md" aria-hidden="true"></i> Referências</a></li>
+      <li><a href="#evidence" aria-label="Gerenciar evidências científicas"><i data-feather="search" class="icon icon-md" aria-hidden="true"></i> Evidências</a></li>
+      <li><a href="#validations" aria-label="Executar validações"><i data-feather="check-circle" class="icon icon-md" aria-hidden="true"></i> Validações</a></li>
+      <li><a href="#reports" aria-label="Gerar relatórios"><i data-feather="file" class="icon icon-md" aria-hidden="true"></i> Relatórios</a></li>
+      <li><a href="#colab" aria-label="Integração Google Colab"><i data-feather="code" class="icon icon-md" aria-hidden="true"></i> Colab</a></li>
+    </ul>
+  </nav>
+  
+  <!-- Qualidade de Insumos -->
+  <nav aria-label="Qualidade de Insumos" class="sidebar-section">
+    <h3 class="sidebar-section-title">Qualidade</h3>
+    <ul role="list">
+      <li>
+        <a href="#quality-dashboard" aria-label="Dashboard de Qualidade">
+          <i data-feather="target" class="icon icon-md" aria-hidden="true"></i> Dashboard Qualidade
+        </a>
+      </li>
+      <li>
+        <a href="#insumo-list" aria-label="Gerenciar insumos">
+          <i data-feather="flask" class="icon icon-md" aria-hidden="true"></i> Insumos
+        </a>
+      </li>
+      <li>
+        <a href="#lote-list" aria-label="Gerenciar lotes e CoA">
+          <i data-feather="clipboard" class="icon icon-md" aria-hidden="true"></i> Lotes & CoA
+        </a>
+      </li>
+      <li>
+        <a href="#receita-list" aria-label="Gerenciar receitas de fertirrigação">
+          <i data-feather="filter" class="icon icon-md" aria-hidden="true"></i> Receitas
+        </a>
+      </li>
+      <li>
+        <a href="#protocolo-list" aria-label="Gerenciar protocolos biológicos">
+          <i data-feather="shield" class="icon icon-md" aria-hidden="true"></i> Protocolos Bio
+        </a>
+      </li>
+      <li>
+        <a href="#parecer-list" aria-label="Ver pareceres de compatibilidade">
+          <i data-feather="check-square" class="icon icon-md" aria-hidden="true"></i> Pareceres
+        </a>
+      </li>
+    </ul>
+  </nav>
+  
+  <nav aria-label="Configurações e administração" class="sidebar-admin">
+    <ul role="list">
+      <li><a href="#settings" aria-label="Configurações do sistema"><i data-feather="settings" class="icon icon-md" aria-hidden="true"></i> Configurações</a></li>
+      <li data-role="admin-only">
+        <a href="#users" aria-label="Gerenciar usuários (apenas administradores)"><i data-feather="users" class="icon icon-md" aria-hidden="true"></i> Usuários</a>
+      </li>
+    </ul>
+  </nav>
+</aside>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('quality-components-css') ?>
+  <?!= include('quality-helpers-js') ?>
+</head>
+<body>
+  <div class="container mt-4">
+    <div class="card">
+      <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Atualizar Parecer Técnico</h5>
+        <button class="btn btn-sm btn-light" onclick="goBack()">← Voltar</button>
+      </div>
+      <div class="card-body">
+        <!-- Informações do Parecer -->
+        <section class="mb-4">
+          <h6 class="border-bottom pb-2">Parecer em Análise</h6>
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>ID Parecer:</strong> <span id="parecer-id">—</span></p>
+              <p><strong>Receita:</strong> <span id="parecer-receita">—</span></p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Protocolo:</strong> <span id="parecer-protocolo">—</span></p>
+              <p><strong>Veredicto Atual:</strong> <span id="veredicto-atual">—</span></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Formulário de Workflow -->
+        <form id="parecer-workflow-form">
+          <!-- Veredicto Final -->
+          <div class="form-group">
+            <label for="veredictoFinal">
+              <strong>Veredicto Final</strong> <span class="text-danger">*</span>
+            </label>
+            <select id="veredictoFinal" name="veredictoFinal" class="form-control" required>
+              <option value="">-- Selecione --</option>
+              <option value="compativel">Compatível</option>
+              <option value="incompativel">Incompatível</option>
+              <option value="compativel_com_restricoes">Compatível com Restrições</option>
+            </select>
+            <small class="form-text text-muted">
+              Veredicto final sobre a compatibilidade entre receita e protocolo
+            </small>
+          </div>
+
+          <!-- Parecer Técnico do Especialista -->
+          <div class="form-group">
+            <label for="parecerTecnicoEspecialista">
+              <strong>Parecer Técnico do Especialista</strong> <span class="text-danger">*</span>
+            </label>
+            <textarea 
+              id="parecerTecnicoEspecialista" 
+              name="parecerTecnicoEspecialista" 
+              class="form-control" 
+              rows="8" 
+              required
+              minlength="20"
+              placeholder="Descreva detalhadamente o parecer técnico sobre a compatibilidade (mínimo 20 caracteres)"
+            ></textarea>
+            <small class="form-text text-muted">
+              Mínimo de 20 caracteres. Inclua análise técnica detalhada, justificativas clínicas e recomendações.
+            </small>
+            <div id="char-count" class="text-muted small mt-1">0 caracteres</div>
+          </div>
+
+          <!-- Guia de Conteúdo -->
+          <div class="alert alert-info mb-4">
+            <strong>💡 O parecer técnico deve incluir:</strong>
+            <ul class="mb-0 mt-2">
+              <li>Análise das condições clínicas do paciente</li>
+              <li>Avaliação dos componentes canabinoides prescritos</li>
+              <li>Compatibilidade entre receita médica e protocolo terapêutico</li>
+              <li>Contraindicações, alertas ou restrições identificadas</li>
+              <li>Recomendações para ajustes ou acompanhamento</li>
+            </ul>
+          </div>
+
+          <!-- Alertas de Validação -->
+          <div id="validation-alert" class="alert alert-danger" style="display:none;" role="alert">
+            <!-- Será preenchido dinamicamente -->
+          </div>
+
+          <!-- Botões de Ação -->
+          <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-secondary" onclick="goBack()">
+              Cancelar
+            </button>
+            <button type="submit" id="btn-submit" class="btn btn-success">
+              💾 Salvar Parecer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentParecer = null;
+
+    function goBack() {
+      window.history.back();
+    }
+
+    function loadParecerData(parecerId) {
+      google.script.run
+        .withSuccessHandler(onParecerLoaded)
+        .withFailureHandler(onLoadError)
+        .routeRequest({
+          action: 'getParecer',
+          parecerId: parecerId
+        });
+    }
+
+    function onParecerLoaded(response) {
+      if (!response.success) {
+        showError(response.message || 'Erro ao carregar parecer');
+        setTimeout(() => goBack(), 2000);
+        return;
+      }
+      
+      currentParecer = response.data;
+      renderParecerInfo(currentParecer);
+      populateForm(currentParecer);
+    }
+
+    function renderParecerInfo(parecer) {
+      document.getElementById('parecer-id').textContent = parecer.id || '—';
+      document.getElementById('parecer-receita').textContent = parecer.nomeReceita || parecer.idReceita || '—';
+      document.getElementById('parecer-protocolo').textContent = parecer.nomeProtocolo || parecer.idProtocolo || '—';
+      document.getElementById('veredicto-atual').innerHTML = renderStatusBadge(parecer.veredictoFinal);
+    }
+
+    function populateForm(parecer) {
+      // Preencher valores atuais
+      if (parecer.veredictoFinal) {
+        document.getElementById('veredictoFinal').value = parecer.veredictoFinal;
+      }
+      if (parecer.parecerTecnicoEspecialista) {
+        document.getElementById('parecerTecnicoEspecialista').value = parecer.parecerTecnicoEspecialista;
+        updateCharCount();
+      }
+    }
+
+    function onLoadError(error) {
+      showError(error.message || 'Erro ao carregar dados');
+      setTimeout(() => goBack(), 2000);
+    }
+
+    function updateCharCount() {
+      const textarea = document.getElementById('parecerTecnicoEspecialista');
+      const counter = document.getElementById('char-count');
+      const length = textarea.value.length;
+      counter.textContent = length + ' caracteres';
+      
+      if (length < 20) {
+        counter.classList.add('text-danger');
+        counter.classList.remove('text-success');
+      } else {
+        counter.classList.add('text-success');
+        counter.classList.remove('text-danger');
+      }
+    }
+
+    function validateForm() {
+      const veredicto = document.getElementById('veredictoFinal').value;
+      const parecer = document.getElementById('parecerTecnicoEspecialista').value.trim();
+      
+      const errors = [];
+      
+      // Validar veredicto
+      const resultVeredicto = validateRequired(veredicto, 'Veredicto Final');
+      if (!resultVeredicto.valid) {
+        errors.push(resultVeredicto.message);
+      }
+      
+      // Validar parecer técnico
+      const resultParecer = validateMinLength(parecer, 20, 'Parecer Técnico do Especialista');
+      if (!resultParecer.valid) {
+        errors.push(resultParecer.message);
+      }
+      
+      if (errors.length > 0) {
+        showValidationErrors(errors);
+        return false;
+      }
+      
+      hideValidationErrors();
+      return true;
+    }
+
+    function showValidationErrors(errors) {
+      const alertDiv = document.getElementById('validation-alert');
+      let html = '<strong>Erros de validação:</strong><ul class="mb-0 mt-2">';
+      errors.forEach(error => {
+        html += `<li>${escapeHtml(error)}</li>`;
+      });
+      html += '</ul>';
+      alertDiv.innerHTML = html;
+      alertDiv.style.display = 'block';
+      alertDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function hideValidationErrors() {
+      const alertDiv = document.getElementById('validation-alert');
+      alertDiv.style.display = 'none';
+    }
+
+    function handleSubmit(event) {
+      event.preventDefault();
+      
+      if (!validateForm()) {
+        return;
+      }
+      
+      if (!currentParecer) {
+        showError('Nenhum parecer carregado');
+        return;
+      }
+      
+      const formData = {
+        parecerId: currentParecer.id,
+        veredictoFinal: document.getElementById('veredictoFinal').value,
+        parecerTecnicoEspecialista: document.getElementById('parecerTecnicoEspecialista').value.trim()
+      };
+      
+      setButtonLoading('btn-submit', true);
+      
+      google.script.run
+        .withSuccessHandler(onSubmitSuccess)
+        .withFailureHandler(onSubmitError)
+        .routeRequest({
+          action: 'updateParecer',
+          data: formData
+        });
+    }
+
+    function onSubmitSuccess(response) {
+      setButtonLoading('btn-submit', false);
+      
+      if (response.success) {
+        showSuccess('Parecer técnico atualizado com sucesso');
+        setTimeout(() => {
+          window.location.href = '?page=parecer-view&id=' + currentParecer.id;
+        }, 1500);
+      } else {
+        showError(response.message || 'Erro ao atualizar parecer');
+      }
+    }
+
+    function onSubmitError(error) {
+      setButtonLoading('btn-submit', false);
+      showError(error.message || 'Erro ao processar solicitação');
+    }
+
+    // Event Listeners
+    document.getElementById('parecerTecnicoEspecialista').addEventListener('input', updateCharCount);
+    document.getElementById('parecer-workflow-form').addEventListener('submit', handleSubmit);
+
+    // Inicializar ao carregar página
+    window.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const parecerId = urlParams.get('id');
+      
+      if (parecerId) {
+        loadParecerData(parecerId);
+      } else {
+        showError('ID do parecer não fornecido');
+        setTimeout(() => goBack(), 2000);
+      }
+    });
+  </script>
+</body>
+</html>

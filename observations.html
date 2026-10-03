@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Observações - Canabica</title>
+</head>
+<body>
+
+<div id="observations-page" class="observations-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <h2>📝 Observações</h2>
+      <p>Registro de observações de experimentos</p>
+    </div>
+    <div class="page-header-right">
+      <button class="btn btn-primary" data-click="openCreateModal">
+        ➕ Nova Observação
+      </button>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-box">
+      <input
+        type="text"
+        id="search-input"
+        placeholder="🔍 Buscar observações..."
+        data-input="handleSearch"
+      />
+    </div>
+    <div class="toolbar-actions">
+      <select id="filter-experiment" class="filter-select" data-change="handleFilterExperiment">
+        <option value="">Todos os Experimentos</option>
+      </select>
+      <button class="btn btn-secondary btn-sm" data-click="handleRefresh">
+        🔄 Atualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div id="loading-state" class="loading-spinner" style="display: none;">
+    <div class="spinner"></div>
+    <p>Carregando observações...</p>
+  </div>
+
+  <!-- Error state -->
+  <div id="error-state" class="alert alert-danger" style="display: none;"></div>
+
+  <!-- Empty state -->
+  <div id="empty-state" class="empty-state" style="display: none;">
+    <div class="empty-icon">📝</div>
+    <h3>Nenhuma observação encontrada</h3>
+    <p>Comece adicionando uma nova observação clicando no botão acima</p>
+  </div>
+
+  <!-- Observations Table -->
+  <div id="observations-container" class="table-container" style="display: none;">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Descrição</th>
+          <th>Experimento</th>
+          <th>Data</th>
+          <th>Tipo</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="observations-tbody">
+        <!-- Observations will be inserted here -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div id="pagination" class="pagination" style="display: none;">
+    <button class="btn btn-secondary btn-sm" data-click="prevPage" id="prev-btn">← Anterior</button>
+    <span id="page-info"></span>
+    <button class="btn btn-secondary btn-sm" data-click="nextPage" id="next-btn">Próximo →</button>
+  </div>
+
+  <!-- Create/Edit Modal -->
+  <div id="form-modal" class="modal" style="display: none;">
+    <div class="modal-overlay" data-click="closeModal"></div>
+    <div class="modal-content cf-modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Nova Observação</h3>
+        <button class="modal-close" data-click="closeModal">×</button>
+      </div>
+      <div id="form-container" class="modal-body">
+        <!-- Form will be inserted here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="delete-modal" class="modal" style="display: none;">
+    <div class="modal-overlay" data-click="cancelDelete"></div>
+    <div class="modal-content modal-small cf-modal-content">
+      <div class="modal-header">
+        <h3>Confirmar Exclusão</h3>
+      </div>
+      <div class="modal-body">
+        <p>Tem certeza que deseja excluir esta observação?</p>
+        <p class="text-muted" id="delete-warning"></p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-danger" data-click="confirmDelete">
+          🗑️ Excluir
+        </button>
+        <button class="btn btn-secondary" data-click="cancelDelete">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* PAGE HEADER */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xl);
+  background: linear-gradient(135deg, var(--primary) 0%, #229954 100%);
+  color: white;
+  margin-bottom: var(--spacing-lg);
+}
+
+.page-header-left h2 {
+  margin: 0 0 5px 0;
+  font-size: 1.8rem;
+}
+
+.page-header-left p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+.page-header-right {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+/* TOOLBAR */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: white;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.search-box input {
+  padding: 10px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.95rem;
+  width: 250px;
+  transition: all var(--transition);
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.filter-select {
+  padding: 10px 12px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.filter-select:hover {
+  border-color: var(--primary);
+}
+
+/* TABLE */
+.table-container {
+  overflow-x: auto;
+  padding: 0 var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.table thead {
+  background-color: var(--bg-secondary);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.table th,
+.table td {
+  padding: var(--spacing-md);
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table tbody tr {
+  transition: background-color var(--transition);
+}
+
+.table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* TYPE BADGE */
+.type-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.type-badge.morphological {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.type-badge.physiological {
+  background-color: #f3e5f5;
+  color: #6a1b9a;
+}
+
+.type-badge.behavioral {
+  background-color: #fce4ec;
+  color: #c2185b;
+}
+
+.type-badge.chemical {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+/* ACTIONS */
+.table-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.table-actions button {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* PAGINATION */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+#page-info {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* EMPTY STATE */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl) var(--spacing-lg);
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--text-primary);
+}
+
+.empty-state p {
+  margin: 0;
+}
+
+/* LOADING SPINNER */
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  gap: var(--spacing-lg);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--bg-secondary);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* MODAL */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  position: relative;
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-small {
+  max-width: 400px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: color var(--transition);
+}
+
+.modal-close:hover {
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: var(--spacing-lg);
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+  justify-content: flex-end;
+}
+
+/* FORM */
+.form-builder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.form-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.form-group label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  padding: 10px 12px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.95rem;
+  font-family: var(--font-family);
+  transition: all var(--transition);
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
+}
+
+.form-group-error input,
+.form-group-error textarea,
+.form-group-error select {
+  border-color: #e74c3c;
+}
+
+.form-error {
+  font-size: 0.85rem;
+  color: #e74c3c;
+}
+
+.form-help {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.form-actions button {
+  flex: 1;
+}
+
+.required {
+  color: #e74c3c;
+}
+
+/* ALERTS */
+.alert {
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  margin: 0 var(--spacing-lg) var(--spacing-lg);
+  border-left: 4px solid;
+}
+
+.alert-danger {
+  background-color: #fee;
+  color: #c00;
+  border-left-color: #c00;
+}
+
+.text-muted {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* RESPONSIVO */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-lg);
+  }
+
+  .page-header-right {
+    width: 100%;
+  }
+
+  .page-header-right .button {
+    width: 100%;
+  }
+
+  .toolbar {
+    flex-direction: column;
+  }
+
+  .search-box input {
+    width: 100%;
+  }
+
+  .toolbar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .table {
+    font-size: 0.85rem;
+  }
+
+  .table th,
+  .table td {
+    padding: var(--spacing-sm);
+  }
+
+  .table-actions {
+    flex-wrap: wrap;
+  }
+
+  .modal-content {
+    max-height: 95vh;
+    width: 95%;
+  }
+}
+</style>
+
+<script>
+<?!= include("api-client.html"); ?>
+<?!= include("form-builder.html"); ?>
+<?!= include("crud-service.html"); ?>
+
+class ObservationsPage {
+  constructor() {
+    this.crud = CRUDFactory.observations();
+    this.experimentsCrud = CRUDFactory.experiments();
+    this.observations = [];
+    this.filteredObservations = [];
+    this.experiments = [];
+    this.currentPage = 1;
+    this.itemsPerPage = 10;
+    this.currentEditingId = null;
+    this.deleteTargetId = null;
+    this.searchQuery = '';
+    this.filterExperimentId = '';
+
+    this.pageContainer = document.getElementById('observations-page');
+    this.loadingState = document.getElementById('loading-state');
+    this.errorState = document.getElementById('error-state');
+    this.emptyState = document.getElementById('empty-state');
+    this.observationsContainer = document.getElementById('observations-container');
+    this.observationsTbody = document.getElementById('observations-tbody');
+    this.pagination = document.getElementById('pagination');
+    this.formModal = document.getElementById('form-modal');
+    this.deleteModal = document.getElementById('delete-modal');
+
+    this.initialize();
+  }
+
+  async initialize() {
+    try {
+      this.showLoading();
+      await this.loadExperiments();
+      await this.loadObservations();
+      this.populateExperimentFilter();
+      this.render();
+      this.attachEventListeners();
+    } catch (error) {
+      console.error('Initialize error:', error);
+      this.showError('Erro ao carregar observações');
+    }
+  }
+
+  async loadExperiments() {
+    try {
+      const response = await this.experimentsCrud.list();
+      this.experiments = response.data || response || [];
+    } catch (error) {
+      console.error('Error loading experiments:', error);
+    }
+  }
+
+  async loadObservations() {
+    try {
+      const response = await this.crud.list();
+      this.observations = response.data || response || [];
+      this.applyFilters();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  populateExperimentFilter() {
+    const select = document.getElementById('filter-experiment');
+    const options = this.experiments.map(e => 
+      `<option value="${e.id}">${e.name}</option>`
+    ).join('');
+    
+    select.innerHTML = '<option value="">Todos os Experimentos</option>' + options;
+  }
+
+  applyFilters() {
+    let filtered = this.observations;
+
+    // Search filter
+    if (this.searchQuery) {
+      const q = this.searchQuery.toLowerCase();
+      filtered = filtered.filter(o =>
+        o.description.toLowerCase().includes(q) ||
+        (o.notes && o.notes.toLowerCase().includes(q))
+      );
+    }
+
+    // Experiment filter
+    if (this.filterExperimentId) {
+      filtered = filtered.filter(o => o.experimentId === this.filterExperimentId);
+    }
+
+    this.filteredObservations = filtered;
+    this.currentPage = 1;
+  }
+
+  render() {
+    this.hideLoading();
+
+    if (this.filteredObservations.length === 0) {
+      this.showEmpty();
+      return;
+    }
+
+    this.renderTable();
+    this.renderPagination();
+    this.observationsContainer.style.display = 'block';
+  }
+
+  renderTable() {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+    const pageObservations = this.filteredObservations.slice(start, end);
+
+    const html = pageObservations.map(obs => {
+      const experiment = this.experiments.find(e => e.id === obs.experimentId);
+      return `
+        <tr>
+          <td>
+            <strong>${obs.description}</strong>
+            ${obs.notes ? `<br/><span class="text-muted">${obs.notes.substring(0, 40)}...</span>` : ''}
+          </td>
+          <td>${experiment ? experiment.name : 'N/A'}</td>
+          <td>${obs.date || 'N/A'}</td>
+          <td>
+            <span class="type-badge ${obs.type.toLowerCase()}">
+              ${this.getTypeLabel(obs.type)}
+            </span>
+          </td>
+          <td>
+            <div class="table-actions">
+              <button class="btn btn-secondary btn-sm" data-observation-id="${obs.id}" data-click="openEditModal">
+                ✏️ Editar
+              </button>
+              <button class="btn btn-danger btn-sm" data-observation-id="${obs.id}" data-click="openDeleteModal">
+                🗑️ Deletar
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    this.observationsTbody.innerHTML = html;
+
+    // Re-attach listeners
+    this.observationsTbody.querySelectorAll('[data-observation-id]').forEach(btn => {
+      const obsId = btn.getAttribute('data-observation-id');
+      const action = btn.getAttribute('data-click');
+      btn.addEventListener('click', () => {
+        if (action === 'openEditModal') {
+          this.openEditModal(obsId);
+        } else if (action === 'openDeleteModal') {
+          this.openDeleteModal(obsId);
+        }
+      });
+    });
+  }
+
+  renderPagination() {
+    const totalPages = Math.ceil(this.filteredObservations.length / this.itemsPerPage);
+
+    if (totalPages <= 1) {
+      this.pagination.style.display = 'none';
+      return;
+    }
+
+    this.pagination.style.display = 'flex';
+    document.getElementById('page-info').textContent = `Página ${this.currentPage} de ${totalPages}`;
+
+    document.getElementById('prev-btn').disabled = this.currentPage === 1;
+    document.getElementById('next-btn').disabled = this.currentPage === totalPages;
+  }
+
+  openCreateModal() {
+    this.currentEditingId = null;
+    document.getElementById('modal-title').textContent = 'Nova Observação';
+
+    const form = new FormBuilder({
+      title: 'Nova Observação',
+      submitText: 'Criar',
+      fields: [
+        FieldTypes.select('experimentId', 'Experimento', 
+          this.experiments.map(e => ({ value: e.id, label: e.name })), 
+          true
+        ),
+        FieldTypes.text('description', 'Descrição', 'Descreva a observação'),
+        FieldTypes.textarea('notes', 'Notas Detalhadas', 'Anotações adicionais', 4),
+        FieldTypes.select('type', 'Tipo', [
+          { value: 'MORPHOLOGICAL', label: 'Morfológica' },
+          { value: 'PHYSIOLOGICAL', label: 'Fisiológica' },
+          { value: 'BEHAVIORAL', label: 'Comportamental' },
+          { value: 'CHEMICAL', label: 'Química' }
+        ], true),
+        FieldTypes.date('date', 'Data da Observação'),
+        FieldTypes.text('quantity', 'Quantidade (opcional)', '0'),
+        FieldTypes.text('unit', 'Unidade (opcional)', 'unidade')
+      ]
+    });
+
+    document.getElementById('form-container').innerHTML = form.render();
+    this.showFormModal();
+    this.attachFormListeners(form);
+  }
+
+  async openEditModal(obsId) {
+    this.currentEditingId = obsId;
+    document.getElementById('modal-title').textContent = 'Editar Observação';
+
+    try {
+      this.showLoading();
+      const observation = await this.crud.get(obsId);
+
+      const form = new FormBuilder({
+        title: 'Editar Observação',
+        submitText: 'Salvar',
+        fields: [
+          FieldTypes.select('experimentId', 'Experimento', 
+            this.experiments.map(e => ({ value: e.id, label: e.name })), 
+            true
+          ),
+          FieldTypes.text('description', 'Descrição', 'Descreva a observação'),
+          FieldTypes.textarea('notes', 'Notas Detalhadas', 'Anotações adicionais', 4),
+          FieldTypes.select('type', 'Tipo', [
+            { value: 'MORPHOLOGICAL', label: 'Morfológica' },
+            { value: 'PHYSIOLOGICAL', label: 'Fisiológica' },
+            { value: 'BEHAVIORAL', label: 'Comportamental' },
+            { value: 'CHEMICAL', label: 'Química' }
+          ], true),
+          FieldTypes.date('date', 'Data da Observação'),
+          FieldTypes.text('quantity', 'Quantidade (opcional)', '0'),
+          FieldTypes.text('unit', 'Unidade (opcional)', 'unidade')
+        ]
+      });
+
+      form.setValues(observation);
+      document.getElementById('form-container').innerHTML = form.render();
+      this.showFormModal();
+      this.attachFormListeners(form);
+
+    } catch (error) {
+      this.showError(`Erro ao carregar observação: ${error.message}`);
+    }
+  }
+
+  attachFormListeners(form) {
+    const formElement = document.querySelector('.form-builder');
+
+    if (!formElement) return;
+
+    formElement.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const values = form.getValues(formElement);
+
+      if (!form.validate(values)) {
+        document.getElementById('form-container').innerHTML = form.render();
+        this.attachFormListeners(form);
+        return;
+      }
+
+      form.setLoading(true);
+      document.getElementById('form-container').innerHTML = form.render();
+
+      try {
+        if (this.currentEditingId) {
+          await this.crud.update(this.currentEditingId, values);
+        } else {
+          await this.crud.create(values);
+        }
+
+        this.closeFormModal();
+        await this.loadObservations();
+        this.render();
+
+      } catch (error) {
+        form.setGlobalError(error.message);
+        document.getElementById('form-container').innerHTML = form.render();
+        this.attachFormListeners(form);
+      }
+    });
+
+    // Cancel button
+    const cancelBtn = formElement.querySelector('button.button-outline');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => this.closeFormModal());
+    }
+  }
+
+  openDeleteModal(obsId) {
+    const observation = this.observations.find(o => o.id === obsId);
+    if (!observation) return;
+
+    this.deleteTargetId = obsId;
+    document.getElementById('delete-warning').textContent = `Esta observação será movida para arquivo.`;
+    this.deleteModal.style.display = 'flex';
+  }
+
+  async confirmDelete() {
+    if (!this.deleteTargetId) return;
+
+    try {
+      await this.crud.delete(this.deleteTargetId);
+      this.cancelDelete();
+      await this.loadObservations();
+      this.render();
+    } catch (error) {
+      this.showError(`Erro ao deletar: ${error.message}`);
+    }
+  }
+
+  cancelDelete() {
+    this.deleteTargetId = null;
+    this.deleteModal.style.display = 'none';
+  }
+
+  handleSearch(e) {
+    this.searchQuery = e.target.value;
+    this.applyFilters();
+    this.render();
+  }
+
+  handleFilterExperiment(e) {
+    this.filterExperimentId = e.target.value;
+    this.applyFilters();
+    this.render();
+  }
+
+  handleRefresh() {
+    this.initialize();
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.render();
+    }
+  }
+
+  nextPage() {
+    const totalPages = Math.ceil(this.filteredObservations.length / this.itemsPerPage);
+    if (this.currentPage < totalPages) {
+      this.currentPage++;
+      this.render();
+    }
+  }
+
+  showFormModal() {
+    this.formModal.style.display = 'flex';
+  }
+
+  closeFormModal() {
+    this.formModal.style.display = 'none';
+  }
+
+  showLoading() {
+    this.loadingState.style.display = 'flex';
+    this.observationsContainer.style.display = 'none';
+    this.emptyState.style.display = 'none';
+  }
+
+  hideLoading() {
+    this.loadingState.style.display = 'none';
+  }
+
+  showEmpty() {
+    this.emptyState.style.display = 'flex';
+    this.observationsContainer.style.display = 'none';
+  }
+
+  showError(message) {
+    this.errorState.textContent = message;
+    this.errorState.style.display = 'block';
+  }
+
+  getTypeLabel(type) {
+    const labels = {
+      'MORPHOLOGICAL': '🔬 Morfológica',
+      'PHYSIOLOGICAL': '💓 Fisiológica',
+      'BEHAVIORAL': '🐝 Comportamental',
+      'CHEMICAL': '⚗️ Química'
+    };
+    return labels[type] || type;
+  }
+
+  attachEventListeners() {
+    // Search
+    document.getElementById('search-input').addEventListener('input', (e) => this.handleSearch(e));
+
+    // Filter
+    document.getElementById('filter-experiment').addEventListener('change', (e) => this.handleFilterExperiment(e));
+
+    // Buttons
+    document.querySelectorAll('[data-click]').forEach(btn => {
+      const action = btn.getAttribute('data-click');
+      btn.addEventListener('click', () => {
+        if (typeof this[action] === 'function') {
+          this[action]();
+        }
+      });
+    });
+
+    // Modals
+    document.getElementById('form-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'form-modal') {
+        this.closeFormModal();
+      }
+    });
+
+    document.getElementById('delete-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'delete-modal') {
+        this.cancelDelete();
+      }
+    });
+
+    // Pagination
+    document.getElementById('prev-btn').addEventListener('click', () => this.prevPage());
+    document.getElementById('next-btn').addEventListener('click', () => this.nextPage());
+
+    // Delete modal actions
+    document.querySelectorAll('[data-click="confirmDelete"]').forEach(btn => {
+      btn.addEventListener('click', () => this.confirmDelete());
+    });
+
+    document.querySelectorAll('[data-click="cancelDelete"]').forEach(btn => {
+      btn.addEventListener('click', () => this.cancelDelete());
+    });
+  }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  new ObservationsPage();
+});
+</script>
+
+</body>
+</html>

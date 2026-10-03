@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('quality-components-css') ?>
+  <?!= include('quality-helpers-js') ?>
+</head>
+<body>
+  <div class="container mt-4">
+    <div class="card">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Detalhes do Insumo</h5>
+        <button class="btn btn-sm btn-light" onclick="goBack()">← Voltar</button>
+      </div>
+      <div class="card-body">
+        <!-- Identificação -->
+        <section class="mb-4">
+          <h6 class="border-bottom pb-2">Identificação</h6>
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>ID:</strong> <span id="insumo-id">—</span></p>
+              <p><strong>Nome Comercial:</strong> <span id="insumo-nome">—</span></p>
+              <p><strong>Tipo:</strong> <span id="insumo-tipo">—</span></p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Fornecedor:</strong> <span id="insumo-fornecedor">—</span></p>
+              <p><strong>Origem:</strong> <span id="insumo-origem">—</span></p>
+              <p><strong>Registro ANVISA:</strong> <span id="insumo-registro">—</span></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Metadata -->
+        <section class="mb-4">
+          <h6 class="border-bottom pb-2">Metadados</h6>
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>Data de Cadastro:</strong> <span id="insumo-created">—</span></p>
+              <p><strong>Última Atualização:</strong> <span id="insumo-updated">—</span></p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Criado Por:</strong> <span id="insumo-created-by">—</span></p>
+              <p><strong>Atualizado Por:</strong> <span id="insumo-updated-by">—</span></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Lotes Vinculados -->
+        <section class="mb-4">
+          <h6 class="border-bottom pb-2">Lotes Vinculados</h6>
+          <div id="lotes-table-container">
+            <p class="text-muted">Carregando lotes...</p>
+          </div>
+        </section>
+
+        <!-- Ações -->
+        <section>
+          <button id="btn-edit-insumo" class="btn btn-warning" onclick="editInsumo()">
+            ✏️ Editar Insumo
+          </button>
+          <button id="btn-add-lote" class="btn btn-success" onclick="addLote()">
+            ➕ Adicionar Lote
+          </button>
+          <button id="btn-delete-insumo" class="btn btn-danger" onclick="deleteInsumo()">
+            🗑️ Excluir Insumo
+          </button>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentInsumo = null;
+
+    function goBack() {
+      window.history.back();
+    }
+
+    function loadInsumoData(insumoId) {
+      setButtonLoading('btn-edit-insumo', true);
+      
+      google.script.run
+        .withSuccessHandler(onInsumoLoaded)
+        .withFailureHandler(onLoadError)
+        .routeRequest({
+          action: 'getInsumo',
+          insumoId: insumoId
+        });
+    }
+
+    function onInsumoLoaded(response) {
+      setButtonLoading('btn-edit-insumo', false);
+      
+      if (!response.success) {
+        showError(response.message || 'Erro ao carregar insumo');
+        return;
+      }
+      
+      currentInsumo = response.data;
+      renderInsumo(currentInsumo);
+      loadLotesVinculados(currentInsumo.id);
+    }
+
+    function renderInsumo(insumo) {
+      document.getElementById('insumo-id').textContent = insumo.id || '—';
+      document.getElementById('insumo-nome').textContent = insumo.nomeComercial || '—';
+      document.getElementById('insumo-tipo').textContent = insumo.tipo || '—';
+      document.getElementById('insumo-fornecedor').textContent = insumo.fornecedor || '—';
+      document.getElementById('insumo-origem').textContent = insumo.origem || '—';
+      document.getElementById('insumo-registro').textContent = insumo.registroAnvisa || '—';
+      document.getElementById('insumo-created').textContent = formatDateTime(insumo.createdAt);
+      document.getElementById('insumo-updated').textContent = formatDateTime(insumo.updatedAt);
+      document.getElementById('insumo-created-by').textContent = insumo.createdBy || '—';
+      document.getElementById('insumo-updated-by').textContent = insumo.updatedBy || '—';
+    }
+
+    function loadLotesVinculados(insumoId) {
+      google.script.run
+        .withSuccessHandler(onLotesLoaded)
+        .withFailureHandler(onLoadLotesError)
+        .routeRequest({
+          action: 'getLotesByInsumo',
+          insumoId: insumoId
+        });
+    }
+
+    function onLotesLoaded(response) {
+      const container = document.getElementById('lotes-table-container');
+      
+      if (!response.success) {
+        container.innerHTML = '<p class="text-danger">Erro ao carregar lotes</p>';
+        return;
+      }
+      
+      container.innerHTML = renderLotesLinkedTable(response.data || []);
+    }
+
+    function onLoadLotesError(error) {
+      document.getElementById('lotes-table-container').innerHTML = 
+        '<p class="text-danger">Erro: ' + escapeHtml(error.message) + '</p>';
+    }
+
+    function onLoadError(error) {
+      setButtonLoading('btn-edit-insumo', false);
+      showError(error.message || 'Erro ao carregar dados');
+    }
+
+    function editInsumo() {
+      if (!currentInsumo) {
+        showError('Nenhum insumo carregado');
+        return;
+      }
+      // Navegar para formulário de edição
+      window.location.href = '?page=insumo-form&id=' + currentInsumo.id;
+    }
+
+    function addLote() {
+      if (!currentInsumo) {
+        showError('Nenhum insumo carregado');
+        return;
+      }
+      // Navegar para formulário de novo lote
+      window.location.href = '?page=lote-form&insumoId=' + currentInsumo.id;
+    }
+
+    async function deleteInsumo() {
+      if (!currentInsumo) {
+        showError('Nenhum insumo carregado');
+        return;
+      }
+
+      const ok = await confirmAction('Tem certeza que deseja excluir este insumo? Esta ação não pode ser desfeita.');
+      if (!ok) return;
+      
+      setButtonLoading('btn-delete-insumo', true);
+      
+      google.script.run
+        .withSuccessHandler(onDeleteSuccess)
+        .withFailureHandler(onDeleteError)
+        .routeRequest({
+          action: 'deleteInsumo',
+          insumoId: currentInsumo.id
+        });
+    }
+
+    function onDeleteSuccess(response) {
+      setButtonLoading('btn-delete-insumo', false);
+      
+      if (response.success) {
+        showSuccess('Insumo excluído com sucesso');
+        setTimeout(() => window.location.href = '?page=insumos-list', 1500);
+      } else {
+        showError(response.message || 'Erro ao excluir insumo');
+      }
+    }
+
+    function onDeleteError(error) {
+      setButtonLoading('btn-delete-insumo', false);
+      showError(error.message || 'Erro ao excluir insumo');
+    }
+
+    function viewLote(loteId) {
+      window.location.href = '?page=lote-view&id=' + loteId;
+    }
+
+    // Inicializar ao carregar página
+    window.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const insumoId = urlParams.get('id');
+      
+      if (insumoId) {
+        loadInsumoData(insumoId);
+      } else {
+        showError('ID do insumo não fornecido');
+      }
+    });
+  </script>
+</body>
+</html>

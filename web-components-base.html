@@ -1,0 +1,579 @@
+<!--
+COMPONENTE: web-components-base.html
+PAPEL: Sistema base de Web Components com utilities e mixins
+
+FUNCIONALIDADES:
+- Base class para todos os componentes
+- Lifecycle hooks
+- Props/Attributes management
+- Event emitters
+- Accessibility helpers
+- Shadow DOM utilities
+
+STATUS: PRODUÇÃO
+-->
+<script>
+/**
+ * @fileoverview Web Components Base System
+ * @version 1.0.0
+ */
+
+(function() {
+  'use strict';
+
+  /**
+   * Base class para todos os Web Components
+   * @class
+   */
+  class AppComponentBase extends HTMLElement {
+    constructor() {
+      super();
+      
+      // State interno
+      this._state = {};
+      this._props = {};
+      this._listeners = {};
+      
+      // Shadow DOM (opcional, configurável por componente)
+      if (this.constructor.useShadowDOM !== false) {
+        this.attachShadow({ mode: 'open' });
+      }
+    }
+
+    // ========================================================================
+    // LIFECYCLE HOOKS
+    // ========================================================================
+
+    /**
+     * Chamado quando elemento é adicionado ao DOM
+     */
+    connectedCallback() {
+      this._connected = true;
+      this._parseAttributes();
+      this._setupAccessibility();
+      this.render();
+      this.onConnected();
+    }
+
+    /**
+     * Chamado quando elemento é removido do DOM
+     */
+    disconnectedCallback() {
+      this._connected = false;
+      this._cleanup();
+      this.onDisconnected();
+    }
+
+    /**
+     * Chamado quando atributo muda
+     */
+    attributeChangedCallback(name, oldValue, newValue) {
+      if (oldValue === newValue) return;
+      
+      this._props[this._camelCase(name)] = this._parseAttributeValue(newValue);
+      
+      if (this._connected) {
+        this.render();
+        this.onAttributeChanged(name, oldValue, newValue);
+      }
+    }
+
+    /**
+     * Chamado quando elemento é movido
+     */
+    adoptedCallback() {
+      this.onAdopted();
+    }
+
+    // Hooks customizáveis (sobrescrever em subclasses)
+    onConnected() {}
+    onDisconnected() {}
+    onAttributeChanged(name, oldValue, newValue) {}
+    onAdopted() {}
+
+    // ========================================================================
+    // PROPS E ATTRIBUTES
+    // ========================================================================
+
+    /**
+     * Define quais atributos são observados
+     * Sobrescrever em subclasses
+     */
+    static get observedAttributes() {
+      return [];
+    }
+
+    /**
+     * Parse inicial de atributos
+     * @private
+     */
+    _parseAttributes() {
+      const attrs = this.constructor.observedAttributes || [];
+      attrs.forEach(attr => {
+        if (this.hasAttribute(attr)) {
+          const value = this.getAttribute(attr);
+          this._props[this._camelCase(attr)] = this._parseAttributeValue(value);
+        }
+      });
+    }
+
+    /**
+     * Parse de valor de atributo (string → tipo correto)
+     * @private
+     */
+    _parseAttributeValue(value) {
+      // Boolean
+      if (value === '' || value === 'true') return true;
+      if (value === 'false') return false;
+      
+      // Number
+      if (/^\d+$/.test(value)) return parseInt(value, 10);
+      if (/^\d*\.\d+$/.test(value)) return parseFloat(value);
+      
+      // JSON
+      if ((value.startsWith('{') && value.endsWith('}')) ||
+          (value.startsWith('[') && value.endsWith(']'))) {
+        try {
+          return JSON.parse(value);
+        } catch (e) {
+          return value;
+        }
+      }
+      
+      // String
+      return value;
+    }
+
+    /**
+     * Converte kebab-case para camelCase
+     * @private
+     */
+    _camelCase(str) {
+      return str.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+    }
+
+    /**
+     * Get prop value
+     */
+    getProp(name) {
+      return this._props[name];
+    }
+
+    /**
+     * Set prop value (e atualiza atributo)
+     */
+    setProp(name, value) {
+      this._props[name] = value;
+      
+      // Atualizar atributo correspondente
+      const attrName = name.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase());
+      
+      if (typeof value === 'boolean') {
+        if (value) {
+          this.setAttribute(attrName, '');
+        } else {
+          this.removeAttribute(attrName);
+        }
+      } else if (value !== null && value !== undefined) {
+        this.setAttribute(attrName, value);
+      } else {
+        this.removeAttribute(attrName);
+      }
+    }
+
+    // ========================================================================
+    // STATE MANAGEMENT
+    // ========================================================================
+
+    /**
+     * Get state value
+     */
+    getState(key) {
+      return this._state[key];
+    }
+
+    /**
+     * Set state value (e re-render)
+     */
+    setState(key, value) {
+      const oldValue = this._state[key];
+      this._state[key] = value;
+      
+      if (oldValue !== value && this._connected) {
+        this.render();
+        this.onStateChanged(key, oldValue, value);
+      }
+    }
+
+    /**
+     * Update múltiplos states de uma vez
+     */
+    updateState(updates) {
+      Object.keys(updates).forEach(key => {
+        this._state[key] = updates[key];
+      });
+      
+      if (this._connected) {
+        this.render();
+      }
+    }
+
+    // Hook customizável
+    onStateChanged(key, oldValue, newValue) {}
+
+    // ========================================================================
+    // EVENT HANDLING
+    // ========================================================================
+
+    /**
+     * Emite evento customizado
+     */
+    emit(eventName, detail) {
+      const event = new CustomEvent(eventName, {
+        detail: detail,
+        bubbles: true,
+        composed: true
+      });
+      this.dispatchEvent(event);
+    }
+
+    /**
+     * Adiciona listener interno (gerenciado)
+     */
+    addListener(element, event, handler) {
+      if (!this._listeners[event]) {
+        this._listeners[event] = [];
+      }
+      
+      element.addEventListener(event, handler);
+      this._listeners[event].push({ element, handler });
+    }
+
+    /**
+     * Remove todos os listeners
+     * @private
+     */
+    _cleanup() {
+      Object.keys(this._listeners).forEach(event => {
+        this._listeners[event].forEach(({ element, handler }) => {
+          element.removeEventListener(event, handler);
+        });
+      });
+      this._listeners = {};
+    }
+
+    // ========================================================================
+    // RENDERING
+    // ========================================================================
+
+    /**
+     * Renderiza componente
+     * Sobrescrever em subclasses
+     */
+    render() {
+      // Base implementation: renderiza template se existir
+      if (this.template) {
+        const root = this.shadowRoot || this;
+        root.innerHTML = this.template();
+      }
+    }
+
+    /**
+     * Template do componente (sobrescrever)
+     */
+    template() {
+      return '';
+    }
+
+    /**
+     * Query selector dentro do componente
+     */
+    $(selector) {
+      const root = this.shadowRoot || this;
+      return root.querySelector(selector);
+    }
+
+    /**
+     * Query selector all dentro do componente
+     */
+    $$(selector) {
+      const root = this.shadowRoot || this;
+      return root.querySelectorAll(selector);
+    }
+
+    // ========================================================================
+    // ACCESSIBILITY
+    // ========================================================================
+
+    /**
+     * Setup básico de acessibilidade
+     * @private
+     */
+    _setupAccessibility() {
+      // Garantir role se não existir
+      if (!this.hasAttribute('role') && this.constructor.defaultRole) {
+        this.setAttribute('role', this.constructor.defaultRole);
+      }
+
+      // Garantir tabindex se focável
+      if (this.constructor.focusable && !this.hasAttribute('tabindex')) {
+        this.setAttribute('tabindex', '0');
+      }
+    }
+
+    /**
+     * Foca o componente
+     */
+    focus() {
+      const focusTarget = this.$('[autofocus]') || 
+                         this.$('button') || 
+                         this.$('input') || 
+                         this;
+      focusTarget.focus();
+    }
+
+    /**
+     * Anuncia mensagem para screen readers
+     */
+    announce(message, priority = 'polite') {
+      if (window.AccessibilityManager) {
+        const region = priority === 'assertive' ? 'alerts' : 'notifications';
+        window.AccessibilityManager.announce(message, region);
+      }
+    }
+
+    // ========================================================================
+    // UTILITIES
+    // ========================================================================
+
+    /**
+     * Sanitiza HTML para prevenir XSS
+     */
+    sanitize(html) {
+      const div = document.createElement('div');
+      div.textContent = html;
+      return div.innerHTML;
+    }
+
+    /**
+     * Cria elemento de forma declarativa
+     */
+    createElement(tag, props, children) {
+      const el = document.createElement(tag);
+      
+      // Props
+      if (props) {
+        Object.keys(props).forEach(key => {
+          if (key.startsWith('on') && typeof props[key] === 'function') {
+            // Event listeners
+            el.addEventListener(key.slice(2).toLowerCase(), props[key]);
+          } else if (key === 'className') {
+            el.className = props[key];
+          } else if (key === 'innerHTML') {
+            el.innerHTML = props[key];
+          } else {
+            el.setAttribute(key, props[key]);
+          }
+        });
+      }
+      
+      // Children
+      if (children) {
+        if (Array.isArray(children)) {
+          children.forEach(child => {
+            if (typeof child === 'string') {
+              el.appendChild(document.createTextNode(child));
+            } else {
+              el.appendChild(child);
+            }
+          });
+        } else if (typeof children === 'string') {
+          el.textContent = children;
+        } else {
+          el.appendChild(children);
+        }
+      }
+      
+      return el;
+    }
+
+    /**
+     * Debounce function
+     */
+    debounce(func, wait) {
+      let timeout;
+      return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
+    /**
+     * Throttle function
+     */
+    throttle(func, limit) {
+      let inThrottle;
+      return (...args) => {
+        if (!inThrottle) {
+          func.apply(this, args);
+          inThrottle = true;
+          setTimeout(() => inThrottle = false, limit);
+        }
+      };
+    }
+  }
+
+  // ========================================================================
+  // GLOBAL REGISTRY
+  // ========================================================================
+
+  /**
+   * Registry de componentes
+   */
+  window.AppComponents = {
+    components: {},
+
+    /**
+     * Registra componente
+     */
+    register(name, ComponentClass) {
+      if (customElements.get(name)) {
+        console.warn(`[WebComponents] Componente já registrado: ${name}`);
+        return;
+      }
+
+      customElements.define(name, ComponentClass);
+      this.components[name] = ComponentClass;
+      
+      console.log(`[WebComponents] Registrado: ${name}`);
+    },
+
+    /**
+     * Get componente por nome
+     */
+    get(name) {
+      return this.components[name] || customElements.get(name);
+    },
+
+    /**
+     * Lista componentes registrados
+     */
+    list() {
+      return Object.keys(this.components);
+    }
+  };
+
+  // Exportar base class
+  window.AppComponentBase = AppComponentBase;
+
+  console.log('[WebComponents] Sistema base inicializado');
+
+})();
+</script>
+
+<style>
+/**
+ * Estilos globais para Web Components
+ */
+
+/* Reset básico */
+app-button,
+app-input,
+app-modal,
+app-table,
+app-toast,
+app-badge,
+app-card,
+app-spinner {
+  display: block;
+  box-sizing: border-box;
+}
+
+/* Variáveis CSS (design tokens) */
+:root {
+  /* Cores */
+  --app-color-primary: #0066cc;
+  --app-color-secondary: #6c757d;
+  --app-color-success: #28a745;
+  --app-color-danger: #dc3545;
+  --app-color-warning: #ffc107;
+  --app-color-info: #17a2b8;
+  
+  /* Tons de cinza */
+  --app-color-text: #333333;
+  --app-color-text-light: #666666;
+  --app-color-text-muted: #999999;
+  --app-color-border: #dee2e6;
+  --app-color-bg: #ffffff;
+  --app-color-bg-light: #f8f9fa;
+  --app-color-bg-dark: #343a40;
+  
+  /* Espaçamento */
+  --app-spacing-xs: 4px;
+  --app-spacing-sm: 8px;
+  --app-spacing-md: 16px;
+  --app-spacing-lg: 24px;
+  --app-spacing-xl: 32px;
+  
+  /* Typography */
+  --app-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --app-font-size-xs: 12px;
+  --app-font-size-sm: 14px;
+  --app-font-size-md: 16px;
+  --app-font-size-lg: 18px;
+  --app-font-size-xl: 24px;
+  
+  /* Border radius */
+  --app-radius-sm: 4px;
+  --app-radius-md: 8px;
+  --app-radius-lg: 12px;
+  --app-radius-full: 9999px;
+  
+  /* Sombras */
+  --app-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --app-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --app-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
+  
+  /* Transições */
+  --app-transition: all 0.2s ease;
+  
+  /* Z-index */
+  --app-z-dropdown: 1000;
+  --app-z-modal: 1050;
+  --app-z-toast: 1100;
+}
+
+/* Modo escuro (opcional) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --app-color-text: #f8f9fa;
+    --app-color-text-light: #dee2e6;
+    --app-color-bg: #212529;
+    --app-color-bg-light: #343a40;
+    --app-color-border: #495057;
+  }
+}
+
+/* Utilities */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Focus visible */
+*:focus-visible {
+  outline: 3px solid var(--app-color-primary);
+  outline-offset: 2px;
+}
+
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+</style>

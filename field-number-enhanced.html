@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campo Number Aprimorado - WebApp Canabica</title>
+  <style>
+    /* ============================================================
+       CSS TOKENS - Field Number Enhanced
+       ============================================================ */
+    :root {
+      /* Cores base */
+      --color-primary: #4CAF50;
+      --color-primary-light: #43A047;
+      --color-primary-dark: #1B5E20;
+      --color-danger: #C62828;
+      --color-warning: #F57C00;
+      --color-success: #2E7D32;
+      --color-border: #BDBDBD;
+      --color-border-focus: #4CAF50;
+      --color-bg: #FFFFFF;
+      --color-bg-disabled: #F5F5F5;
+      --color-text: #212121;
+      --color-text-muted: #757575;
+      --color-text-disabled: #9E9E9E;
+      
+      /* Espaçamento */
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 12px;
+      --spacing-lg: 16px;
+      
+      /* Tipografia */
+      --font-size-sm: 12px;
+      --font-size-base: 14px;
+      --font-size-lg: 16px;
+      --font-weight-normal: 400;
+      --font-weight-medium: 500;
+      --font-weight-bold: 600;
+      
+      /* Bordas */
+      --border-radius: 6px;
+      --border-width: 1px;
+      
+      /* Sombras */
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 2px 4px rgba(0,0,0,0.1);
+      --shadow-focus: 0 0 0 3px rgba(46,125,50,0.1);
+      
+      /* Transições */
+      --transition-fast: 150ms ease;
+      --transition-base: 200ms ease;
+    }
+
+    /* ============================================================
+       RESET E BASE
+       ============================================================ */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: var(--font-size-base);
+      color: var(--color-text);
+      line-height: 1.5;
+      padding: var(--spacing-lg);
+      background: #FAFAFA;
+    }
+
+    /* ============================================================
+       FIELD GROUP CONTAINER
+       ============================================================ */
+    .field-group {
+      margin-bottom: var(--spacing-lg);
+      max-width: 400px;
+    }
+
+    /* ============================================================
+       LABEL
+       ============================================================ */
+    .field-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-xs);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+      color: var(--color-text);
+      transition: color var(--transition-fast);
+    }
+
+    .field-label .required {
+      color: var(--color-danger);
+      margin-left: 2px;
+    }
+
+    .field-label .unit {
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-normal);
+      color: var(--color-text-muted);
+    }
+
+    /* ============================================================
+       INPUT WRAPPER
+       ============================================================ */
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    /* ============================================================
+       NUMBER INPUT
+       ============================================================ */
+    .field-number {
+      width: 100%;
+      padding: var(--spacing-md);
+      padding-right: calc(var(--spacing-lg) * 2.5);
+      font-size: var(--font-size-base);
+      font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+      color: var(--color-text);
+      background-color: var(--color-bg);
+      border: var(--border-width) solid var(--color-border);
+      border-radius: var(--border-radius);
+      outline: none;
+      transition: all var(--transition-base);
+    }
+
+    .field-number:hover:not(:disabled) {
+      border-color: var(--color-primary);
+    }
+
+    .field-number:focus {
+      border-color: var(--color-border-focus);
+      box-shadow: var(--shadow-focus);
+    }
+
+    .field-number:disabled {
+      background-color: var(--color-bg-disabled);
+      color: var(--color-text-disabled);
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    /* Remove spinner padrão do browser */
+    .field-number::-webkit-inner-spin-button,
+    .field-number::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .field-number[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    /* Estados de validação */
+    .field-number.error {
+      border-color: var(--color-danger);
+      animation: shake 0.3s ease;
+    }
+
+    .field-number.success {
+      border-color: var(--color-success);
+    }
+
+    .field-number.warning {
+      border-color: var(--color-warning);
+    }
+
+    /* ============================================================
+       SPINNER CONTROLS (custom)
+       ============================================================ */
+    .spinner-controls {
+      position: absolute;
+      right: 0;
+      top: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      border-left: var(--border-width) solid var(--color-border);
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+
+    .input-wrapper:hover .spinner-controls,
+    .field-number:focus ~ .spinner-controls {
+      opacity: 1;
+    }
+
+    .spinner-btn {
+      flex: 1;
+      width: 32px;
+      background: white;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-text-muted);
+      transition: all var(--transition-fast);
+      font-size: 12px;
+    }
+
+    .spinner-btn:hover:not(:disabled) {
+      background: var(--color-primary);
+      color: white;
+    }
+
+    .spinner-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.3;
+    }
+
+    .spinner-btn:first-child {
+      border-top-right-radius: var(--border-radius);
+      border-bottom: calc(var(--border-width) / 2) solid var(--color-border);
+    }
+
+    .spinner-btn:last-child {
+      border-bottom-right-radius: var(--border-radius);
+    }
+
+    .spinner-btn:active:not(:disabled) {
+      background: var(--color-primary-dark);
+    }
+
+    /* ============================================================
+       UNIT SUFFIX
+       ============================================================ */
+    .unit-suffix {
+      position: absolute;
+      right: calc(32px + var(--spacing-sm));
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-muted);
+      pointer-events: none;
+      font-weight: var(--font-weight-medium);
+    }
+
+    /* ============================================================
+       RANGE INDICATOR
+       ============================================================ */
+    .range-indicator {
+      margin-top: var(--spacing-xs);
+      height: 4px;
+      background: var(--color-bg-disabled);
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .range-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      background: var(--color-primary);
+      border-radius: 2px;
+      transition: width var(--transition-base), background-color var(--transition-fast);
+    }
+
+    .range-fill.warning {
+      background: var(--color-warning);
+    }
+
+    .range-fill.danger {
+      background: var(--color-danger);
+    }
+
+    .range-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: var(--spacing-xs);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-muted);
+    }
+
+    /* ============================================================
+       HINT TEXT
+       ============================================================ */
+    .field-hint {
+      display: block;
+      margin-top: var(--spacing-xs);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-muted);
+      transition: all var(--transition-fast);
+    }
+
+    .field-hint.error {
+      color: var(--color-danger);
+      font-weight: var(--font-weight-medium);
+    }
+
+    .field-hint.success {
+      color: var(--color-success);
+    }
+
+    .field-hint.warning {
+      color: var(--color-warning);
+    }
+
+    /* ============================================================
+       STATE ICONS
+       ============================================================ */
+    .input-wrapper .state-icon {
+      position: absolute;
+      right: calc(32px + var(--spacing-sm));
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+
+    .input-wrapper.has-error .state-icon.error,
+    .input-wrapper.has-success .state-icon.success,
+    .input-wrapper.has-warning .state-icon.warning {
+      opacity: 1;
+    }
+
+    /* ============================================================
+       ANIMATIONS
+       ============================================================ */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+      20%, 40%, 60%, 80% { transform: translateX(4px); }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .field-hint {
+      animation: fadeIn var(--transition-base);
+    }
+
+    /* ============================================================
+       FOCUS-VISIBLE (Acessibilidade via teclado)
+       ============================================================ */
+    .field-number:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+
+    /* ============================================================
+       DEMO STYLES
+       ============================================================ */
+    .demo-section {
+      background: white;
+      padding: var(--spacing-lg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .demo-section h2 {
+      margin-bottom: var(--spacing-md);
+      font-size: var(--font-size-lg);
+      color: var(--color-primary);
+    }
+
+    .demo-actions {
+      margin-top: var(--spacing-lg);
+      display: flex;
+      gap: var(--spacing-sm);
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: var(--font-size-sm);
+      border: var(--border-width) solid var(--color-border);
+      border-radius: var(--border-radius);
+      background: white;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .btn:hover {
+      background: var(--color-primary);
+      color: white;
+      border-color: var(--color-primary);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       DEMO: Número com Range Indicator
+       ============================================================ -->
+  <div class="demo-section">
+    <h2>Número com Indicador de Range</h2>
+
+    <div class="field-group">
+      <label class="field-label" for="number-ph">
+        <span>pH do Solo <span class="required">*</span></span>
+        <span class="unit">Escala 0-14</span>
+      </label>
+      <div class="input-wrapper">
+        <input 
+          type="number" 
+          id="number-ph" 
+          class="field-number" 
+          min="0" 
+          max="14" 
+          step="0.1"
+          value="6.5"
+          placeholder="0.0"
+          required
+        />
+        <span class="unit-suffix">pH</span>
+        <span class="state-icon error">❌</span>
+        <span class="state-icon success">✅</span>
+        <span class="state-icon warning">⚠️</span>
+        <div class="spinner-controls">
+          <button class="spinner-btn" onclick="incrementPH()">▲</button>
+          <button class="spinner-btn" onclick="decrementPH()">▼</button>
+        </div>
+      </div>
+      <div class="range-indicator">
+        <div id="ph-fill" class="range-fill" style="width: 46.4%;"></div>
+      </div>
+      <div class="range-labels">
+        <span>0.0 (Ácido)</span>
+        <span>7.0 (Neutro)</span>
+        <span>14.0 (Alcalino)</span>
+      </div>
+      <span id="ph-hint" class="field-hint">pH ideal para cannabis: 6.0 - 7.0</span>
+    </div>
+
+    <div class="demo-actions">
+      <button class="btn" onclick="setPHDefault()">Resetar</button>
+      <button class="btn" onclick="setPHError()">Erro</button>
+      <button class="btn" onclick="setPHSuccess()">Sucesso</button>
+      <button class="btn" onclick="setPHWarning()">Aviso</button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       DEMO: Número com Unidade e Validação
+       ============================================================ -->
+  <div class="demo-section">
+    <h2>Altura da Planta</h2>
+
+    <div class="field-group">
+      <label class="field-label" for="number-height">
+        <span>Altura <span class="required">*</span></span>
+        <span class="unit">Centímetros</span>
+      </label>
+      <div class="input-wrapper" id="height-wrapper">
+        <input 
+          type="number" 
+          id="number-height" 
+          class="field-number" 
+          min="0" 
+          max="300" 
+          step="0.5"
+          value=""
+          placeholder="0.0"
+          required
+        />
+        <span class="unit-suffix">cm</span>
+        <span class="state-icon error">❌</span>
+        <span class="state-icon success">✅</span>
+        <span class="state-icon warning">⚠️</span>
+        <div class="spinner-controls">
+          <button class="spinner-btn" onclick="incrementHeight()">▲</button>
+          <button class="spinner-btn" onclick="decrementHeight()">▼</button>
+        </div>
+      </div>
+      <div class="range-indicator">
+        <div id="height-fill" class="range-fill" style="width: 0%;"></div>
+      </div>
+      <div class="range-labels">
+        <span>0 cm</span>
+        <span>150 cm</span>
+        <span>300 cm</span>
+      </div>
+      <span id="height-hint" class="field-hint">Informe a altura em centímetros</span>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       DEMO: Concentração com Precisão Decimal
+       ============================================================ -->
+  <div class="demo-section">
+    <h2>Concentração de Nutriente</h2>
+
+    <div class="field-group">
+      <label class="field-label" for="number-concentration">
+        <span>Nitrogênio (N)</span>
+        <span class="unit">ppm</span>
+      </label>
+      <div class="input-wrapper">
+        <input 
+          type="number" 
+          id="number-concentration" 
+          class="field-number" 
+          min="0" 
+          max="1000" 
+          step="1"
+          value="200"
+          placeholder="0"
+        />
+        <span class="unit-suffix">ppm</span>
+        <div class="spinner-controls">
+          <button class="spinner-btn" onclick="incrementConcentration()">▲</button>
+          <button class="spinner-btn" onclick="decrementConcentration()">▼</button>
+        </div>
+      </div>
+      <div class="range-indicator">
+        <div id="conc-fill" class="range-fill" style="width: 20%;"></div>
+      </div>
+      <div class="range-labels">
+        <span>0 ppm</span>
+        <span>500 ppm</span>
+        <span>1000 ppm</span>
+      </div>
+      <span class="field-hint">Concentração em partes por milhão</span>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       JAVASCRIPT - Controle de Estados e Validação
+       ============================================================ -->
+  <script>
+    // ===== pH FIELD =====
+    const phInput = document.getElementById('number-ph');
+    const phWrapper = phInput.parentElement;
+    const phFill = document.getElementById('ph-fill');
+    const phHint = document.getElementById('ph-hint');
+
+    function updatePHRange() {
+      const value = parseFloat(phInput.value) || 0;
+      const percentage = (value / 14) * 100;
+      phFill.style.width = percentage + '%';
+
+      // Cores baseadas em ranges ideais
+      if (value >= 6.0 && value <= 7.0) {
+        phFill.className = 'range-fill';
+      } else if (value >= 5.5 && value < 6.0 || value > 7.0 && value <= 7.5) {
+        phFill.className = 'range-fill warning';
+      } else {
+        phFill.className = 'range-fill danger';
+      }
+    }
+
+    function incrementPH() {
+      const step = parseFloat(phInput.step) || 0.1;
+      const max = parseFloat(phInput.max) || 14;
+      const current = parseFloat(phInput.value) || 0;
+      if (current < max) {
+        phInput.value = Math.min(current + step, max).toFixed(1);
+        updatePHRange();
+      }
+    }
+
+    function decrementPH() {
+      const step = parseFloat(phInput.step) || 0.1;
+      const min = parseFloat(phInput.min) || 0;
+      const current = parseFloat(phInput.value) || 0;
+      if (current > min) {
+        phInput.value = Math.max(current - step, min).toFixed(1);
+        updatePHRange();
+      }
+    }
+
+    function setPHDefault() {
+      phWrapper.classList.remove('has-error', 'has-success', 'has-warning');
+      phInput.classList.remove('error', 'success', 'warning');
+      phInput.value = '6.5';
+      phHint.textContent = 'pH ideal para cannabis: 6.0 - 7.0';
+      phHint.classList.remove('error', 'success', 'warning');
+      updatePHRange();
+    }
+
+    function setPHError() {
+      phWrapper.classList.remove('has-success', 'has-warning');
+      phWrapper.classList.add('has-error');
+      phInput.classList.remove('success', 'warning');
+      phInput.classList.add('error');
+      phHint.textContent = 'Valor fora do range permitido (0-14)';
+      phHint.classList.remove('success', 'warning');
+      phHint.classList.add('error');
+    }
+
+    function setPHSuccess() {
+      phWrapper.classList.remove('has-error', 'has-warning');
+      phWrapper.classList.add('has-success');
+      phInput.classList.remove('error', 'warning');
+      phInput.classList.add('success');
+      phHint.textContent = 'pH dentro do range ideal';
+      phHint.classList.remove('error', 'warning');
+      phHint.classList.add('success');
+    }
+
+    function setPHWarning() {
+      phWrapper.classList.remove('has-error', 'has-success');
+      phWrapper.classList.add('has-warning');
+      phInput.classList.remove('error', 'success');
+      phInput.classList.add('warning');
+      phHint.textContent = 'pH próximo aos limites - monitorar';
+      phHint.classList.remove('error', 'success');
+      phHint.classList.add('warning');
+    }
+
+    phInput.addEventListener('input', updatePHRange);
+    phInput.addEventListener('change', function() {
+      const value = parseFloat(this.value);
+      if (isNaN(value) || value < 0 || value > 14) {
+        setPHError();
+      } else if (value >= 6.0 && value <= 7.0) {
+        setPHSuccess();
+      } else {
+        setPHWarning();
+      }
+    });
+
+    // ===== HEIGHT FIELD =====
+    const heightInput = document.getElementById('number-height');
+    const heightWrapper = document.getElementById('height-wrapper');
+    const heightFill = document.getElementById('height-fill');
+    const heightHint = document.getElementById('height-hint');
+
+    function updateHeightRange() {
+      const value = parseFloat(heightInput.value) || 0;
+      const percentage = (value / 300) * 100;
+      heightFill.style.width = percentage + '%';
+    }
+
+    function incrementHeight() {
+      const step = parseFloat(heightInput.step) || 0.5;
+      const max = parseFloat(heightInput.max) || 300;
+      const current = parseFloat(heightInput.value) || 0;
+      if (current < max) {
+        heightInput.value = Math.min(current + step, max).toFixed(1);
+        updateHeightRange();
+      }
+    }
+
+    function decrementHeight() {
+      const step = parseFloat(heightInput.step) || 0.5;
+      const min = parseFloat(heightInput.min) || 0;
+      const current = parseFloat(heightInput.value) || 0;
+      if (current > min) {
+        heightInput.value = Math.max(current - step, min).toFixed(1);
+        updateHeightRange();
+      }
+    }
+
+    heightInput.addEventListener('input', updateHeightRange);
+    heightInput.addEventListener('change', function() {
+      const value = parseFloat(this.value);
+      if (this.value === '' || isNaN(value)) {
+        heightWrapper.classList.add('has-error');
+        heightInput.classList.add('error');
+        heightHint.textContent = 'Este campo é obrigatório';
+        heightHint.classList.add('error');
+      } else {
+        heightWrapper.classList.remove('has-error');
+        heightWrapper.classList.add('has-success');
+        heightInput.classList.remove('error');
+        heightInput.classList.add('success');
+        heightHint.textContent = 'Altura registrada com sucesso';
+        heightHint.classList.remove('error');
+        heightHint.classList.add('success');
+      }
+    });
+
+    // ===== CONCENTRATION FIELD =====
+    const concInput = document.getElementById('number-concentration');
+    const concFill = document.getElementById('conc-fill');
+
+    function updateConcRange() {
+      const value = parseFloat(concInput.value) || 0;
+      const percentage = (value / 1000) * 100;
+      concFill.style.width = percentage + '%';
+    }
+
+    function incrementConcentration() {
+      const step = parseFloat(concInput.step) || 1;
+      const max = parseFloat(concInput.max) || 1000;
+      const current = parseFloat(concInput.value) || 0;
+      if (current < max) {
+        concInput.value = Math.min(current + step, max);
+        updateConcRange();
+      }
+    }
+
+    function decrementConcentration() {
+      const step = parseFloat(concInput.step) || 1;
+      const min = parseFloat(concInput.min) || 0;
+      const current = parseFloat(concInput.value) || 0;
+      if (current > min) {
+        concInput.value = Math.max(current - step, min);
+        updateConcRange();
+      }
+    }
+
+    concInput.addEventListener('input', updateConcRange);
+
+    // Inicializar ranges
+    updatePHRange();
+    updateHeightRange();
+    updateConcRange();
+
+    // Acessibilidade: suporte para teclas arrow up/down
+    document.querySelectorAll('.field-number').forEach(input => {
+      input.addEventListener('keydown', function(e) {
+        const step = parseFloat(this.step) || 1;
+        const min = parseFloat(this.min);
+        const max = parseFloat(this.max);
+        let value = parseFloat(this.value) || 0;
+
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (isNaN(max) || value < max) {
+            this.value = (value + step).toFixed(step < 1 ? 1 : 0);
+            this.dispatchEvent(new Event('input'));
+          }
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (isNaN(min) || value > min) {
+            this.value = (value - step).toFixed(step < 1 ? 1 : 0);
+            this.dispatchEvent(new Event('input'));
+          }
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!--
+COMPONENTE: study-list.html
+PAPEL: Lista de estudos.
+
+PRINCIPAIS FUNCIONALIDADES:
+- consulta, filtros, paginação, exportação e ações;
+- mantém o estado de UI separado do processamento no Apps Script;
+- não acessa diretamente a planilha: usa client.html e os contratos do Web App.
+
+INTEGRAÇÕES:
+- StudyService, table, filters;
+- dados esperados: Studies.
+
+SEGURANÇA E LIMITAÇÕES:
+- nunca renderizar senha, token completo ou stack trace;
+- validação visual não substitui ValidationService no servidor;
+- usar escaping/templating seguro para texto proveniente da planilha;
+- esqueleto preparado para HtmlService e componentes parciais.
+
+STATUS: ESQUELETO DE INTERFACE — completar acessibilidade, testes e estados de erro.
+-->
+<section class="view" data-component="study-list.html"><header class="page-header"><div><p class="eyebrow">Lista de estudos</p><h1>Study List</h1><p>consulta, filtros, paginação, exportação e ações.</p></div><button data-action="create">Novo</button></header><?!= include('filters') ?><div data-role="content-mount"><?!= include('table') ?><?!= include('empty-state') ?></div><?!= include('pagination') ?></section>

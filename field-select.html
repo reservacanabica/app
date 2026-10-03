@@ -1,0 +1,22 @@
+<!--
+COMPONENTE: field-select.html
+PAPEL: Campo de seleção.
+
+PRINCIPAIS FUNCIONALIDADES:
+- enumerações de status, papel, grau e veredito;
+- mantém o estado de UI separado do processamento no Apps Script;
+- não acessa diretamente a planilha: usa client.html e os contratos do Web App.
+
+INTEGRAÇÕES:
+- Constants via dados de UI;
+- dados esperados: Valor enumerado.
+
+SEGURANÇA E LIMITAÇÕES:
+- nunca renderizar senha, token completo ou stack trace;
+- validação visual não substitui ValidationService no servidor;
+- usar escaping/templating seguro para texto proveniente da planilha;
+- esqueleto preparado para HtmlService e componentes parciais.
+
+STATUS: ESQUELETO DE INTERFACE — completar acessibilidade, testes e estados de erro.
+-->
+<label data-field-type="select"><span data-role="label"></span><select data-role="input"></select><small data-role="help"></small></label>

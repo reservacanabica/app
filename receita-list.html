@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Receitas de Fertirrigação</title>
+  
+  <link rel="stylesheet" href="quality-components.css">
+</head>
+<body>
+  <div class="list-container">
+    <!-- Header -->
+    <div class="list-header">
+      <h2>Receitas de Fertirrigação</h2>
+      <button onclick="navigateTo('receita-form')" class="btn-primary">
+        <span>+</span> Nova Receita
+      </button>
+    </div>
+    
+    <!-- Filters -->
+    <div class="filters">
+      <input
+        type="search"
+        id="searchInput"
+        placeholder="Buscar por nome da fase..."
+        style="flex: 1; min-width: 300px;"
+      >
+      
+      <select id="filterFase">
+        <option value="">Todas as fases</option>
+        <option value="PROPAGACAO">Propagação</option>
+        <option value="VEGETATIVA">Vegetativa</option>
+        <option value="FLORACAO">Floração</option>
+      </select>
+      
+      <button onclick="applyFilters()" class="btn-secondary">
+        Filtrar
+      </button>
+    </div>
+    
+    <!-- Table -->
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortTable('nome_fase')" style="cursor: pointer;">
+              Nome da Fase ↕
+            </th>
+            <th onclick="sortTable('fase_cultivo')" style="cursor: pointer;">
+              Fase ↕
+            </th>
+            <th>
+              NPK (ppm)
+            </th>
+            <th>
+              Ca-Mg (ppm)
+            </th>
+            <th onclick="sortTable('ph_solucao')" style="cursor: pointer;">
+              pH ↕
+            </th>
+            <th onclick="sortTable('ec_final')" style="cursor: pointer;">
+              EC ↕
+            </th>
+            <th style="text-align: center;">
+              Ações
+            </th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- Populated via JS -->
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Empty state -->
+    <div id="emptyState" class="empty-state" hidden>
+      <p>Nenhuma receita encontrada</p>
+      <button onclick="navigateTo('receita-form')" class="btn-primary" style="margin-top: 1rem;">
+        Cadastrar Primeira Receita
+      </button>
+    </div>
+    
+    <!-- Stats -->
+    <div id="stats" style="margin-top: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+      <div style="padding: 1rem; background: var(--bg-secondary); border-radius: 12px;">
+        <div style="font-size: 0.75rem; color: #6b7280; text-transform: uppercase; margin-bottom: 0.5rem;">Total</div>
+        <div style="font-size: 1.5rem; font-weight: 700;" id="totalCount">0</div>
+      </div>
+      
+      <div style="padding: 1rem; background: #dbeafe; border-radius: 12px;">
+        <div style="font-size: 0.75rem; color: #1e40af; text-transform: uppercase; margin-bottom: 0.5rem;">Propagação</div>
+        <div style="font-size: 1.5rem; font-weight: 700; color: #1e40af;" id="propagacaoCount">0</div>
+      </div>
+      
+      <div style="padding: 1rem; background: #d1fae5; border-radius: 12px;">
+        <div style="font-size: 0.75rem; color: #065f46; text-transform: uppercase; margin-bottom: 0.5rem;">Vegetativa</div>
+        <div style="font-size: 1.5rem; font-weight: 700; color: #065f46;" id="vegetativaCount">0</div>
+      </div>
+      
+      <div style="padding: 1rem; background: #fef3c7; border-radius: 12px;">
+        <div style="font-size: 0.75rem; color: #92400e; text-transform: uppercase; margin-bottom: 0.5rem;">Floração</div>
+        <div style="font-size: 1.5rem; font-weight: 700; color: #92400e;" id="floracaoCount">0</div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="quality-helpers.js"></script>
+  <script src="api-client.html"></script>
+  
+  <script>
+    // Estado
+    let allReceitas = [];
+    let filteredReceitas = [];
+    let currentSort = { field: 'nome_fase', direction: 'asc' };
+    
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+      loadReceitas();
+      
+      document.getElementById('searchInput').addEventListener('input', applyFilters);
+    });
+    
+    /**
+     * Carrega receitas
+     */
+    async function loadReceitas() {
+      try {
+        showLoading(true);
+        
+        allReceitas = await api.receitas.list();
+        filteredReceitas = allReceitas;
+        
+        applyFilters();
+        
+      } catch (error) {
+        handleApiError(error);
+      } finally {
+        showLoading(false);
+      }
+    }
+    
+    /**
+     * Aplica filtros
+     */
+    function applyFilters() {
+      const searchTerm = document.getElementById('searchInput').value;
+      const filterFase = document.getElementById('filterFase').value;
+      
+      let result = allReceitas;
+      
+      // Filtro de busca
+      if (searchTerm) {
+        result = filterItems(result, searchTerm, ['nome_fase']);
+      }
+      
+      // Filtro de fase
+      if (filterFase) {
+        result = result.filter(r => r.fase_cultivo === filterFase);
+      }
+      
+      filteredReceitas = result;
+      
+      // Ordenação
+      filteredReceitas = sortBy(filteredReceitas, currentSort.field, currentSort.direction);
+      
+      renderTable();
+      updateStats();
+    }
+    
+    /**
+     * Ordena tabela
+     */
+    function sortTable(field) {
+      if (currentSort.field === field) {
+        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+      } else {
+        currentSort.field = field;
+        currentSort.direction = 'asc';
+      }
+      
+      filteredReceitas = sortBy(filteredReceitas, currentSort.field, currentSort.direction);
+      renderTable();
+    }
+    
+    /**
+     * Renderiza tabela
+     */
+    function renderTable() {
+      const columns = [
+        {
+          key: 'nome_fase',
+          render: (value) => `<strong>${value}</strong>`
+        },
+        {
+          key: 'fase_cultivo',
+          render: (value) => {
+            const badges = {
+              'PROPAGACAO': '<span class="badge badge-info">Propagação</span>',
+              'VEGETATIVA': '<span class="badge badge-success">Vegetativa</span>',
+              'FLORACAO': '<span class="badge badge-warning">Floração</span>'
+            };
+            return badges[value] || value;
+          }
+        },
+        {
+          key: 'npk',
+          render: (_, item) => {
+            return `<span style="font-family: monospace; font-size: 0.875rem;">
+              N:${formatNumber(item.n_ppm, 0)} 
+              P:${formatNumber(item.p_ppm, 0)} 
+              K:${formatNumber(item.k_ppm, 0)}
+            </span>`;
+          }
+        },
+        {
+          key: 'ca_mg',
+          render: (_, item) => {
+            const ratio = item.ca_ppm / item.mg_ppm;
+            const ratioOk = ratio >= 2.0 && ratio <= 5.0;
+            const color = ratioOk ? '#10b981' : '#f59e0b';
+            
+            return `<span style="font-family: monospace; font-size: 0.875rem;">
+              Ca:${formatNumber(item.ca_ppm, 0)} 
+              Mg:${formatNumber(item.mg_ppm, 0)}
+              <span style="color: ${color}; margin-left: 0.25rem;">(${formatNumber(ratio, 1)})</span>
+            </span>`;
+          }
+        },
+        {
+          key: 'ph_solucao',
+          render: (value) => {
+            const phOk = value >= 5.5 && value <= 6.5;
+            const color = phOk ? '#10b981' : '#f59e0b';
+            return `<span style="color: ${color}; font-weight: 500;">${formatNumber(value, 1)}</span>`;
+          }
+        },
+        {
+          key: 'ec_final',
+          render: (value) => `${formatNumber(value, 2)} mS/cm`
+        }
+      ];
+      
+      const actionsRenderer = (item) => `
+        <div style="display: flex; gap: 0.5rem; justify-content: center;">
+          <button onclick="viewReceita('${item.id}')" class="btn-sm btn-secondary" title="Visualizar">
+            👁️
+          </button>
+          <button onclick="editReceita('${item.id}')" class="btn-sm btn-primary" title="Editar">
+            ✏️
+          </button>
+          <button onclick="usarReceita('${item.id}')" class="btn-sm btn-success" title="Usar em Análise">
+            🔬
+          </button>
+          <button onclick="deleteReceita('${item.id}', '${item.nome_fase}')" class="btn-sm btn-danger" title="Excluir">
+            🗑️
+          </button>
+        </div>
+      `;
+      
+      window.renderTable(filteredReceitas, columns, actionsRenderer);
+    }
+    
+    /**
+     * Atualiza estatísticas
+     */
+    function updateStats() {
+      const total = filteredReceitas.length;
+      const propagacao = filteredReceitas.filter(r => r.fase_cultivo === 'PROPAGACAO').length;
+      const vegetativa = filteredReceitas.filter(r => r.fase_cultivo === 'VEGETATIVA').length;
+      const floracao = filteredReceitas.filter(r => r.fase_cultivo === 'FLORACAO').length;
+      
+      document.getElementById('totalCount').textContent = total;
+      document.getElementById('propagacaoCount').textContent = propagacao;
+      document.getElementById('vegetativaCount').textContent = vegetativa;
+      document.getElementById('floracaoCount').textContent = floracao;
+      
+      document.getElementById('emptyState').hidden = total > 0;
+    }
+    
+    /**
+     * Visualiza receita
+     */
+    function viewReceita(id) {
+      navigateTo('receita-view', { id });
+    }
+    
+    /**
+     * Edita receita
+     */
+    function editReceita(id) {
+      navigateTo('receita-form', { id });
+    }
+    
+    /**
+     * Usa receita em análise de compatibilidade
+     */
+    function usarReceita(id) {
+      navigateTo('parecer-form', { receita_id: id });
+    }
+    
+    /**
+     * Exclui receita
+     */
+    async function deleteReceita(id, nome) {
+      const confirmed = confirm(
+        `Tem certeza que deseja excluir a receita "${nome}"?\n\n` +
+        `Esta ação não pode ser desfeita.`
+      );
+      
+      if (!confirmed) return;
+      
+      try {
+        showLoading(true);
+        
+        await api.receitas.delete(id);
+        
+        showToast('success', 'Receita excluída com sucesso!');
+        
+        await loadReceitas();
+        
+      } catch (error) {
+        handleApiError(error);
+      } finally {
+        showLoading(false);
+      }
+    }
+  </script>
+</body>
+</html>

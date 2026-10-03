@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Experimentos - Canabica</title>
+</head>
+<body>
+
+<div id="experiments-page" class="experiments-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <h2>🧪 Experimentos</h2>
+      <p>Gerenciamento de experimentos científicos</p>
+    </div>
+    <div class="page-header-right">
+      <button class="btn btn-primary" data-click="openCreateModal">
+        ➕ Novo Experimento
+      </button>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-box">
+      <input
+        type="text"
+        id="search-input"
+        placeholder="🔍 Buscar experimentos..."
+        data-input="handleSearch"
+      />
+    </div>
+    <div class="toolbar-actions">
+      <select id="filter-study" class="filter-select" data-change="handleFilterStudy">
+        <option value="">Todos os Estudos</option>
+      </select>
+      <button class="btn btn-secondary btn-sm" data-click="handleRefresh">
+        🔄 Atualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div id="loading-state" class="loading-spinner" style="display: none;">
+    <div class="spinner"></div>
+    <p>Carregando experimentos...</p>
+  </div>
+
+  <!-- Error state -->
+  <div id="error-state" class="alert alert-danger" style="display: none;"></div>
+
+  <!-- Empty state -->
+  <div id="empty-state" class="empty-state" style="display: none;">
+    <div class="empty-icon">🧪</div>
+    <h3>Nenhum experimento encontrado</h3>
+    <p>Comece criando um novo experimento clicando no botão acima</p>
+  </div>
+
+  <!-- Experiments Table -->
+  <div id="experiments-container" class="table-container" style="display: none;">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Estudo</th>
+          <th>Status</th>
+          <th>Data</th>
+          <th>Observações</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="experiments-tbody">
+        <!-- Experiments will be inserted here -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div id="pagination" class="pagination" style="display: none;">
+    <button class="btn btn-secondary btn-sm" data-click="prevPage" id="prev-btn">← Anterior</button>
+    <span id="page-info"></span>
+    <button class="btn btn-secondary btn-sm" data-click="nextPage" id="next-btn">Próximo →</button>
+  </div>
+
+  <!-- Create/Edit Modal -->
+  <div id="form-modal" class="modal" style="display: none;">
+    <div class="modal-overlay" data-click="closeModal"></div>
+    <div class="modal-content cf-modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Novo Experimento</h3>
+        <button class="modal-close" data-click="closeModal">×</button>
+      </div>
+      <div id="form-container" class="modal-body">
+        <!-- Form will be inserted here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="delete-modal" class="modal" style="display: none;">
+    <div class="modal-overlay" data-click="cancelDelete"></div>
+    <div class="modal-content modal-small cf-modal-content">
+      <div class="modal-header">
+        <h3>Confirmar Exclusão</h3>
+      </div>
+      <div class="modal-body">
+        <p>Tem certeza que deseja excluir este experimento?</p>
+        <p class="text-muted" id="delete-warning"></p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-danger" data-click="confirmDelete">
+          🗑️ Excluir
+        </button>
+        <button class="btn btn-secondary" data-click="cancelDelete">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* PAGE HEADER */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xl);
+  background: linear-gradient(135deg, var(--primary) 0%, #229954 100%);
+  color: white;
+  margin-bottom: var(--spacing-lg);
+}
+
+.page-header-left h2 {
+  margin: 0 0 5px 0;
+  font-size: 1.8rem;
+}
+
+.page-header-left p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+.page-header-right {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+/* TOOLBAR */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: white;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.search-box input {
+  padding: var(--canna-space-3) var(--canna-space-4); /* 10→12px 16px */
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.95rem;
+  width: 250px;
+  transition: all var(--transition);
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.filter-select {
+  padding: var(--canna-space-3) var(--canna-space-3); /* 10→12px 12px */
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.filter-select:hover {
+  border-color: var(--primary);
+}
+
+/* TABLE */
+.table-container {
+  overflow-x: auto;
+  padding: 0 var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.table thead {
+  background-color: var(--bg-secondary);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.table th,
+.table td {
+  padding: var(--spacing-md);
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table tbody tr {
+  transition: background-color var(--transition);
+}
+
+.table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* STATUS BADGE */
+.status-badge {
+  display: inline-block;
+  padding: var(--canna-space-1) 12px;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-badge.pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.in_progress {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-badge.completed {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-badge.failed {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* ACTIONS */
+.table-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.table-actions button {
+  padding: var(--canna-space-2) var(--canna-space-3); /* 6→8px 12px */
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* PAGINATION */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+#page-info {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* EMPTY STATE */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl) var(--spacing-lg);
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--text-primary);
+}
+
+.empty-state p {
+  margin: 0;
+}
+
+/* LOADING SPINNER */
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  gap: var(--spacing-lg);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--bg-secondary);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* MODAL */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  position: relative;
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-small {
+  max-width: 400px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: color var(--transition);
+}
+
+.modal-close:hover {
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: var(--spacing-lg);
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+  justify-content: flex-end;
+}
+
+/* FORM */
+.form-builder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.form-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.form-group label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  padding: var(--canna-space-3) var(--canna-space-3); /* 10→12px 12px */
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.95rem;
+  font-family: var(--font-family);
+  transition: all var(--transition);
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
+}
+
+.form-group-error input,
+.form-group-error textarea,
+.form-group-error select {
+  border-color: #e74c3c;
+}
+
+.form-error {
+  font-size: 0.85rem;
+  color: #e74c3c;
+}
+
+.form-help {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.form-actions button {
+  flex: 1;
+}
+
+.required {
+  color: #e74c3c;
+}
+
+/* ALERTS */
+.alert {
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  margin: 0 var(--spacing-lg) var(--spacing-lg);
+  border-left: 4px solid;
+}
+
+.alert-danger {
+  background-color: #fee;
+  color: #c00;
+  border-left-color: #c00;
+}
+
+.text-muted {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* RESPONSIVO */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-lg);
+  }
+
+  .page-header-right {
+    width: 100%;
+  }
+
+  .page-header-right .button {
+    width: 100%;
+  }
+
+  .toolbar {
+    flex-direction: column;
+  }
+
+  .search-box input {
+    width: 100%;
+  }
+
+  .toolbar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .table {
+    font-size: 0.85rem;
+  }
+
+  .table th,
+  .table td {
+    padding: var(--spacing-sm);
+  }
+
+  .table-actions {
+    flex-wrap: wrap;
+  }
+
+  .modal-content {
+    max-height: 95vh;
+    width: 95%;
+  }
+}
+</style>
+
+<script>
+<?!= include("api-client.html"); ?>
+<?!= include("form-builder.html"); ?>
+<?!= include("crud-service.html"); ?>
+
+class ExperimentsPage {
+  constructor() {
+    this.crud = CRUDFactory.experiments();
+    this.studiesCrud = CRUDFactory.studies();
+    this.experiments = [];
+    this.filteredExperiments = [];
+    this.studies = [];
+    this.currentPage = 1;
+    this.itemsPerPage = 10;
+    this.currentEditingId = null;
+    this.deleteTargetId = null;
+    this.searchQuery = '';
+    this.filterStudyId = '';
+
+    this.pageContainer = document.getElementById('experiments-page');
+    this.loadingState = document.getElementById('loading-state');
+    this.errorState = document.getElementById('error-state');
+    this.emptyState = document.getElementById('empty-state');
+    this.experimentsContainer = document.getElementById('experiments-container');
+    this.experimentsTbody = document.getElementById('experiments-tbody');
+    this.pagination = document.getElementById('pagination');
+    this.formModal = document.getElementById('form-modal');
+    this.deleteModal = document.getElementById('delete-modal');
+
+    this.initialize();
+  }
+
+  async initialize() {
+    try {
+      this.showLoading();
+      await this.loadStudies();
+      await this.loadExperiments();
+      this.populateStudyFilter();
+      this.render();
+      this.attachEventListeners();
+    } catch (error) {
+      console.error('Initialize error:', error);
+      this.showError('Erro ao carregar experimentos');
+    }
+  }
+
+  async loadStudies() {
+    try {
+      const response = await this.studiesCrud.list();
+      this.studies = response.data || response || [];
+    } catch (error) {
+      console.error('Error loading studies:', error);
+    }
+  }
+
+  async loadExperiments() {
+    try {
+      const response = await this.crud.list();
+      this.experiments = response.data || response || [];
+      this.applyFilters();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  populateStudyFilter() {
+    const select = document.getElementById('filter-study');
+    const options = this.studies.map(s => 
+      `<option value="${s.id}">${s.name}</option>`
+    ).join('');
+    
+    select.innerHTML = '<option value="">Todos os Estudos</option>' + options;
+  }
+
+  applyFilters() {
+    let filtered = this.experiments;
+
+    // Search filter
+    if (this.searchQuery) {
+      const q = this.searchQuery.toLowerCase();
+      filtered = filtered.filter(e =>
+        e.name.toLowerCase().includes(q) ||
+        (e.description && e.description.toLowerCase().includes(q))
+      );
+    }
+
+    // Study filter
+    if (this.filterStudyId) {
+      filtered = filtered.filter(e => e.studyId === this.filterStudyId);
+    }
+
+    this.filteredExperiments = filtered;
+    this.currentPage = 1;
+  }
+
+  render() {
+    this.hideLoading();
+
+    if (this.filteredExperiments.length === 0) {
+      this.showEmpty();
+      return;
+    }
+
+    this.renderTable();
+    this.renderPagination();
+    this.experimentsContainer.style.display = 'block';
+  }
+
+  renderTable() {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+    const pageExperiments = this.filteredExperiments.slice(start, end);
+
+    const html = pageExperiments.map(exp => {
+      const study = this.studies.find(s => s.id === exp.studyId);
+      return `
+        <tr>
+          <td>
+            <strong>${exp.name}</strong>
+            ${exp.description ? `<br/><span class="text-muted">${exp.description.substring(0, 40)}...</span>` : ''}
+          </td>
+          <td>${study ? study.name : 'N/A'}</td>
+          <td>
+            <span class="status-badge ${exp.status.toLowerCase().replace('_', '-')}">
+              ${this.getStatusLabel(exp.status)}
+            </span>
+          </td>
+          <td>${exp.date || 'N/A'}</td>
+          <td>${exp.observationCount || 0}</td>
+          <td>
+            <div class="table-actions">
+              <button class="btn btn-secondary btn-sm" data-experiment-id="${exp.id}" data-click="openEditModal">
+                ✏️ Editar
+              </button>
+              <button class="btn btn-danger btn-sm" data-experiment-id="${exp.id}" data-click="openDeleteModal">
+                🗑️ Deletar
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    this.experimentsTbody.innerHTML = html;
+
+    // Re-attach listeners
+    this.experimentsTbody.querySelectorAll('[data-experiment-id]').forEach(btn => {
+      const expId = btn.getAttribute('data-experiment-id');
+      const action = btn.getAttribute('data-click');
+      btn.addEventListener('click', () => {
+        if (action === 'openEditModal') {
+          this.openEditModal(expId);
+        } else if (action === 'openDeleteModal') {
+          this.openDeleteModal(expId);
+        }
+      });
+    });
+  }
+
+  renderPagination() {
+    const totalPages = Math.ceil(this.filteredExperiments.length / this.itemsPerPage);
+
+    if (totalPages <= 1) {
+      this.pagination.style.display = 'none';
+      return;
+    }
+
+    this.pagination.style.display = 'flex';
+    document.getElementById('page-info').textContent = `Página ${this.currentPage} de ${totalPages}`;
+
+    document.getElementById('prev-btn').disabled = this.currentPage === 1;
+    document.getElementById('next-btn').disabled = this.currentPage === totalPages;
+  }
+
+  openCreateModal() {
+    this.currentEditingId = null;
+    document.getElementById('modal-title').textContent = 'Novo Experimento';
+
+    const form = new FormBuilder({
+      title: 'Novo Experimento',
+      submitText: 'Criar',
+      fields: [
+        FieldTypes.select('studyId', 'Estudo', 
+          this.studies.map(s => ({ value: s.id, label: s.name })), 
+          true
+        ),
+        FieldTypes.text('name', 'Nome', 'Ex: Teste de Crescimento v1'),
+        FieldTypes.textarea('description', 'Descrição', 'Descreva o experimento', 4),
+        FieldTypes.select('status', 'Status', [
+          { value: 'PENDING', label: 'Pendente' },
+          { value: 'IN_PROGRESS', label: 'Em Progresso' },
+          { value: 'COMPLETED', label: 'Concluído' },
+          { value: 'FAILED', label: 'Falhou' }
+        ]),
+        FieldTypes.date('date', 'Data do Experimento'),
+        FieldTypes.text('temperature', 'Temperatura (°C)', '25'),
+        FieldTypes.text('humidity', 'Umidade (%)', '60')
+      ]
+    });
+
+    document.getElementById('form-container').innerHTML = form.render();
+    this.showFormModal();
+    this.attachFormListeners(form);
+  }
+
+  async openEditModal(expId) {
+    this.currentEditingId = expId;
+    document.getElementById('modal-title').textContent = 'Editar Experimento';
+
+    try {
+      this.showLoading();
+      const experiment = await this.crud.get(expId);
+
+      const form = new FormBuilder({
+        title: 'Editar Experimento',
+        submitText: 'Salvar',
+        fields: [
+          FieldTypes.select('studyId', 'Estudo', 
+            this.studies.map(s => ({ value: s.id, label: s.name })), 
+            true
+          ),
+          FieldTypes.text('name', 'Nome', 'Ex: Teste de Crescimento v1'),
+          FieldTypes.textarea('description', 'Descrição', 'Descreva o experimento', 4),
+          FieldTypes.select('status', 'Status', [
+            { value: 'PENDING', label: 'Pendente' },
+            { value: 'IN_PROGRESS', label: 'Em Progresso' },
+            { value: 'COMPLETED', label: 'Concluído' },
+            { value: 'FAILED', label: 'Falhou' }
+          ]),
+          FieldTypes.date('date', 'Data do Experimento'),
+          FieldTypes.text('temperature', 'Temperatura (°C)', '25'),
+          FieldTypes.text('humidity', 'Umidade (%)', '60')
+        ]
+      });
+
+      form.setValues(experiment);
+      document.getElementById('form-container').innerHTML = form.render();
+      this.showFormModal();
+      this.attachFormListeners(form);
+
+    } catch (error) {
+      this.showError(`Erro ao carregar experimento: ${error.message}`);
+    }
+  }
+
+  attachFormListeners(form) {
+    const formElement = document.querySelector('.form-builder');
+
+    if (!formElement) return;
+
+    formElement.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const values = form.getValues(formElement);
+
+      if (!form.validate(values)) {
+        document.getElementById('form-container').innerHTML = form.render();
+        this.attachFormListeners(form);
+        return;
+      }
+
+      form.setLoading(true);
+      document.getElementById('form-container').innerHTML = form.render();
+
+      try {
+        if (this.currentEditingId) {
+          await this.crud.update(this.currentEditingId, values);
+        } else {
+          await this.crud.create(values);
+        }
+
+        this.closeFormModal();
+        await this.loadExperiments();
+        this.render();
+
+      } catch (error) {
+        form.setGlobalError(error.message);
+        document.getElementById('form-container').innerHTML = form.render();
+        this.attachFormListeners(form);
+      }
+    });
+
+    // Cancel button
+    const cancelBtn = formElement.querySelector('button.button-outline');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => this.closeFormModal());
+    }
+  }
+
+  openDeleteModal(expId) {
+    const experiment = this.experiments.find(e => e.id === expId);
+    if (!experiment) return;
+
+    this.deleteTargetId = expId;
+    document.getElementById('delete-warning').textContent = `Este experimento "${experiment.name}" será movido para arquivo.`;
+    this.deleteModal.style.display = 'flex';
+  }
+
+  async confirmDelete() {
+    if (!this.deleteTargetId) return;
+
+    try {
+      await this.crud.delete(this.deleteTargetId);
+      this.cancelDelete();
+      await this.loadExperiments();
+      this.render();
+    } catch (error) {
+      this.showError(`Erro ao deletar: ${error.message}`);
+    }
+  }
+
+  cancelDelete() {
+    this.deleteTargetId = null;
+    this.deleteModal.style.display = 'none';
+  }
+
+  handleSearch(e) {
+    this.searchQuery = e.target.value;
+    this.applyFilters();
+    this.render();
+  }
+
+  handleFilterStudy(e) {
+    this.filterStudyId = e.target.value;
+    this.applyFilters();
+    this.render();
+  }
+
+  handleRefresh() {
+    this.initialize();
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.render();
+    }
+  }
+
+  nextPage() {
+    const totalPages = Math.ceil(this.filteredExperiments.length / this.itemsPerPage);
+    if (this.currentPage < totalPages) {
+      this.currentPage++;
+      this.render();
+    }
+  }
+
+  showFormModal() {
+    this.formModal.style.display = 'flex';
+  }
+
+  closeFormModal() {
+    this.formModal.style.display = 'none';
+  }
+
+  showLoading() {
+    this.loadingState.style.display = 'flex';
+    this.experimentsContainer.style.display = 'none';
+    this.emptyState.style.display = 'none';
+  }
+
+  hideLoading() {
+    this.loadingState.style.display = 'none';
+  }
+
+  showEmpty() {
+    this.emptyState.style.display = 'flex';
+    this.experimentsContainer.style.display = 'none';
+  }
+
+  showError(message) {
+    this.errorState.textContent = message;
+    this.errorState.style.display = 'block';
+  }
+
+  getStatusLabel(status) {
+    const labels = {
+      'PENDING': '⏳ Pendente',
+      'IN_PROGRESS': '🔄 Em Progresso',
+      'COMPLETED': '✅ Concluído',
+      'FAILED': '❌ Falhou'
+    };
+    return labels[status] || status;
+  }
+
+  attachEventListeners() {
+    // Search
+    document.getElementById('search-input').addEventListener('input', (e) => this.handleSearch(e));
+
+    // Filter
+    document.getElementById('filter-study').addEventListener('change', (e) => this.handleFilterStudy(e));
+
+    // Buttons
+    document.querySelectorAll('[data-click]').forEach(btn => {
+      const action = btn.getAttribute('data-click');
+      btn.addEventListener('click', () => {
+        if (typeof this[action] === 'function') {
+          this[action]();
+        }
+      });
+    });
+
+    // Modals
+    document.getElementById('form-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'form-modal') {
+        this.closeFormModal();
+      }
+    });
+
+    document.getElementById('delete-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'delete-modal') {
+        this.cancelDelete();
+      }
+    });
+
+    // Pagination
+    document.getElementById('prev-btn').addEventListener('click', () => this.prevPage());
+    document.getElementById('next-btn').addEventListener('click', () => this.nextPage());
+
+    // Delete modal actions
+    document.querySelectorAll('[data-click="confirmDelete"]').forEach(btn => {
+      btn.addEventListener('click', () => this.confirmDelete());
+    });
+
+    document.querySelectorAll('[data-click="cancelDelete"]').forEach(btn => {
+      btn.addEventListener('click', () => this.cancelDelete());
+    });
+  }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  new ExperimentsPage();
+});
+</script>
+
+</body>
+</html>

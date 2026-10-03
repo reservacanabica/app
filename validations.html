@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Validações - Canabica</title>
+</head>
+<body>
+
+<div id="validations-page" class="validations-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <h2>✅ Validações Científicas</h2>
+      <p>Execute validações sobre seus dados de pesquisa</p>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="validations-content">
+    <!-- Overview -->
+    <div class="card">
+      <h3>📋 Sobre as Validações</h3>
+      <p>
+        O Canabica implementa 10 validações científicas automáticas para garantir 
+        a integridade e qualidade dos dados de pesquisa:
+      </p>
+      <div class="validation-list">
+        <div class="validation-rule">
+          <strong>V01: Completude de Dados</strong> - Verifica se campos obrigatórios estão preenchidos
+        </div>
+        <div class="validation-rule">
+          <strong>V02: Consistência de Datas</strong> - Valida sequência temporal (início < fim)
+        </div>
+        <div class="validation-rule">
+          <strong>V03: Valores Permitidos</strong> - Verifica se valores estão nas enumerações esperadas
+        </div>
+        <div class="validation-rule">
+          <strong>V04: Relacionamentos Válidos</strong> - Garante que referências apontam para entidades existentes
+        </div>
+        <div class="validation-rule">
+          <strong>V05: Limites Numéricos</strong> - Valida ranges (ex: temperatura -50°C a +50°C)
+        </div>
+        <div class="validation-rule">
+          <strong>V06: Duplicatas</strong> - Detecta registros duplicados
+        </div>
+        <div class="validation-rule">
+          <strong>V07: Padrões de Texto</strong> - Valida formato (email, URL, padrões regex)
+        </div>
+        <div class="validation-rule">
+          <strong>V08: Coerência Semântica</strong> - Verifica lógica entre campos (ex: status COMPLETED requer data de fim)
+        </div>
+        <div class="validation-rule">
+          <strong>V09: Outliers Estatísticos</strong> - Detecta valores anômalos usando IQR
+        </div>
+        <div class="validation-rule">
+          <strong>V10: Auditoria de Mudanças</strong> - Valida que todas as mudanças têm registro de auditoria
+        </div>
+      </div>
+    </div>
+
+    <!-- Validation Selection -->
+    <div class="card">
+      <h3>🎯 Selecionar Validações</h3>
+
+      <div class="form-group">
+        <label for="study-select">Estudo (opcional):</label>
+        <select id="study-select" class="form-control">
+          <option value="">Todos os Estudos</option>
+        </select>
+      </div>
+
+      <div class="validations-grid">
+        <div class="validation-checkbox">
+          <label>
+            <input type="checkbox" value="V01" checked />
+            V01: Completude
+          </label>
+        </div>
+        <div class="validation-checkbox">
+          <label>
+            <input type="checkbox" value="V02" checked />
+            V02: Datas
+          </label>
+        </div>
+        <div class="validation-checkbox">
+          <label>
+            <input type="checkbox" value="V03" checked />
+            V03: Valores
+          </label>
+        </div>
+        <div class="validation-checkbox">
+          <label>
+            <input type="checkbox" value="V04" checked />
+            V04: Relacionamentos
+          </label>
+        </div>
+        <div class="validation-checkbox">
+          <label>
+            <input type="checkbox" value="V05" checked />
+            V05: Limites
+          </label>
+        </div>
+        <div class="validation-checkbox">
+          <label>
+            <input type="checkbox" value="V06" checked />
+            V06: Duplicatas
+          </label>
+        </div>
+        <div class="validation-checkbox">
+          <label>
+            <input type="checkbox" value="V07" />
+            V07: Padrões
+          </label>
+        </div>
+        <div class="validation-checkbox">
+          <label>
+            <input type="checkbox" value="V08" />
+            V08: Semântica
+          </label>
+        </div>
+        <div class="validation-checkbox">
+          <label>
+            <input type="checkbox" value="V09" />
+            V09: Outliers
+          </label>
+        </div>
+        <div class="validation-checkbox">
+          <label>
+            <input type="checkbox" value="V10" />
+            V10: Auditoria
+          </label>
+        </div>
+      </div>
+
+      <button class="button button-primary" data-click="handleRunValidations">
+        ▶️ Executar Validações
+      </button>
+    </div>
+
+    <!-- Results -->
+    <div id="results-card" class="card" style="display: none;">
+      <h3>📊 Resultados das Validações</h3>
+
+      <!-- Summary -->
+      <div id="summary-box" class="summary-box"></div>
+
+      <!-- Progress -->
+      <div id="results-list" class="results-list"></div>
+
+      <!-- Detailed Issues -->
+      <div id="issues-section" style="display: none;">
+        <h4>⚠️ Problemas Encontrados</h4>
+        <div id="issues-list" class="issues-list"></div>
+      </div>
+
+      <!-- Export Results -->
+      <div class="action-buttons">
+        <button class="button button-secondary" data-click="handleExportResults">
+          📥 Exportar Resultados
+        </button>
+        <button class="button button-outline" data-click="handleRunAgain">
+          🔄 Executar Novamente
+        </button>
+      </div>
+    </div>
+
+    <!-- Historical Runs -->
+    <div class="card">
+      <h3>📋 Histórico de Execuções</h3>
+      <div id="history-list" class="history-list">
+        <p class="text-muted">Nenhuma validação executada ainda</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* PAGE HEADER */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xl);
+  background: linear-gradient(135deg, var(--primary) 0%, #229954 100%);
+  color: white;
+  margin-bottom: var(--spacing-lg);
+}
+
+.page-header-left h2 {
+  margin: 0 0 5px 0;
+  font-size: 1.8rem;
+}
+
+.page-header-left p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+/* CONTENT */
+.validations-content {
+  padding: 0 var(--spacing-lg) var(--spacing-lg);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.card {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.card h3 {
+  margin-top: 0;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--bg-secondary);
+  padding-bottom: var(--spacing-md);
+}
+
+.card h4 {
+  margin: var(--spacing-lg) 0 var(--spacing-md) 0;
+  color: var(--text-primary);
+}
+
+/* VALIDATION LIST */
+.validation-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.validation-rule {
+  padding: var(--spacing-md);
+  background-color: var(--bg-secondary);
+  border-left: 3px solid var(--primary);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.validation-rule strong {
+  color: var(--primary);
+}
+
+/* FORM */
+.form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-primary);
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.95rem;
+  font-family: var(--font-family);
+  transition: all var(--transition);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
+}
+
+/* VALIDATIONS GRID */
+.validations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--spacing-md);
+  margin: var(--spacing-md) 0;
+  padding: var(--spacing-md);
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius);
+}
+
+.validation-checkbox label {
+  display: flex;
+  align-items: center;
+  font-weight: 400;
+  cursor: pointer;
+  margin: 0;
+}
+
+.validation-checkbox input[type="checkbox"] {
+  margin-right: var(--spacing-sm);
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* SUMMARY */
+.summary-box {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(46, 204, 113, 0.05) 100%);
+  border-radius: var(--border-radius);
+}
+
+.summary-item {
+  text-align: center;
+}
+
+.summary-number {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.summary-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+/* RESULTS LIST */
+.results-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.result-item {
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  border-left: 4px solid;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.result-item.pass {
+  background-color: #d4edda;
+  border-left-color: #28a745;
+}
+
+.result-item.warning {
+  background-color: #fff3cd;
+  border-left-color: #ffc107;
+}
+
+.result-item.fail {
+  background-color: #f8d7da;
+  border-left-color: #dc3545;
+}
+
+.result-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.result-status {
+  display: inline-block;
+  padding: var(--canna-space-1) 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.result-item.pass .result-status {
+  background-color: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+}
+
+.result-item.warning .result-status {
+  background-color: rgba(255, 193, 7, 0.2);
+  color: #856404;
+}
+
+.result-item.fail .result-status {
+  background-color: rgba(220, 53, 69, 0.2);
+  color: #721c24;
+}
+
+/* ISSUES */
+.issues-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.issue-item {
+  padding: var(--spacing-md);
+  background-color: var(--bg-secondary);
+  border-left: 3px solid #e74c3c;
+  border-radius: 6px;
+}
+
+.issue-title {
+  font-weight: 600;
+  color: #c00;
+  margin-bottom: var(--spacing-xs);
+}
+
+.issue-description {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.issue-count {
+  display: inline-block;
+  background-color: #e74c3c;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: var(--spacing-xs);
+}
+
+/* HISTORY */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.history-item {
+  padding: var(--spacing-md);
+  background-color: var(--bg-secondary);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--border-radius);
+}
+
+.history-item-title {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.history-item-meta {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+/* BUTTONS */
+.button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.button-primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.button-primary:hover {
+  background-color: #229954;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.button-secondary {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 2px solid var(--border-color);
+}
+
+.button-secondary:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.button-outline {
+  background-color: transparent;
+  color: var(--text-primary);
+  border: 2px solid var(--border-color);
+}
+
+.button-outline:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.action-buttons .button {
+  flex: 1;
+}
+
+/* TEXT UTILITIES */
+.text-muted {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* RESPONSIVO */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .validations-content {
+    padding: 0 var(--spacing-md) var(--spacing-md);
+  }
+
+  .card {
+    padding: var(--spacing-md);
+  }
+
+  .validations-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .summary-box {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .result-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+}
+</style>
+
+<script>
+<?!= include("api-client.html"); ?>
+<?!= include("crud-service.html"); ?>
+
+class ValidationsPage {
+  constructor() {
+    this.studiesCrud = CRUDFactory.studies();
+    this.studies = [];
+    this.validationHistory = [];
+    this.currentResults = null;
+
+    this.initialize();
+  }
+
+  async initialize() {
+    try {
+      await this.loadStudies();
+      this.populateStudySelect();
+      this.loadValidationHistory();
+      this.attachEventListeners();
+    } catch (error) {
+      console.error('Initialize error:', error);
+    }
+  }
+
+  async loadStudies() {
+    try {
+      const response = await this.studiesCrud.list();
+      this.studies = response.data || response || [];
+    } catch (error) {
+      console.error('Error loading studies:', error);
+    }
+  }
+
+  populateStudySelect() {
+    const select = document.getElementById('study-select');
+    const options = this.studies.map(s => 
+      `<option value="${s.id}">${s.name}</option>`
+    ).join('');
+    
+    select.innerHTML = '<option value="">Todos os Estudos</option>' + options;
+  }
+
+  async handleRunValidations() {
+    const studyId = document.getElementById('study-select').value || null;
+    const selectedValidations = Array.from(document.querySelectorAll('.validation-checkbox input:checked'))
+      .map(cb => cb.value);
+
+    if (selectedValidations.length === 0) {
+      alert('Por favor, selecione pelo menos uma validação');
+      return;
+    }
+
+    try {
+      const response = await api.post('/validations/run', {
+        studyId,
+        validations: selectedValidations
+      });
+
+      this.currentResults = response;
+      this.displayResults(response);
+      this.addToHistory(studyId, selectedValidations, response);
+
+    } catch (error) {
+      console.error('Validation error:', error);
+      alert('Erro ao executar validações: ' + error.message);
+    }
+  }
+
+  displayResults(results) {
+    const resultsCard = document.getElementById('results-card');
+    const summary = document.getElementById('summary-box');
+    const resultsList = document.getElementById('results-list');
+    const issuesSection = document.getElementById('issues-section');
+    const issuesList = document.getElementById('issues-list');
+
+    resultsCard.style.display = 'block';
+
+    // Summary
+    summary.innerHTML = `
+      <div class="summary-item">
+        <div class="summary-number">${results.total}</div>
+        <div class="summary-label">Total</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-number" style="color: #28a745;">${results.passed}</div>
+        <div class="summary-label">Passou</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-number" style="color: #ffc107;">${results.warnings}</div>
+        <div class="summary-label">Avisos</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-number" style="color: #dc3545;">${results.failed}</div>
+        <div class="summary-label">Falhou</div>
+      </div>
+    `;
+
+    // Results
+    resultsList.innerHTML = results.details.map(detail => {
+      const statusClass = detail.status === 'pass' ? 'pass' : detail.status === 'warning' ? 'warning' : 'fail';
+      const statusLabel = detail.status === 'pass' ? '✅ Passou' : detail.status === 'warning' ? '⚠️ Aviso' : '❌ Falhou';
+      
+      return `
+        <div class="result-item ${statusClass}">
+          <div>
+            <div class="result-name">${detail.name}</div>
+            <p style="margin: var(--spacing-xs) 0 0; font-size: 0.9rem;">${detail.message}</p>
+          </div>
+          <span class="result-status">${statusLabel}</span>
+        </div>
+      `;
+    }).join('');
+
+    // Issues
+    if (results.issues && results.issues.length > 0) {
+      issuesSection.style.display = 'block';
+      issuesList.innerHTML = results.issues.map(issue => `
+        <div class="issue-item">
+          <div class="issue-title">${issue.validation}</div>
+          <div class="issue-description">${issue.description}</div>
+          <span class="issue-count">${issue.count} problema(s)</span>
+        </div>
+      `).join('');
+    } else {
+      issuesSection.style.display = 'none';
+    }
+  }
+
+  handleExportResults() {
+    if (!this.currentResults) return;
+
+    const json = JSON.stringify(this.currentResults, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `validacao_${new Date().toISOString()}.json`;
+    a.click();
+  }
+
+  handleRunAgain() {
+    document.getElementById('results-card').style.display = 'none';
+  }
+
+  addToHistory(studyId, validations, results) {
+    const study = studyId ? this.studies.find(s => s.id === studyId) : null;
+    
+    this.validationHistory.unshift({
+      study: study ? study.name : 'Todos os Estudos',
+      validations: validations.length,
+      passed: results.passed,
+      failed: results.failed,
+      timestamp: new Date().toLocaleString('pt-BR')
+    });
+
+    this.validationHistory = this.validationHistory.slice(0, 10);
+    this.renderHistory();
+  }
+
+  loadValidationHistory() {
+    this.renderHistory();
+  }
+
+  renderHistory() {
+    const container = document.getElementById('history-list');
+
+    if (this.validationHistory.length === 0) {
+      container.innerHTML = '<p class="text-muted">Nenhuma validação executada ainda</p>';
+      return;
+    }
+
+    const html = this.validationHistory.map((item, idx) => `
+      <div class="history-item">
+        <div class="history-item-title">
+          ${idx + 1}. ${item.study}
+          <span style="float: right; font-size: 0.85rem; font-weight: 400;">
+            ✅ ${item.passed} | ❌ ${item.failed}
+          </span>
+        </div>
+        <div class="history-item-meta">${item.validations} validações • ${item.timestamp}</div>
+      </div>
+    `).join('');
+
+    container.innerHTML = html;
+  }
+
+  attachEventListeners() {
+    document.querySelectorAll('[data-click]').forEach(btn => {
+      const action = btn.getAttribute('data-click');
+      btn.addEventListener('click', () => {
+        if (typeof this[action] === 'function') {
+          this[action]();
+        }
+      });
+    });
+  }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  new ValidationsPage();
+});
+</script>
+
+</body>
+</html>

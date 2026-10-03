@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#4CAF50">
+  <meta name="description" content="Acesso ao sistema de gestão Reserva Canabica.">
+  <title>Reserva Canabica — Acesso Seguro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4CAF50;
+      --primary-strong: #1B5E20;
+      --primary-soft: #388E3C;
+      --surface: #1E1E1E;
+      --background: #121212;
+      --border: #2C2C2C;
+      --text: #E0E0E0;
+      --muted: #9E9E9E;
+      --accent: #4CAF50;
+      --danger: #D32F2F;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--background);
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    .login-container {
+      display: grid;
+      min-height: 100vh;
+      grid-template-columns: minmax(320px, 0.85fr) minmax(400px, 1.15fr);
+      max-width: 100vw;
+      overflow: hidden;
+    }
+    
+    /* === LADO ESQUERDO: CONTEXTO === */
+    .login-branding {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: clamp(var(--canna-space-8), 5vw, var(--canna-space-16));
+      color: #fff;
+      background: 
+        linear-gradient(145deg, rgba(30, 125, 50, 0.95), rgba(27, 94, 32, 0.9)),
+        radial-gradient(circle at 60% 30%, rgba(76, 175, 80, 0.3), transparent 50%);
+      overflow: hidden;
+    }
+    
+    .login-branding::before,
+    .login-branding::after {
+      position: absolute;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      content: "";
+      pointer-events: none;
+    }
+    
+    .login-branding::before {
+      width: 380px;
+      height: 380px;
+      right: -200px;
+      top: -100px;
+    }
+    
+    .login-branding::after {
+      width: 250px;
+      height: 250px;
+      left: -130px;
+      bottom: -90px;
+    }
+    
+    .brand-header,
+    .brand-content,
+    .brand-footer {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .brand-identity {
+      display: flex;
+      align-items: center;
+      gap: var(--canna-space-4);
+    }
+    
+    .cannabis-brand-mark {
+      display: grid;
+      width: 56px;
+      height: 56px;
+      place-items: center;
+      background: var(--surface);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+    
+    .brand-name strong,
+    .brand-name small {
+      display: block;
+    }
+    
+    .brand-name strong {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    
+    .brand-name small {
+      margin-top: 4px;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.8rem;
+      font-weight: 400;
+    }
+    
+    .brand-content {
+      max-width: 560px;
+      margin: 40px 0;
+    }
+    
+    .brand-badge {
+      display: inline-block;
+      padding: 6px 14px;
+      margin-bottom: var(--canna-space-5);
+      color: var(--primary-strong);
+      background: rgba(76, 175, 80, 0.15);
+      border: 1px solid rgba(76, 175, 80, 0.3);
+      border-radius: var(--radius-full, 9999px);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    
+    .brand-content h1 {
+      max-width: 520px;
+      margin-bottom: var(--canna-space-5);
+      font-size: clamp(2rem, 4.5vw, 3.8rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+    }
+    
+    .brand-content p {
+      max-width: 500px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 1.05rem;
+      line-height: 1.65;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 14px;
+      margin-top: var(--canna-space-8);
+    }
+    
+    .feature-card {
+      padding: var(--canna-space-4);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--canna-space-3);
+      backdrop-filter: blur(8px);
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    
+    .feature-card:hover {
+      background: rgba(255, 255, 255, 0.09);
+      transform: translateY(-2px);
+    }
+    
+    .feature-card .icon {
+      color: var(--accent);
+    }
+    
+    .feature-card strong {
+      display: block;
+      margin-top: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    
+    .feature-card small {
+      display: block;
+      margin-top: 6px;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.72rem;
+      line-height: 1.4;
+    }
+    
+    .brand-footer {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.7rem;
+    }
+    
+    /* === LADO DIREITO: FORMULÁRIO === */
+    .login-form-area {
+      display: grid;
+      place-items: center;
+      padding: var(--canna-space-8);
+      background:
+        radial-gradient(circle at 80% 10%, rgba(76, 175, 80, 0.05), transparent 30rem),
+        var(--background);
+    }
+    
+    .form-wrapper {
+      width: min(420px, 100%);
+    }
+    
+    .form-wrapper > .form-tag {
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    
+    .form-wrapper h2 {
+      margin: var(--canna-space-3) 0 var(--canna-space-2);
+      font-size: clamp(1.7rem, 3.5vw, 2.2rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+    
+    .form-wrapper > p {
+      margin-bottom: var(--canna-space-8);
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+    
+    .form-group {
+      margin-bottom: var(--canna-space-5);
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: var(--canna-space-2);
+      color: var(--text);
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+    
+    .input-wrapper {
+      position: relative;
+    }
+    
+    .input-wrapper .icon {
+      position: absolute;
+      top: 50%;
+      left: 14px;
+      color: var(--muted);
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 14px 14px 14px 46px;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.95rem;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .form-input:focus {
+      border-color: var(--accent);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+    }
+    
+    .form-input::placeholder {
+      color: #616161;
+    }
+    
+    .form-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: var(--canna-space-6) 0 28px;
+    }
+    
+    .checkbox-wrapper {
+      display: flex;
+      align-items: center;
+      gap: var(--canna-space-2);
+    }
+    
+    .checkbox-wrapper input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
+    
+    .checkbox-wrapper label {
+      color: var(--muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    
+    .forgot-link {
+      color: var(--accent);
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: opacity 0.2s ease;
+    }
+    
+    .forgot-link:hover {
+      opacity: 0.8;
+      text-decoration: underline;
+    }
+    
+    .btn-login {
+      width: 100%;
+      padding: 15px;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+    
+    .btn-login:hover {
+      background: var(--primary-soft);
+    }
+    
+    .btn-login:active {
+      transform: scale(0.98);
+    }
+    
+    .btn-login:disabled {
+      background: #424242;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    
+    .alert {
+      padding: var(--canna-space-3) var(--canna-space-4);
+      margin-bottom: var(--canna-space-5);
+      border-radius: var(--canna-space-3);
+      font-size: 0.88rem;
+      display: none;
+    }
+    
+    .alert.show {
+      display: block;
+    }
+    
+    .alert-error {
+      color: #FFCDD2;
+      background: rgba(211, 47, 47, 0.15);
+      border: 1px solid rgba(211, 47, 47, 0.3);
+    }
+    
+    .alert-success {
+      color: #C8E6C9;
+      background: rgba(76, 175, 80, 0.15);
+      border: 1px solid rgba(76, 175, 80, 0.3);
+    }
+    
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 28px 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    
+    .divider::before,
+    .divider::after {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+      content: "";
+    }
+    
+    .divider::before {
+      margin-right: var(--canna-space-3);
+    }
+    
+    .divider::after {
+      margin-left: var(--canna-space-3);
+    }
+    
+    .alternative-action {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+    
+    .alternative-action a {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity 0.2s ease;
+    }
+    
+    .alternative-action a:hover {
+      opacity: 0.8;
+      text-decoration: underline;
+    }
+    
+    /* === RESPONSIVIDADE === */
+    @media (max-width: 968px) {
+      .login-container {
+        grid-template-columns: 1fr;
+      }
+      
+      .login-branding {
+        display: none;
+      }
+      
+      .form-wrapper {
+        padding: var(--canna-space-5);
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .form-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--canna-space-4);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <!-- LADO ESQUERDO: BRANDING -->
+    <div class="login-branding">
+      <div class="brand-header">
+        <div class="brand-identity">
+          <div class="cannabis-brand-mark">
+            <i data-feather="leaf" class="icon icon-lg" style="color: var(--accent);" aria-hidden="true"></i>
+          </div>
+          <div class="brand-name">
+            <strong>Reserva Canabica</strong>
+            <small>Sistema de Gestão Integrada</small>
+          </div>
+        </div>
+      </div>
+      
+      <div class="brand-content">
+        <span class="brand-badge"><i data-feather="leaf" class="icon icon-sm" aria-hidden="true"></i> Plataforma Segura</span>
+        <h1>Gestão Profissional de Cultivo Medicinal</h1>
+        <p>
+          Controle completo do ciclo produtivo, rastreabilidade total e conformidade regulatória 
+          em uma plataforma desenvolvida especificamente para o setor canábico.
+        </p>
+        
+        <div class="features-grid">
+          <div class="feature-card">
+            <i data-feather="package" class="icon icon-lg" aria-hidden="true"></i>
+            <strong>Estoque</strong>
+            <small>Rastreamento lote a lote</small>
+          </div>
+          <div class="feature-card">
+            <i data-feather="bar-chart-2" class="icon icon-lg" aria-hidden="true"></i>
+            <strong>Relatórios</strong>
+            <small>Conformidade ANVISA</small>
+          </div>
+          <div class="feature-card">
+            <i data-feather="shield" class="icon icon-lg" aria-hidden="true"></i>
+            <strong>Segurança</strong>
+            <small>Auditoria completa</small>
+          </div>
+        </div>
+      </div>
+      
+      <div class="brand-footer">
+        © 2026 Reserva Canabica. Todos os direitos reservados.
+      </div>
+    </div>
+    
+    <!-- LADO DIREITO: FORMULÁRIO -->
+    <div class="login-form-area">
+      <div class="form-wrapper">
+        <span class="form-tag">Acesso Restrito</span>
+        <h2>Bem-vindo de volta</h2>
+        <p>Entre com suas credenciais para acessar o sistema</p>
+        
+        <div id="alertContainer"></div>
+        
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="username">Usuário ou E-mail</label>
+            <div class="input-wrapper">
+              <i data-feather="user" class="icon icon-md" aria-hidden="true"></i>
+              <input 
+                type="text" 
+                id="username" 
+                name="username" 
+                class="form-input" 
+                placeholder="seu.email@empresa.com"
+                required
+                autocomplete="username"
+              >
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="password">Senha</label>
+            <div class="input-wrapper">
+              <i data-feather="lock" class="icon icon-md" aria-hidden="true"></i>
+              <input 
+                type="password" 
+                id="password" 
+                name="password" 
+                class="form-input" 
+                placeholder="••••••••"
+                required
+                autocomplete="current-password"
+              >
+            </div>
+          </div>
+          
+          <div class="form-actions">
+            <div class="checkbox-wrapper">
+              <input type="checkbox" id="remember" name="remember">
+              <label for="remember">Lembrar de mim</label>
+            </div>
+            <a href="#" class="forgot-link">Esqueceu a senha?</a>
+          </div>
+          
+          <button type="submit" class="btn-login" id="btnLogin">
+            Entrar no Sistema
+          </button>
+        </form>
+        
+        <div class="divider">ou</div>
+        
+        <div class="alternative-action">
+          Primeiro acesso? <a href="#">Solicite suas credenciais</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT DE INJEÇÃO DO LOGO BASE64 -->
+  <script id="cannabis-brand-logo-injector">
+  (function () {
+    'use strict';
+    
+    var logoSrc = 'data:image/svg+xml;base64,<?!= include("BrandLogoCanabicaBase64"); ?>';
+    
+    function domReady(callback) {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', callback, { once: true });
+      } else {
+        callback();
+      }
+    }
+    
+    function findLogoTarget() {
+      // Heurística: múltiplos seletores em ordem de prioridade
+      return document.querySelector(
+        '.cannabis-brand-mark, .reserva-logo, .auth-cannabis-logo, .brand-mark, .auth-logo'
+      );
+    }
+    
+    function injectLogo() {
+      // Previne duplicação
+      if (document.querySelector('.injected-cannabis-logo')) {
+        return;
+      }
+      
+      var target = findLogoTarget();
+      if (!target) {
+        console.warn('[Logo Injector] Target element not found');
+        return;
+      }
+      
+      // Tratamento polimórfico do target
+      if (target.tagName === 'IMG') {
+        // Target já é uma imagem
+        target.src = logoSrc;
+        target.alt = target.alt || 'Logo Reserva Canabica';
+        target.classList.add('injected-cannabis-logo');
+      } else {
+        // Target é um container
+        var img = document.createElement('img');
+        img.src = logoSrc;
+        img.alt = 'Logo Reserva Canabica';
+        img.className = 'injected-cannabis-logo';
+        
+        // Estilos intrínsecos responsivos
+        img.style.cssText = [
+          'width: 100%',
+          'height: 100%',
+          'object-fit: contain',
+          'border-radius: inherit',
+          'filter: drop-shadow(0 2px 8px rgba(76, 175, 80, 0.25))'
+        ].join(';');
+        
+        // Limpa conteúdo anterior e injeta logo
+        target.innerHTML = '';
+        target.appendChild(img);
+        target.classList.add('logo-injected');
+      }
+      
+      console.info('[Logo Injector] Cannabis brand logo injected successfully');
+    }
+    
+    // Executa quando DOM estiver pronto
+    domReady(injectLogo);
+  })();
+  </script>
+  
+  <!-- SCRIPT DE AUTENTICAÇÃO -->
+  <script>
+  (function() {
+    'use strict';
+    
+    var form = document.getElementById('loginForm');
+    var btnLogin = document.getElementById('btnLogin');
+    var alertContainer = document.getElementById('alertContainer');
+    
+    function showAlert(message, type) {
+      type = type || 'error';
+      var alert = document.createElement('div');
+      alert.className = 'alert alert-' + type + ' show';
+      alert.textContent = message;
+      
+      alertContainer.innerHTML = '';
+      alertContainer.appendChild(alert);
+      
+      setTimeout(function() {
+        alert.classList.remove('show');
+      }, 5000);
+    }
+    
+    function handleSubmit(event) {
+      event.preventDefault();
+      
+      var username = document.getElementById('username').value.trim();
+      var password = document.getElementById('password').value;
+      
+      if (!username || !password) {
+        showAlert('Por favor, preencha todos os campos.', 'error');
+        return;
+      }
+      
+      // Desabilita botão durante processamento
+      btnLogin.disabled = true;
+      btnLogin.textContent = 'Autenticando...';
+      
+      // Chama função de login no backend
+      google.script.run
+        .withSuccessHandler(onLoginSuccess)
+        .withFailureHandler(onLoginError)
+        .authLogin_({ username: username, password: password });
+    }
+    
+    function onLoginSuccess(response) {
+      if (response.success) {
+        showAlert('Login realizado com sucesso! Redirecionando...', 'success');
+        setTimeout(function() {
+          window.location.href = response.redirectUrl || '?page=dashboard';
+        }, 1000);
+      } else {
+        showAlert(response.message || 'Credenciais inválidas.', 'error');
+        btnLogin.disabled = false;
+        btnLogin.textContent = 'Entrar no Sistema';
+      }
+    }
+    
+    function onLoginError(error) {
+      console.error('Login error:', error);
+      showAlert('Erro ao conectar com o servidor. Tente novamente.', 'error');
+      btnLogin.disabled = false;
+      btnLogin.textContent = 'Entrar no Sistema';
+    }
+    
+    if (form) {
+      form.addEventListener('submit', handleSubmit);
+    }
+  })();
+  </script>
+</body>
+</html>

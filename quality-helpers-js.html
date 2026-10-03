@@ -1,0 +1,304 @@
+<script>
+/**
+ * quality-helpers.js
+ * Funções auxiliares reutilizáveis para UI e lógica do frontend
+ */
+
+/**
+ * Formata data ISO para DD/MM/YYYY HH:MM
+ */
+function formatDateTime(isoString) {
+  if (!isoString) return '—';
+  const date = new Date(isoString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
+/**
+ * Formata data ISO para DD/MM/YYYY
+ */
+function formatDate(isoString) {
+  if (!isoString) return '—';
+  const date = new Date(isoString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+/**
+ * Escapa HTML para prevenir XSS
+ */
+function escapeHtml(text) {
+  if (!text) return '';
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return String(text).replace(/[&<>"']/g, m => map[m]);
+}
+
+/**
+ * Renderiza badge de status com cor apropriada
+ */
+function renderStatusBadge(status) {
+  if (!status) return '<span class="badge badge-secondary">N/A</span>';
+  
+  const statusMap = {
+    // Status Auditoria
+    'pendente': { label: 'Pendente', class: 'warning' },
+    'aprovado': { label: 'Aprovado', class: 'success' },
+    'reprovado': { label: 'Reprovado', class: 'danger' },
+    'em_analise': { label: 'Em Análise', class: 'info' },
+    
+    // Status Liberação
+    'liberado': { label: 'Liberado', class: 'success' },
+    'bloqueado': { label: 'Bloqueado', class: 'danger' },
+    'condicional': { label: 'Condicional', class: 'warning' },
+    
+    // Status Parecer
+    'compativel': { label: 'Compatível', class: 'success' },
+    'incompativel': { label: 'Incompatível', class: 'danger' },
+    'compativel_com_restricoes': { label: 'Compatível c/ Restrições', class: 'warning' }
+  };
+  
+  const config = statusMap[status.toLowerCase()] || { label: status, class: 'secondary' };
+  return `<span class="badge badge-${config.class}">${escapeHtml(config.label)}</span>`;
+}
+
+/**
+ * Renderiza tabela de metais pesados com alertas
+ */
+function renderMetaisPesadosTable(metaisPesados) {
+  if (!metaisPesados || Object.keys(metaisPesados).length === 0) {
+    return '<p class="text-muted">Sem dados de metais pesados</p>';
+  }
+  
+  const limites = {
+    Pb: 2.0,
+    Cd: 0.5,
+    As: 1.0,
+    Hg: 0.1
+  };
+  
+  let html = '<table class="table table-sm table-bordered">';
+  html += '<thead><tr><th>Metal</th><th>Valor (ppm)</th><th>Limite (ppm)</th><th>Status</th></tr></thead>';
+  html += '<tbody>';
+  
+  for (const [metal, valor] of Object.entries(metaisPesados)) {
+    const limite = limites[metal];
+    const excedeRed = valor > limite;
+    const excedeYellow = valor > limite * 0.8;
+    
+    let statusHtml = '';
+    if (excedeRed) {
+      statusHtml = '<span class="badge badge-danger">Excede</span>';
+    } else if (excedeYellow) {
+      statusHtml = '<span class="badge badge-warning">Alerta</span>';
+    } else {
+      statusHtml = '<span class="badge badge-success">OK</span>';
+    }
+    
+    const rowClass = excedeRed ? 'table-danger' : (excedeYellow ? 'table-warning' : '');
+    
+    html += `<tr class="${rowClass}">`;
+    html += `<td><strong>${escapeHtml(metal)}</strong></td>`;
+    html += `<td>${valor.toFixed(2)}</td>`;
+    html += `<td>${limite.toFixed(2)}</td>`;
+    html += `<td>${statusHtml}</td>`;
+    html += '</tr>';
+  }
+  
+  html += '</tbody></table>';
+  return html;
+}
+
+/**
+ * Renderiza lista de regras de parecer
+ */
+function renderRegrasList(regras) {
+  if (!regras || regras.length === 0) {
+    return '<p class="text-muted">Nenhuma regra aplicada</p>';
+  }
+  
+  let html = '<ul class="list-group">';
+  regras.forEach((regra, idx) => {
+    const iconClass = regra.cumprida ? 'text-success' : 'text-danger';
+    const icon = regra.cumprida ? '✓' : '✗';
+    html += `<li class="list-group-item d-flex justify-content-between align-items-center">`;
+    html += `<span>${escapeHtml(regra.descricao)}</span>`;
+    html += `<span class="${iconClass} font-weight-bold">${icon}</span>`;
+    html += '</li>';
+  });
+  html += '</ul>';
+  return html;
+}
+
+/**
+ * Valida campo obrigatório
+ */
+function validateRequired(value, fieldName) {
+  if (!value || String(value).trim() === '') {
+    return { valid: false, message: `${fieldName} é obrigatório` };
+  }
+  return { valid: true };
+}
+
+/**
+ * Valida comprimento mínimo de texto
+ */
+function validateMinLength(value, minLength, fieldName) {
+  if (!value || String(value).trim().length < minLength) {
+    return { valid: false, message: `${fieldName} deve ter pelo menos ${minLength} caracteres` };
+  }
+  return { valid: true };
+}
+
+/**
+ * Mostra mensagem de erro genérica.
+ * Usa UI.Toast se disponível (design system); fallback para console.
+ */
+function showError(message) {
+  if (typeof UI !== 'undefined' && UI.Toast) {
+    UI.Toast.error('Erro', message);
+  } else {
+    console.error('[showError]', message);
+    // fallback visual inline: tenta encontrar um container de alerta na página
+    const el = document.getElementById('error-state') || document.getElementById('alert-container');
+    if (el) {
+      el.innerHTML = `
+        <div class="alert alert-error" style="display:flex;margin-bottom:var(--space-md,16px)">
+          <div class="alert-icon">✕</div>
+          <div class="alert-content">
+            <div class="alert-title">Erro</div>
+            <div class="alert-message">${escapeHtml(message)}</div>
+          </div>
+        </div>`;
+      el.style.display = 'block';
+    }
+  }
+}
+
+/**
+ * Mostra mensagem de sucesso genérica.
+ * Usa UI.Toast se disponível (design system); fallback para console.
+ */
+function showSuccess(message) {
+  if (typeof UI !== 'undefined' && UI.Toast) {
+    UI.Toast.success('Sucesso', message);
+  } else {
+    console.log('[showSuccess]', message);
+    const el = document.getElementById('success-state') || document.getElementById('alert-container');
+    if (el) {
+      el.innerHTML = `
+        <div class="alert alert-success" style="display:flex;margin-bottom:var(--space-md,16px);background:#e8f5e9;border-left:4px solid #4caf50;padding:var(--space-md,16px);border-radius:var(--radius-md,8px)">
+          <div class="alert-icon">✓</div>
+          <div class="alert-content">
+            <div class="alert-title">Sucesso</div>
+            <div class="alert-message">${escapeHtml(message)}</div>
+          </div>
+        </div>`;
+      el.style.display = 'block';
+    }
+  }
+}
+
+/**
+ * Confirma ação com o usuário.
+ * Usa UI.Modal.confirm se disponível (design system);
+ * retorna uma Promise que resolve true/false.
+ * Assinatura assíncrona: await confirmAction(msg) ou .then(ok => {...})
+ */
+function confirmAction(message) {
+  if (typeof UI !== 'undefined' && UI.Modal) {
+    return new Promise(function(resolve) {
+      UI.Modal.confirm({
+        title: 'Confirmar',
+        message: message,
+        confirmText: 'Confirmar',
+        cancelText: 'Cancelar',
+        onConfirm: function() { resolve(true);  },
+        onCancel:  function() { resolve(false); }
+      });
+    });
+  }
+  // fallback síncrono — mantém compatibilidade com chamadas existentes
+  return Promise.resolve(window.confirm(message));
+}
+
+/**
+ * Desabilita botão e mostra loading
+ */
+function setButtonLoading(buttonId, loading) {
+  const btn = document.getElementById(buttonId);
+  if (!btn) return;
+  
+  if (loading) {
+    btn.disabled = true;
+    btn.dataset.originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm mr-2"></span>Carregando...';
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = btn.dataset.originalText || btn.innerHTML;
+  }
+}
+
+/**
+ * Renderiza lista de insumos vinculados
+ */
+function renderInsumosLinkedTable(insumos) {
+  if (!insumos || insumos.length === 0) {
+    return '<p class="text-muted">Nenhum insumo vinculado</p>';
+  }
+  
+  let html = '<table class="table table-sm table-hover">';
+  html += '<thead><tr><th>ID</th><th>Nome</th><th>Tipo</th><th>Fornecedor</th><th>Ações</th></tr></thead>';
+  html += '<tbody>';
+  
+  insumos.forEach(insumo => {
+    html += '<tr>';
+    html += `<td>${escapeHtml(insumo.id)}</td>`;
+    html += `<td>${escapeHtml(insumo.nomeComercial)}</td>`;
+    html += `<td>${escapeHtml(insumo.tipo)}</td>`;
+    html += `<td>${escapeHtml(insumo.fornecedor)}</td>`;
+    html += `<td><a href="#" onclick="viewInsumo('${insumo.id}'); return false;" class="btn btn-sm btn-primary">Ver</a></td>`;
+    html += '</tr>';
+  });
+  
+  html += '</tbody></table>';
+  return html;
+}
+
+/**
+ * Renderiza lista de lotes vinculados
+ */
+function renderLotesLinkedTable(lotes) {
+  if (!lotes || lotes.length === 0) {
+    return '<p class="text-muted">Nenhum lote vinculado</p>';
+  }
+  
+  let html = '<table class="table table-sm table-hover">';
+  html += '<thead><tr><th>ID Lote</th><th>Insumo</th><th>Status Auditoria</th><th>Status Liberação</th><th>Ações</th></tr></thead>';
+  html += '<tbody>';
+  
+  lotes.forEach(lote => {
+    html += '<tr>';
+    html += `<td>${escapeHtml(lote.idLote)}</td>`;
+    html += `<td>${escapeHtml(lote.nomeInsumo || '—')}</td>`;
+    html += `<td>${renderStatusBadge(lote.statusAuditoria)}</td>`;
+    html += `<td>${renderStatusBadge(lote.statusLiberacao)}</td>`;
+    html += `<td><a href="#" onclick="viewLote('${lote.id}'); return false;" class="btn btn-sm btn-primary">Ver</a></td>`;
+    html += '</tr>';
+  });
+  
+  html += '</tbody></table>';
+  return html;
+}
+</script>
